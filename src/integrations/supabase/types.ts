@@ -14,7 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_properties: {
+        Row: {
+          address: string
+          bathrooms: number
+          bedrooms: number
+          city: string
+          created_at: string
+          description: string | null
+          features: string[] | null
+          garage_spaces: number | null
+          id: string
+          images: string[] | null
+          listing_type: Database["public"]["Enums"]["listing_type"]
+          lot_size: number | null
+          price: number
+          property_type: Database["public"]["Enums"]["property_type"]
+          sqft: number | null
+          state: string
+          status: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at: string
+          user_id: string
+          year_built: number | null
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          bathrooms?: number
+          bedrooms?: number
+          city: string
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          garage_spaces?: number | null
+          id?: string
+          images?: string[] | null
+          listing_type?: Database["public"]["Enums"]["listing_type"]
+          lot_size?: number | null
+          price: number
+          property_type?: Database["public"]["Enums"]["property_type"]
+          sqft?: number | null
+          state: string
+          status?: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+          year_built?: number | null
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          bathrooms?: number
+          bedrooms?: number
+          city?: string
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          garage_spaces?: number | null
+          id?: string
+          images?: string[] | null
+          listing_type?: Database["public"]["Enums"]["listing_type"]
+          lot_size?: number | null
+          price?: number
+          property_type?: Database["public"]["Enums"]["property_type"]
+          sqft?: number | null
+          state?: string
+          status?: Database["public"]["Enums"]["listing_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+          year_built?: number | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +130,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      listing_status: "active" | "pending" | "sold" | "rented"
+      listing_type: "sale" | "rent"
+      property_type: "house" | "condo" | "townhouse" | "apartment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +259,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      listing_status: ["active", "pending", "sold", "rented"],
+      listing_type: ["sale", "rent"],
+      property_type: ["house", "condo", "townhouse", "apartment"],
+    },
   },
 } as const
