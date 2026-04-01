@@ -12,6 +12,7 @@ import MyListingsPage from "./pages/MyListingsPage.tsx";
 import RealtorsPage from "./pages/RealtorsPage.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import RealtorDashboard from "./pages/RealtorDashboard.tsx";
+import RealtorProfilePage from "./pages/RealtorProfilePage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
