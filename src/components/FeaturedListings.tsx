@@ -44,6 +44,10 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
           description: p.description ?? "",
           features: p.features ?? [],
           isNew: new Date(p.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000,
+          maintenanceFee: p.maintenance_fee ? Number(p.maintenance_fee) : 0,
+          bikeParkingSpaces: p.bike_parking ?? 0,
+          carParkingSpaces: p.car_parking ?? 0,
+          stories: p.stories ?? 0,
           agent: { name: "", phone: "", email: "" },
         }));
         setDbProperties(mapped);
