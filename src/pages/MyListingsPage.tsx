@@ -6,7 +6,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Bed, Bath, Maximize, Trash2, Pencil } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Bed, Bath, Maximize, Trash2, Pencil, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -38,6 +39,22 @@ const MyListingsPage = () => {
     else {
       setListings((prev) => prev.filter((l) => l.id !== id));
       toast.success("Listing deleted");
+    }
+  };
+
+  const toggleStatus = async (listing: Tables<"user_properties">) => {
+    const newStatus = listing.status === "active" ? "pending" : "active";
+    // Payment bypass — in future, verify $1000 payment before activating
+    // if (newStatus === "active") { await verifyPayment(); }
+    const { error } = await supabase
+      .from("user_properties")
+      .update({ status: newStatus })
+      .eq("id", listing.id);
+    if (error) {
+      toast.error("Failed to update status");
+    } else {
+      setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, status: newStatus } : l));
+      toast.success(newStatus === "active" ? "Listing activated!" : "Listing deactivated");
     }
   };
 
@@ -107,7 +124,19 @@ const MyListingsPage = () => {
                     <span className="flex items-center gap-1"><Bed className="h-4 w-4" /> {listing.bedrooms} bd</span>
                     <span className="flex items-center gap-1"><Bath className="h-4 w-4" /> {listing.bathrooms} ba</span>
                     {listing.sqft && <span className="flex items-center gap-1"><Maximize className="h-4 w-4" /> {listing.sqft.toLocaleString()} sqft</span>}
-                    <div className="ml-auto flex gap-2">
+                    <div className="ml-auto flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{listing.status === "active" ? "Active" : "Inactive"}</span>
+                        <Switch
+                          checked={listing.status === "active"}
+                          onCheckedChange={() => toggleStatus(listing)}
+                        />
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <DollarSign className="h-3 w-3" />
+                        <span>$1,000</span>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Free beta</Badge>
+                      </div>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/edit-property/${listing.id}`)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(listing.id)}>
                         <Trash2 className="h-4 w-4" />
