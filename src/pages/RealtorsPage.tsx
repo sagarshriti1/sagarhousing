@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Phone, Mail, Star } from "lucide-react";
+import { Search, MapPin, Phone, Mail, Star, Award } from "lucide-react";
 
 interface Realtor {
   id: string;
