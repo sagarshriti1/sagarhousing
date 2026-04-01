@@ -12,6 +12,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 const MyListingsPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [listings, setListings] = useState<Tables<"user_properties">[]>([]);
   const [loading, setLoading] = useState(true);
 
