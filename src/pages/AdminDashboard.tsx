@@ -420,8 +420,13 @@ const AdminDashboard = () => {
                   <Input value={editingRealtor.city} onChange={(e) => setEditingRealtor({ ...editingRealtor, city: e.target.value })} />
                 </div>
                 <div>
-                  <Label>State</Label>
-                  <Input value={editingRealtor.state} onChange={(e) => setEditingRealtor({ ...editingRealtor, state: e.target.value })} />
+                  <Label>City</Label>
+                  <Select value={editingRealtor.city} onValueChange={(v) => setEditingRealtor({ ...editingRealtor, city: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                    <SelectContent>
+                      {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div>

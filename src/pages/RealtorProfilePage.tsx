@@ -81,7 +81,7 @@ const RealtorProfilePage = () => {
                   )}
                 </div>
                 <p className="flex items-center gap-1.5 text-muted-foreground justify-center sm:justify-start">
-                  <MapPin className="h-4 w-4 shrink-0" /> {realtor.city}, {realtor.state}
+                  <MapPin className="h-4 w-4 shrink-0" /> {realtor.city}
                 </p>
                 {realtor.years_experience && (
                   <p className="flex items-center gap-1.5 text-muted-foreground justify-center sm:justify-start">

@@ -298,11 +298,12 @@ const RealtorDashboard = () => {
                   </div>
                   <div>
                     <Label>City *</Label>
-                    <Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="City" />
-                  </div>
-                  <div>
-                    <Label>State *</Label>
-                    <Input value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="State" />
+                    <Select value={formData.city} onValueChange={(v) => setFormData({ ...formData, city: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                      <SelectContent>
+                        {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label>License Number</Label>
