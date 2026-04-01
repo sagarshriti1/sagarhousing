@@ -46,7 +46,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
     fetchDbProperties();
   }, []);
 
-  const allProperties = useMemo(() => [...dbProperties, ...properties], [dbProperties]);
+  const allProperties = dbProperties;
 
   const effectiveListingType = listingType !== "all" ? listingType : heroListingType ?? "all";
 
