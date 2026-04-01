@@ -57,7 +57,7 @@ const ListPropertyPage = () => {
     listing_type: 'sale' as 'sale' | 'rent',
     year_built: '',
     lot_size: '',
-    garage_spaces: '0',
+    
     maintenance_fee: '0',
     bike_parking: '0',
     car_parking: '0',
@@ -93,7 +93,7 @@ const ListPropertyPage = () => {
         listing_type: data.listing_type,
         year_built: data.year_built ? String(data.year_built) : '',
         lot_size: data.lot_size ? String(data.lot_size) : '',
-        garage_spaces: String(data.garage_spaces ?? 0),
+        
         maintenance_fee: String((data as any).maintenance_fee ?? 0),
         bike_parking: String((data as any).bike_parking ?? 0),
         car_parking: String((data as any).car_parking ?? 0),
@@ -186,7 +186,7 @@ const ListPropertyPage = () => {
         listing_type: form.listing_type,
         year_built: form.year_built ? parseInt(form.year_built) : null,
         lot_size: form.lot_size ? parseFloat(form.lot_size) : null,
-        garage_spaces: parseInt(form.garage_spaces),
+        
         features: selectedFeatures,
         images: allImages,
         maintenance_fee: parseFloat(form.maintenance_fee) || 0,
@@ -316,10 +316,6 @@ const ListPropertyPage = () => {
               <div className='space-y-2'>
                 <Label htmlFor='lotSize'>Lot Size (Aana)</Label>
                 <Input id='lotSize' type='number' value={form.lot_size} onChange={e => updateForm('lot_size', e.target.value)} placeholder='4' min='0' step='0.01' />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='garage'>Garage Spaces</Label>
-                <Input id='garage' type='number' value={form.garage_spaces} onChange={e => updateForm('garage_spaces', e.target.value)} min='0' />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='maintenance_fee'>Maintenance Fee (Rs.)</Label>
