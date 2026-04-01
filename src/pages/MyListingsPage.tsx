@@ -114,7 +114,7 @@ const MyListingsPage = () => {
                         <Badge variant="outline" className="capitalize">{listing.listing_type === "sale" ? "For Sale" : "For Rent"}</Badge>
                       </div>
                       <h3 className="font-display text-lg font-bold text-foreground">{listing.title}</h3>
-                      <p className="text-sm text-muted-foreground">{listing.address}, {listing.city}, {listing.state} {listing.zip_code}</p>
+                      <p className="text-sm text-muted-foreground">{listing.address}, {listing.city}</p>
                     </div>
                     <p className="font-display text-xl font-bold text-price">
                       ${listing.price.toLocaleString()}{listing.listing_type === "rent" ? "/mo" : ""}
