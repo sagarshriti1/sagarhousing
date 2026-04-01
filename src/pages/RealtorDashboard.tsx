@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Phone, Mail, Star, Award, Megaphone, DollarSign, Save, Plus } from "lucide-react";
+import { Star, Award, Megaphone, DollarSign, Save, Plus, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface RealtorProfile {
