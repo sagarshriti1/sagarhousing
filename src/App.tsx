@@ -10,6 +10,7 @@ import PropertyDetail from "./pages/PropertyDetail.tsx";
 import ListPropertyPage from "./pages/ListPropertyPage.tsx";
 import MyListingsPage from "./pages/MyListingsPage.tsx";
 import RealtorsPage from "./pages/RealtorsPage.tsx";
+import AdminDashboard from "./pages/AdminDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
