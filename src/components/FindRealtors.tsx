@@ -172,7 +172,7 @@ const FindRealtors = () => {
                       </a>
                     )}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 

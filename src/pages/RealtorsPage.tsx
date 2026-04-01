@@ -145,7 +145,7 @@ const RealtorsPage = () => {
                     </a>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
