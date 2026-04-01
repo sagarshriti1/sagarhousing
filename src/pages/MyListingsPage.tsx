@@ -44,7 +44,7 @@ const MyListingsPage = () => {
 
   const toggleStatus = async (listing: Tables<"user_properties">) => {
     const newStatus = listing.status === "active" ? "pending" : "active";
-    // Payment bypass — in future, verify $1000 payment before activating
+    // Payment bypass — in future, verify Rs.1000 payment before activating
     // if (newStatus === "active") { await verifyPayment(); }
     const { error } = await supabase
       .from("user_properties")
