@@ -100,8 +100,8 @@ const RealtorDashboard = () => {
   if (!user || (role !== "realtor" && role !== "admin")) return <Navigate to="/" replace />;
 
   const saveProfile = async () => {
-    if (!formData.name || !formData.city || !formData.state) {
-      toast.error("Name, city, and state are required");
+    if (!formData.name || !formData.city) {
+      toast.error("Name and city are required");
       return;
     }
     setSaving(true);
