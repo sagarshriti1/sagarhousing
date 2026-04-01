@@ -297,7 +297,7 @@ const ListPropertyPage = () => {
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Property Details</h2>
             <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
               <div className='space-y-2'>
-                <Label htmlFor='price'>Price ($) *</Label>
+                <Label htmlFor='price'>Price (Rs.) *</Label>
                 <Input id='price' type='number' value={form.price} onChange={e => updateForm('price', e.target.value)} placeholder='450000' required min='0' />
               </div>
               <div className='space-y-2'>
