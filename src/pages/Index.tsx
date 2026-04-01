@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import FeaturedListings from "@/components/FeaturedListings";
@@ -6,7 +7,16 @@ import FindRealtors from "@/components/FindRealtors";
 import Footer from "@/components/Footer";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<"buy" | "rent">("buy");
+  const [searchParams] = useSearchParams();
+  const typeParam = searchParams.get("type");
+  const [activeTab, setActiveTab] = useState<"buy" | "rent">(
+    typeParam === "rent" ? "rent" : "buy"
+  );
+
+  useEffect(() => {
+    if (typeParam === "rent") setActiveTab("rent");
+    else if (typeParam === "buy") setActiveTab("buy");
+  }, [typeParam]);
 
   return (
     <div className="min-h-screen flex flex-col">

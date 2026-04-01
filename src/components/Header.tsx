@@ -27,13 +27,13 @@ const Header = () => {
 
         <nav className='hidden md:flex items-center gap-8'>
           <Link
-            to='/'
+            to='/?type=buy'
             className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
           >
             Buy
           </Link>
           <Link
-            to='/'
+            to='/?type=rent'
             className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
           >
             Rent
@@ -126,10 +126,10 @@ const Header = () => {
       {mobileOpen && (
         <div className='md:hidden border-t border-border bg-card animate-fade-in'>
           <nav className='container py-4 flex flex-col gap-3'>
-            <Link to='/' className='text-sm font-medium py-2 text-foreground'>
+            <Link to='/?type=buy' className='text-sm font-medium py-2 text-foreground'>
               Buy
             </Link>
-            <Link to='/' className='text-sm font-medium py-2 text-foreground'>
+            <Link to='/?type=rent' className='text-sm font-medium py-2 text-foreground'>
               Rent
             </Link>
             <Link to={user ? '/list-property' : '/auth'} className='text-sm font-medium py-2 text-foreground'>
