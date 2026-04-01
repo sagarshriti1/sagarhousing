@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
 
-const FeaturedListings = () => {
+const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => {
   const [listingType, setListingType] = useState("all");
   const [propertyType, setPropertyType] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
@@ -48,9 +48,11 @@ const FeaturedListings = () => {
 
   const allProperties = useMemo(() => [...dbProperties, ...properties], [dbProperties]);
 
+  const effectiveListingType = listingType !== "all" ? listingType : heroListingType ?? "all";
+
   const filtered = useMemo(() => {
     return allProperties.filter((p) => {
-      if (listingType !== "all" && p.listingType !== listingType) return false;
+      if (effectiveListingType !== "all" && p.listingType !== effectiveListingType) return false;
       if (propertyType !== "all" && p.type !== propertyType) return false;
       if (beds !== "all" && p.beds < parseInt(beds)) return false;
       if (priceRange !== "all") {
@@ -59,7 +61,7 @@ const FeaturedListings = () => {
       }
       return true;
     });
-  }, [listingType, propertyType, priceRange, beds, allProperties]);
+  }, [effectiveListingType, propertyType, priceRange, beds, allProperties]);
 
   return (
     <section className="container py-12">

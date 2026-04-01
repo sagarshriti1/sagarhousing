@@ -4,9 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import heroBg from "@/assets/hero-bg.jpg";
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  activeTab: "buy" | "rent";
+  setActiveTab: (tab: "buy" | "rent") => void;
+}
+
+const HeroSection = ({ activeTab, setActiveTab }: HeroSectionProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"buy" | "rent">("buy");
 
   return (
     <section className="relative h-[540px] flex items-center justify-center overflow-hidden">
