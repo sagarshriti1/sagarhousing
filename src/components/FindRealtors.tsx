@@ -99,7 +99,6 @@ const FindRealtors = () => {
                   key={realtor.id}
                   className={`bg-card rounded-lg border p-6 shadow-card hover:shadow-lg transition-shadow block ${realtor.is_featured ? "border-accent ring-1 ring-accent/30 relative" : "border-border"}`}
                 >
-                >
                   {realtor.is_featured && (
                     <div className="absolute -top-3 left-4">
                       <Badge className="bg-accent text-accent-foreground gap-1">
