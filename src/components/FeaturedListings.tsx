@@ -32,8 +32,6 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
           title: p.title,
           address: p.address,
           city: p.city,
-          state: p.state,
-          zip: p.zip_code,
           price: Number(p.price),
           beds: p.bedrooms,
           baths: Number(p.bathrooms),
