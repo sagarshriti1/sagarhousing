@@ -44,6 +44,10 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
           description: p.description ?? "",
           features: p.features ?? [],
           isNew: new Date(p.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000,
+          maintenanceFee: p.maintenance_fee ? Number(p.maintenance_fee) : 0,
+          bikeParkingSpaces: p.bike_parking ?? 0,
+          carParkingSpaces: p.car_parking ?? 0,
+          stories: p.stories ?? 0,
           agent: { name: "", phone: "", email: "" },
         }));
         setDbProperties(mapped);
@@ -69,8 +73,13 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
         const [min, max] = priceRange.split("-").map(Number);
         if (p.price < min || p.price > max) return false;
       }
-      // maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories filters
-      // will work once DB columns are added; for now they are UI-ready
+      if (maintenanceFee !== "all") {
+        const [, max] = maintenanceFee.split("-").map(Number);
+        if ((p.maintenanceFee ?? 0) > max) return false;
+      }
+      if (parseInt(bikeParkingSpaces) > 0 && (p.bikeParkingSpaces ?? 0) < parseInt(bikeParkingSpaces)) return false;
+      if (parseInt(carParkingSpaces) > 0 && (p.carParkingSpaces ?? 0) < parseInt(carParkingSpaces)) return false;
+      if (parseInt(stories) > 0 && (p.stories ?? 0) < parseInt(stories)) return false;
       return true;
     });
   }, [effectiveListingType, propertyType, priceRange, beds, baths, sqmMin, sqmMax, yearBuilt, maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories, allProperties]);
