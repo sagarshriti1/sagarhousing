@@ -250,7 +250,7 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{realtor.city}, {realtor.state}</TableCell>
+                      <TableCell>{realtor.city}</TableCell>
                       <TableCell>{realtor.years_experience ?? "—"} yrs</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
