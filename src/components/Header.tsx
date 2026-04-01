@@ -27,13 +27,13 @@ const Header = () => {
 
         <nav className='hidden md:flex items-center gap-8'>
           <Link
-            to='/'
+            to='/?type=buy'
             className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
           >
             Buy
           </Link>
           <Link
-            to='/'
+            to='/?type=rent'
             className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
           >
             Rent
