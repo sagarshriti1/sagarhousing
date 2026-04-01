@@ -186,7 +186,7 @@ const ListPropertyPage = () => {
         listing_type: form.listing_type,
         year_built: form.year_built ? parseInt(form.year_built) : null,
         lot_size: form.lot_size ? parseFloat(form.lot_size) : null,
-        garage_spaces: parseInt(form.garage_spaces),
+        
         features: selectedFeatures,
         images: allImages,
         maintenance_fee: parseFloat(form.maintenance_fee) || 0,
