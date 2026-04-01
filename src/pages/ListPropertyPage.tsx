@@ -31,7 +31,8 @@ const COMMON_FEATURES = [
 ];
 
 const ListPropertyPage = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isAdmin = role === 'admin';
   const navigate = useNavigate();
   const { id: editId } = useParams<{ id?: string }>();
   const isEdit = !!editId;
