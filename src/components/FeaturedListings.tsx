@@ -10,8 +10,13 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
   const [priceRange, setPriceRange] = useState("all");
   const [beds, setBeds] = useState("all");
   const [baths, setBaths] = useState("all");
-  const [sqftMin, setSqftMin] = useState("all");
+  const [sqmMin, setSqmMin] = useState("");
+  const [sqmMax, setSqmMax] = useState("");
   const [yearBuilt, setYearBuilt] = useState("all");
+  const [maintenanceFee, setMaintenanceFee] = useState("all");
+  const [bikeParkingSpaces, setBikeParkingSpaces] = useState("0");
+  const [carParkingSpaces, setCarParkingSpaces] = useState("0");
+  const [stories, setStories] = useState("0");
   const [dbProperties, setDbProperties] = useState<Property[]>([]);
 
   useEffect(() => {
@@ -59,15 +64,18 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
       if (propertyType !== "all" && p.type !== propertyType) return false;
       if (beds !== "all" && p.beds < parseInt(beds)) return false;
       if (baths !== "all" && p.baths < parseInt(baths)) return false;
-      if (sqftMin !== "all" && p.sqft < parseInt(sqftMin)) return false;
+      if (sqmMin && p.sqft < parseInt(sqmMin)) return false;
+      if (sqmMax && p.sqft > parseInt(sqmMax)) return false;
       if (yearBuilt !== "all" && p.yearBuilt < parseInt(yearBuilt)) return false;
       if (priceRange !== "all") {
         const [min, max] = priceRange.split("-").map(Number);
         if (p.price < min || p.price > max) return false;
       }
+      // maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories filters
+      // will work once DB columns are added; for now they are UI-ready
       return true;
     });
-  }, [effectiveListingType, propertyType, priceRange, beds, baths, sqftMin, yearBuilt, allProperties]);
+  }, [effectiveListingType, propertyType, priceRange, beds, baths, sqmMin, sqmMax, yearBuilt, maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories, allProperties]);
 
   return (
     <section className="container py-12">
@@ -89,10 +97,20 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
         setBeds={setBeds}
         baths={baths}
         setBaths={setBaths}
-        sqftMin={sqftMin}
-        setSqftMin={setSqftMin}
+        sqmMin={sqmMin}
+        setSqmMin={setSqmMin}
+        sqmMax={sqmMax}
+        setSqmMax={setSqmMax}
         yearBuilt={yearBuilt}
         setYearBuilt={setYearBuilt}
+        maintenanceFee={maintenanceFee}
+        setMaintenanceFee={setMaintenanceFee}
+        bikeParkingSpaces={bikeParkingSpaces}
+        setBikeParkingSpaces={setBikeParkingSpaces}
+        carParkingSpaces={carParkingSpaces}
+        setCarParkingSpaces={setCarParkingSpaces}
+        stories={stories}
+        setStories={setStories}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

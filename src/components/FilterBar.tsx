@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SlidersHorizontal } from "lucide-react";
-import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface FilterBarProps {
   listingType: string;
@@ -17,10 +16,20 @@ interface FilterBarProps {
   setBeds: (v: string) => void;
   baths: string;
   setBaths: (v: string) => void;
-  sqftMin: string;
-  setSqftMin: (v: string) => void;
+  sqmMin: string;
+  setSqmMin: (v: string) => void;
+  sqmMax: string;
+  setSqmMax: (v: string) => void;
   yearBuilt: string;
   setYearBuilt: (v: string) => void;
+  maintenanceFee: string;
+  setMaintenanceFee: (v: string) => void;
+  bikeParkingSpaces: string;
+  setBikeParkingSpaces: (v: string) => void;
+  carParkingSpaces: string;
+  setCarParkingSpaces: (v: string) => void;
+  stories: string;
+  setStories: (v: string) => void;
 }
 
 const FilterBar = ({
@@ -29,8 +38,13 @@ const FilterBar = ({
   priceRange, setPriceRange,
   beds, setBeds,
   baths, setBaths,
-  sqftMin, setSqftMin,
+  sqmMin, setSqmMin,
+  sqmMax, setSqmMax,
   yearBuilt, setYearBuilt,
+  maintenanceFee, setMaintenanceFee,
+  bikeParkingSpaces, setBikeParkingSpaces,
+  carParkingSpaces, setCarParkingSpaces,
+  stories, setStories,
 }: FilterBarProps) => {
   return (
     <div className="flex flex-wrap items-center gap-3 py-6">
@@ -103,21 +117,30 @@ const FilterBar = ({
             <SlidersHorizontal className="h-4 w-4" /> Filters
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 space-y-4" align="start">
+        <PopoverContent className="w-80 space-y-4 max-h-[70vh] overflow-y-auto" align="start">
+          {/* Square Meter Range */}
           <div className="space-y-2">
-            <Label>Min. Sqft</Label>
-            <Select value={sqftMin} onValueChange={setSqftMin}>
-              <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Any</SelectItem>
-                <SelectItem value="500">500+ sqft</SelectItem>
-                <SelectItem value="1000">1,000+ sqft</SelectItem>
-                <SelectItem value="1500">1,500+ sqft</SelectItem>
-                <SelectItem value="2000">2,000+ sqft</SelectItem>
-                <SelectItem value="3000">3,000+ sqft</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Square Meter</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                placeholder="No Min"
+                value={sqmMin}
+                onChange={(e) => setSqmMin(e.target.value)}
+                className="w-full"
+              />
+              <span className="text-muted-foreground text-sm">–</span>
+              <Input
+                type="number"
+                placeholder="No Max"
+                value={sqmMax}
+                onChange={(e) => setSqmMax(e.target.value)}
+                className="w-full"
+              />
+            </div>
           </div>
+
+          {/* Year Built */}
           <div className="space-y-2">
             <Label>Year Built</Label>
             <Select value={yearBuilt} onValueChange={setYearBuilt}>
@@ -130,6 +153,57 @@ const FilterBar = ({
                 <SelectItem value="1990">1990+</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Maintenance Fee */}
+          <div className="space-y-2">
+            <Label>Maintenance Fee (Rs.)</Label>
+            <Select value={maintenanceFee} onValueChange={setMaintenanceFee}>
+              <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any</SelectItem>
+                <SelectItem value="0-1000">Under Rs. 1,000</SelectItem>
+                <SelectItem value="0-5000">Under Rs. 5,000</SelectItem>
+                <SelectItem value="0-10000">Under Rs. 10,000</SelectItem>
+                <SelectItem value="0-25000">Under Rs. 25,000</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Motor Bike Parking */}
+          <div className="space-y-2">
+            <Label>Motor Bike Parking</Label>
+            <Input
+              type="number"
+              min={0}
+              placeholder="0"
+              value={bikeParkingSpaces}
+              onChange={(e) => setBikeParkingSpaces(e.target.value)}
+            />
+          </div>
+
+          {/* Car Parking */}
+          <div className="space-y-2">
+            <Label>Car Parking</Label>
+            <Input
+              type="number"
+              min={0}
+              placeholder="0"
+              value={carParkingSpaces}
+              onChange={(e) => setCarParkingSpaces(e.target.value)}
+            />
+          </div>
+
+          {/* Stories */}
+          <div className="space-y-2">
+            <Label>Stories</Label>
+            <Input
+              type="number"
+              min={0}
+              placeholder="0"
+              value={stories}
+              onChange={(e) => setStories(e.target.value)}
+            />
           </div>
         </PopoverContent>
       </Popover>
