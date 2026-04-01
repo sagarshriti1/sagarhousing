@@ -15,6 +15,10 @@ export interface Property {
   description: string;
   features: string[];
   isNew: boolean;
+  maintenanceFee?: number;
+  bikeParkingSpaces?: number;
+  carParkingSpaces?: number;
+  stories?: number;
   agent: {
     name: string;
     phone: string;
