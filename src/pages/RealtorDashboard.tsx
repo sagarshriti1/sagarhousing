@@ -10,9 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, Award, Megaphone, DollarSign, Save, Plus, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+const NEPAL_CITIES = [
+  'Bhaktapur','Bharatpur','Biratnagar','Birgunj','Butwal','Damak','Dhangadhi',
+  'Dharan','Ghorahi','Hetauda','Itahari','Janakpur','Kathmandu','Lalitpur',
+  'Nepalgunj','Pokhara','Siddharthanagar','Tulsipur',
+];
 
 interface RealtorProfile {
   id: string;
@@ -48,7 +55,7 @@ const RealtorDashboard = () => {
     email: "",
     phone: "",
     city: "",
-    state: "",
+    state: "Nepal",
     bio: "",
     photo_url: "",
     license_number: "",
@@ -72,7 +79,7 @@ const RealtorDashboard = () => {
         email: data.email ?? "",
         phone: data.phone ?? "",
         city: data.city,
-        state: data.state,
+        state: "Nepal",
         bio: data.bio ?? "",
         photo_url: data.photo_url ?? "",
         license_number: data.license_number ?? "",
@@ -93,8 +100,8 @@ const RealtorDashboard = () => {
   if (!user || (role !== "realtor" && role !== "admin")) return <Navigate to="/" replace />;
 
   const saveProfile = async () => {
-    if (!formData.name || !formData.city || !formData.state) {
-      toast.error("Name, city, and state are required");
+    if (!formData.name || !formData.city) {
+      toast.error("Name and city are required");
       return;
     }
     setSaving(true);
@@ -103,7 +110,7 @@ const RealtorDashboard = () => {
       email: formData.email || null,
       phone: formData.phone || null,
       city: formData.city,
-      state: formData.state,
+      state: "Nepal",
       bio: formData.bio || null,
       photo_url: formData.photo_url || null,
       license_number: formData.license_number || null,
@@ -291,11 +298,12 @@ const RealtorDashboard = () => {
                   </div>
                   <div>
                     <Label>City *</Label>
-                    <Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="City" />
-                  </div>
-                  <div>
-                    <Label>State *</Label>
-                    <Input value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} placeholder="State" />
+                    <Select value={formData.city} onValueChange={(v) => setFormData({ ...formData, city: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                      <SelectContent>
+                        {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label>License Number</Label>

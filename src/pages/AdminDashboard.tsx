@@ -35,6 +35,12 @@ import {
 import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
+const NEPAL_CITIES = [
+  'Bhaktapur','Bharatpur','Biratnagar','Birgunj','Butwal','Damak','Dhangadhi',
+  'Dharan','Ghorahi','Hetauda','Itahari','Janakpur','Kathmandu','Lalitpur',
+  'Nepalgunj','Pokhara','Siddharthanagar','Tulsipur',
+];
+
 interface Realtor {
   id: string;
   name: string;
@@ -250,7 +256,7 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{realtor.city}, {realtor.state}</TableCell>
+                      <TableCell>{realtor.city}</TableCell>
                       <TableCell>{realtor.years_experience ?? "—"} yrs</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -414,8 +420,13 @@ const AdminDashboard = () => {
                   <Input value={editingRealtor.city} onChange={(e) => setEditingRealtor({ ...editingRealtor, city: e.target.value })} />
                 </div>
                 <div>
-                  <Label>State</Label>
-                  <Input value={editingRealtor.state} onChange={(e) => setEditingRealtor({ ...editingRealtor, state: e.target.value })} />
+                  <Label>City</Label>
+                  <Select value={editingRealtor.city} onValueChange={(v) => setEditingRealtor({ ...editingRealtor, city: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                    <SelectContent>
+                      {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div>
