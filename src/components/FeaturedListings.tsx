@@ -9,6 +9,9 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
   const [propertyType, setPropertyType] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
   const [beds, setBeds] = useState("all");
+  const [baths, setBaths] = useState("all");
+  const [sqftMin, setSqftMin] = useState("all");
+  const [yearBuilt, setYearBuilt] = useState("all");
   const [dbProperties, setDbProperties] = useState<Property[]>([]);
 
   useEffect(() => {
@@ -55,13 +58,16 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
       if (effectiveListingType !== "all" && p.listingType !== effectiveListingType) return false;
       if (propertyType !== "all" && p.type !== propertyType) return false;
       if (beds !== "all" && p.beds < parseInt(beds)) return false;
+      if (baths !== "all" && p.baths < parseInt(baths)) return false;
+      if (sqftMin !== "all" && p.sqft < parseInt(sqftMin)) return false;
+      if (yearBuilt !== "all" && p.yearBuilt < parseInt(yearBuilt)) return false;
       if (priceRange !== "all") {
         const [min, max] = priceRange.split("-").map(Number);
         if (p.price < min || p.price > max) return false;
       }
       return true;
     });
-  }, [effectiveListingType, propertyType, priceRange, beds, allProperties]);
+  }, [effectiveListingType, propertyType, priceRange, beds, baths, sqftMin, yearBuilt, allProperties]);
 
   return (
     <section className="container py-12">
@@ -81,6 +87,12 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
         setPriceRange={setPriceRange}
         beds={beds}
         setBeds={setBeds}
+        baths={baths}
+        setBaths={setBaths}
+        sqftMin={sqftMin}
+        setSqftMin={setSqftMin}
+        yearBuilt={yearBuilt}
+        setYearBuilt={setYearBuilt}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
