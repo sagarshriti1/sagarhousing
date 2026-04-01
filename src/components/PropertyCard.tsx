@@ -10,9 +10,9 @@ interface PropertyCardProps {
 const PropertyCard = ({ property }: PropertyCardProps) => {
   const formatPrice = (price: number, listingType: string) => {
     if (listingType === "rent") {
-      return `$${price.toLocaleString()}/mo`;
+      return `Rs. ${price.toLocaleString()}/mo`;
     }
-    return `$${price.toLocaleString()}`;
+    return `Rs. ${price.toLocaleString()}`;
   };
 
   return (

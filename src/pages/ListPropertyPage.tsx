@@ -55,7 +55,7 @@ const ListPropertyPage = () => {
     bedrooms: '3',
     bathrooms: '2',
     sqft: '',
-    property_type: 'house' as 'house' | 'condo' | 'townhouse' | 'apartment',
+    property_type: 'house' as 'apartment' | 'commercial' | 'house' | 'land',
     listing_type: 'sale' as 'sale' | 'rent',
     year_built: '',
     lot_size: '',
@@ -89,7 +89,7 @@ const ListPropertyPage = () => {
         bedrooms: String(data.bedrooms),
         bathrooms: String(data.bathrooms),
         sqft: data.sqft ? String(data.sqft) : '',
-        property_type: data.property_type,
+        property_type: data.property_type as 'apartment' | 'commercial' | 'house' | 'land',
         listing_type: data.listing_type,
         year_built: data.year_built ? String(data.year_built) : '',
         lot_size: data.lot_size ? String(data.lot_size) : '',
@@ -244,10 +244,10 @@ const ListPropertyPage = () => {
                 <Select value={form.property_type} onValueChange={v => updateForm('property_type', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='house'>House</SelectItem>
-                    <SelectItem value='condo'>Condo</SelectItem>
-                    <SelectItem value='townhouse'>Townhouse</SelectItem>
                     <SelectItem value='apartment'>Apartment</SelectItem>
+                    <SelectItem value='commercial'>Commercial</SelectItem>
+                    <SelectItem value='house'>House</SelectItem>
+                    <SelectItem value='land'>Land</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -297,7 +297,7 @@ const ListPropertyPage = () => {
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Property Details</h2>
             <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
               <div className='space-y-2'>
-                <Label htmlFor='price'>Price ($) *</Label>
+                <Label htmlFor='price'>Price (Rs.) *</Label>
                 <Input id='price' type='number' value={form.price} onChange={e => updateForm('price', e.target.value)} placeholder='450000' required min='0' />
               </div>
               <div className='space-y-2'>

@@ -215,7 +215,13 @@ export type Database = {
       app_role: "admin" | "realtor" | "user"
       listing_status: "active" | "pending" | "sold" | "rented"
       listing_type: "sale" | "rent"
-      property_type: "house" | "condo" | "townhouse" | "apartment"
+      property_type:
+        | "house"
+        | "condo"
+        | "townhouse"
+        | "apartment"
+        | "commercial"
+        | "land"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -346,7 +352,14 @@ export const Constants = {
       app_role: ["admin", "realtor", "user"],
       listing_status: ["active", "pending", "sold", "rented"],
       listing_type: ["sale", "rent"],
-      property_type: ["house", "condo", "townhouse", "apartment"],
+      property_type: [
+        "house",
+        "condo",
+        "townhouse",
+        "apartment",
+        "commercial",
+        "land",
+      ],
     },
   },
 } as const

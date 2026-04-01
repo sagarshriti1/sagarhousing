@@ -9,7 +9,7 @@ export interface Property {
   beds: number;
   baths: number;
   sqft: number;
-  type: "house" | "condo" | "townhouse" | "apartment";
+  type: "apartment" | "commercial" | "house" | "land";
   listingType: "sale" | "rent";
   image: string;
   images: string[];
