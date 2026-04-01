@@ -18,10 +18,10 @@ import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import { Upload, X, Plus, Loader2 } from 'lucide-react';
 
-const US_STATES = [
-  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
-  'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
-  'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+const NEPAL_CITIES = [
+  'Bhaktapur','Bharatpur','Biratnagar','Birgunj','Butwal','Damak','Dhangadhi',
+  'Dharan','Ghorahi','Hetauda','Itahari','Janakpur','Kathmandu','Lalitpur',
+  'Nepalgunj','Pokhara','Siddharthanagar','Tulsipur',
 ];
 
 const COMMON_FEATURES = [
@@ -49,8 +49,6 @@ const ListPropertyPage = () => {
     description: '',
     address: '',
     city: '',
-    state: '',
-    zip_code: '',
     price: '',
     bedrooms: '3',
     bathrooms: '2',
@@ -60,6 +58,10 @@ const ListPropertyPage = () => {
     year_built: '',
     lot_size: '',
     garage_spaces: '0',
+    maintenance_fee: '0',
+    bike_parking: '0',
+    car_parking: '0',
+    stories: '0',
   });
 
   useEffect(() => {
@@ -83,8 +85,6 @@ const ListPropertyPage = () => {
         description: data.description ?? '',
         address: data.address,
         city: data.city,
-        state: data.state,
-        zip_code: data.zip_code,
         price: String(data.price),
         bedrooms: String(data.bedrooms),
         bathrooms: String(data.bathrooms),
@@ -94,6 +94,10 @@ const ListPropertyPage = () => {
         year_built: data.year_built ? String(data.year_built) : '',
         lot_size: data.lot_size ? String(data.lot_size) : '',
         garage_spaces: String(data.garage_spaces ?? 0),
+        maintenance_fee: String((data as any).maintenance_fee ?? 0),
+        bike_parking: String((data as any).bike_parking ?? 0),
+        car_parking: String((data as any).car_parking ?? 0),
+        stories: String((data as any).stories ?? 0),
       });
       setSelectedFeatures(data.features ?? []);
       setExistingImages(data.images ?? []);
@@ -147,14 +151,13 @@ const ListPropertyPage = () => {
     e.preventDefault();
     if (!user) return;
 
-    if (!form.title || !form.address || !form.city || !form.state || !form.zip_code || !form.price) {
+    if (!form.title || !form.address || !form.city || !form.price) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     setLoading(true);
     try {
-      // Upload new images
       const newImageUrls: string[] = [];
       for (const file of imageFiles) {
         const fileExt = file.name.split('.').pop();
@@ -173,8 +176,8 @@ const ListPropertyPage = () => {
         description: form.description || null,
         address: form.address,
         city: form.city,
-        state: form.state,
-        zip_code: form.zip_code,
+        state: '',
+        zip_code: '',
         price: parseFloat(form.price),
         bedrooms: parseInt(form.bedrooms),
         bathrooms: parseFloat(form.bathrooms),
@@ -186,6 +189,10 @@ const ListPropertyPage = () => {
         garage_spaces: parseInt(form.garage_spaces),
         features: selectedFeatures,
         images: allImages,
+        maintenance_fee: parseFloat(form.maintenance_fee) || 0,
+        bike_parking: parseInt(form.bike_parking) || 0,
+        car_parking: parseInt(form.car_parking) || 0,
+        stories: parseInt(form.stories) || 0,
       };
 
       if (isEdit) {
@@ -269,26 +276,16 @@ const ListPropertyPage = () => {
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Location</h2>
             <div className='space-y-2'>
               <Label htmlFor='address'>Street Address *</Label>
-              <Input id='address' value={form.address} onChange={e => updateForm('address', e.target.value)} placeholder='123 Main Street' required />
+              <Input id='address' value={form.address} onChange={e => updateForm('address', e.target.value)} placeholder='e.g. Thamel, Ward No. 26' required />
             </div>
-            <div className='grid grid-cols-3 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='city'>City *</Label>
-                <Input id='city' value={form.city} onChange={e => updateForm('city', e.target.value)} placeholder='Austin' required />
-              </div>
-              <div className='space-y-2'>
-                <Label>State *</Label>
-                <Select value={form.state} onValueChange={v => updateForm('state', v)}>
-                  <SelectTrigger><SelectValue placeholder='Select' /></SelectTrigger>
-                  <SelectContent>
-                    {US_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='zip'>ZIP Code *</Label>
-                <Input id='zip' value={form.zip_code} onChange={e => updateForm('zip_code', e.target.value)} placeholder='78701' required />
-              </div>
+            <div className='space-y-2'>
+              <Label>City *</Label>
+              <Select value={form.city} onValueChange={v => updateForm('city', v)}>
+                <SelectTrigger><SelectValue placeholder='Select City' /></SelectTrigger>
+                <SelectContent>
+                  {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </section>
 
@@ -309,20 +306,36 @@ const ListPropertyPage = () => {
                 <Input id='bathrooms' type='number' value={form.bathrooms} onChange={e => updateForm('bathrooms', e.target.value)} min='0' step='0.5' />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='sqft'>Square Feet</Label>
-                <Input id='sqft' type='number' value={form.sqft} onChange={e => updateForm('sqft', e.target.value)} placeholder='2000' min='0' />
+                <Label htmlFor='sqft'>Square Meter</Label>
+                <Input id='sqft' type='number' value={form.sqft} onChange={e => updateForm('sqft', e.target.value)} placeholder='200' min='0' />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='yearBuilt'>Year Built</Label>
                 <Input id='yearBuilt' type='number' value={form.year_built} onChange={e => updateForm('year_built', e.target.value)} placeholder='2020' min='1800' max={new Date().getFullYear()} />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='lotSize'>Lot Size (acres)</Label>
-                <Input id='lotSize' type='number' value={form.lot_size} onChange={e => updateForm('lot_size', e.target.value)} placeholder='0.25' min='0' step='0.01' />
+                <Label htmlFor='lotSize'>Lot Size (Aana)</Label>
+                <Input id='lotSize' type='number' value={form.lot_size} onChange={e => updateForm('lot_size', e.target.value)} placeholder='4' min='0' step='0.01' />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='garage'>Garage Spaces</Label>
                 <Input id='garage' type='number' value={form.garage_spaces} onChange={e => updateForm('garage_spaces', e.target.value)} min='0' />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='maintenance_fee'>Maintenance Fee (Rs.)</Label>
+                <Input id='maintenance_fee' type='number' value={form.maintenance_fee} onChange={e => updateForm('maintenance_fee', e.target.value)} placeholder='0' min='0' />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='bike_parking'>Motor Bike Parking</Label>
+                <Input id='bike_parking' type='number' value={form.bike_parking} onChange={e => updateForm('bike_parking', e.target.value)} placeholder='0' min='0' />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='car_parking'>Car Parking</Label>
+                <Input id='car_parking' type='number' value={form.car_parking} onChange={e => updateForm('car_parking', e.target.value)} placeholder='0' min='0' />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='stories'>Stories</Label>
+                <Input id='stories' type='number' value={form.stories} onChange={e => updateForm('stories', e.target.value)} placeholder='0' min='0' />
               </div>
             </div>
           </section>

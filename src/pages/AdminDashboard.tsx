@@ -352,8 +352,8 @@ const AdminDashboard = () => {
                   {properties.map((prop) => (
                     <TableRow key={prop.id}>
                       <TableCell className="font-medium text-foreground">{prop.title}</TableCell>
-                      <TableCell>{prop.city}, {prop.state}</TableCell>
-                      <TableCell>${prop.price.toLocaleString()}</TableCell>
+                      <TableCell>{prop.city}</TableCell>
+                      <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge variant={prop.status === "active" ? "default" : "secondary"}>{prop.status}</Badge>
                       </TableCell>
