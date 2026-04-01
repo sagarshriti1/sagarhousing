@@ -2,6 +2,7 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import FeaturedListings from "@/components/FeaturedListings";
+import FindRealtors from "@/components/FindRealtors";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -13,6 +14,7 @@ const Index = () => {
       <main className="flex-1">
         <HeroSection activeTab={activeTab} setActiveTab={setActiveTab} />
         <FeaturedListings heroListingType={activeTab === "buy" ? "sale" : "rent"} />
+        <FindRealtors />
       </main>
       <Footer />
     </div>
