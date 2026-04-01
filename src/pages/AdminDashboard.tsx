@@ -35,6 +35,12 @@ import {
 import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
+const NEPAL_CITIES = [
+  'Bhaktapur','Bharatpur','Biratnagar','Birgunj','Butwal','Damak','Dhangadhi',
+  'Dharan','Ghorahi','Hetauda','Itahari','Janakpur','Kathmandu','Lalitpur',
+  'Nepalgunj','Pokhara','Siddharthanagar','Tulsipur',
+];
+
 interface Realtor {
   id: string;
   name: string;
