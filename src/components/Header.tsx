@@ -39,7 +39,7 @@ const Header = () => {
             Rent
           </Link>
           <Link
-            to='/'
+            to={user ? '/list-property' : '/auth'}
             className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
           >
             Sell
