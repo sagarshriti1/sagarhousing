@@ -417,10 +417,6 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <Label>City</Label>
-                  <Input value={editingRealtor.city} onChange={(e) => setEditingRealtor({ ...editingRealtor, city: e.target.value })} />
-                </div>
-                <div>
-                  <Label>City</Label>
                   <Select value={editingRealtor.city} onValueChange={(v) => setEditingRealtor({ ...editingRealtor, city: v })}>
                     <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
                     <SelectContent>
