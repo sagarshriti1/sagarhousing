@@ -39,6 +39,8 @@ const RealtorDashboard = () => {
   const [saving, setSaving] = useState(false);
   const [newSpecialty, setNewSpecialty] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state for new profile
   const [formData, setFormData] = useState({
