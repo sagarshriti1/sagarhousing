@@ -17,6 +17,7 @@ interface Realtor {
   bio: string | null;
   specialties: string[] | null;
   years_experience: number | null;
+  is_featured: boolean;
 }
 
 const FindRealtors = () => {
