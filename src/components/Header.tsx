@@ -77,6 +77,11 @@ const Header = () => {
                   <DropdownMenuItem asChild>
                     <Link to='/my-listings'>My Listings</Link>
                   </DropdownMenuItem>
+                  {role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link to='/admin'><Shield className='h-4 w-4 mr-2' /> Admin Dashboard</Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={signOut}
