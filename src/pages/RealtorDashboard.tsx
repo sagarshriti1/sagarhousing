@@ -55,7 +55,7 @@ const RealtorDashboard = () => {
     email: "",
     phone: "",
     city: "",
-    state: "",
+    state: "Nepal",
     bio: "",
     photo_url: "",
     license_number: "",
