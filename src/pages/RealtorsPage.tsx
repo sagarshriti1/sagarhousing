@@ -28,7 +28,7 @@ const RealtorsPage = () => {
   useEffect(() => {
     const fetchRealtors = async () => {
       setLoading(true);
-      let query = supabase.from("realtors").select("*");
+      let query = supabase.from("realtors").select("*").order("is_featured", { ascending: false });
 
       if (citySearch.trim()) {
         query = query.ilike("city", `%${citySearch.trim()}%`);
