@@ -57,7 +57,7 @@ const ListPropertyPage = () => {
     listing_type: 'sale' as 'sale' | 'rent',
     year_built: '',
     lot_size: '',
-    garage_spaces: '0',
+    
     maintenance_fee: '0',
     bike_parking: '0',
     car_parking: '0',
