@@ -132,7 +132,7 @@ const Header = () => {
             <Link to='/' className='text-sm font-medium py-2 text-foreground'>
               Rent
             </Link>
-            <Link to='/' className='text-sm font-medium py-2 text-foreground'>
+            <Link to={user ? '/list-property' : '/auth'} className='text-sm font-medium py-2 text-foreground'>
               Sell
             </Link>
             {user ? (
