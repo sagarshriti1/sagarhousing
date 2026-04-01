@@ -55,7 +55,7 @@ const ListPropertyPage = () => {
     bedrooms: '3',
     bathrooms: '2',
     sqft: '',
-    property_type: 'house' as 'house' | 'condo' | 'townhouse' | 'apartment',
+    property_type: 'house' as 'apartment' | 'commercial' | 'house' | 'land',
     listing_type: 'sale' as 'sale' | 'rent',
     year_built: '',
     lot_size: '',
