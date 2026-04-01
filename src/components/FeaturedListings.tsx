@@ -48,9 +48,11 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
 
   const allProperties = useMemo(() => [...dbProperties, ...properties], [dbProperties]);
 
+  const effectiveListingType = listingType !== "all" ? listingType : heroListingType ?? "all";
+
   const filtered = useMemo(() => {
     return allProperties.filter((p) => {
-      if (listingType !== "all" && p.listingType !== listingType) return false;
+      if (effectiveListingType !== "all" && p.listingType !== effectiveListingType) return false;
       if (propertyType !== "all" && p.type !== propertyType) return false;
       if (beds !== "all" && p.beds < parseInt(beds)) return false;
       if (priceRange !== "all") {
@@ -59,7 +61,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
       }
       return true;
     });
-  }, [listingType, propertyType, priceRange, beds, allProperties]);
+  }, [effectiveListingType, propertyType, priceRange, beds, allProperties]);
 
   return (
     <section className="container py-12">
