@@ -10,9 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, Award, Megaphone, DollarSign, Save, Plus, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+const NEPAL_CITIES = [
+  'Bhaktapur','Bharatpur','Biratnagar','Birgunj','Butwal','Damak','Dhangadhi',
+  'Dharan','Ghorahi','Hetauda','Itahari','Janakpur','Kathmandu','Lalitpur',
+  'Nepalgunj','Pokhara','Siddharthanagar','Tulsipur',
+];
 
 interface RealtorProfile {
   id: string;
