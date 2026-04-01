@@ -47,6 +47,57 @@ export type Database = {
         }
         Relationships: []
       }
+      realtors: {
+        Row: {
+          bio: string | null
+          city: string
+          created_at: string
+          email: string | null
+          id: string
+          license_number: string | null
+          name: string
+          phone: string | null
+          photo_url: string | null
+          specialties: string[] | null
+          state: string
+          updated_at: string
+          user_id: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          bio?: string | null
+          city: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          specialties?: string[] | null
+          state: string
+          updated_at?: string
+          user_id?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          bio?: string | null
+          city?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          specialties?: string[] | null
+          state?: string
+          updated_at?: string
+          user_id?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
       user_properties: {
         Row: {
           address: string
