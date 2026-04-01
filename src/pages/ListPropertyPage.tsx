@@ -93,7 +93,7 @@ const ListPropertyPage = () => {
         listing_type: data.listing_type,
         year_built: data.year_built ? String(data.year_built) : '',
         lot_size: data.lot_size ? String(data.lot_size) : '',
-        garage_spaces: String(data.garage_spaces ?? 0),
+        
         maintenance_fee: String((data as any).maintenance_fee ?? 0),
         bike_parking: String((data as any).bike_parking ?? 0),
         car_parking: String((data as any).car_parking ?? 0),
