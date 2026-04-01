@@ -68,12 +68,16 @@ const ListPropertyPage = () => {
   useEffect(() => {
     if (!editId || !user) return;
     const fetchProperty = async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('user_properties')
         .select('*')
-        .eq('id', editId)
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .eq('id', editId);
+
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (error || !data) {
         toast.error('Property not found');
