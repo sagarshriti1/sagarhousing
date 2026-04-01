@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -87,9 +88,10 @@ const RealtorsPage = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {realtors.map((realtor) => (
-              <div
+              <Link
+                to={`/realtor/${realtor.id}`}
                 key={realtor.id}
-                className={`bg-card rounded-lg border p-6 shadow-card hover:shadow-lg transition-shadow ${realtor.is_featured ? "border-accent ring-1 ring-accent/30 relative" : "border-border"}`}
+                className={`bg-card rounded-lg border p-6 shadow-card hover:shadow-lg transition-shadow block ${realtor.is_featured ? "border-accent ring-1 ring-accent/30 relative" : "border-border"}`}
               >
                 {realtor.is_featured && (
                   <div className="absolute -top-3 left-4">
@@ -143,7 +145,7 @@ const RealtorsPage = () => {
                     </a>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
