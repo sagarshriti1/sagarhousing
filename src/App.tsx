@@ -35,6 +35,7 @@ const App = () => (
             <Route path="/list-property" element={<ProtectedRoute><ListPropertyPage /></ProtectedRoute>} />
             <Route path="/edit-property/:id" element={<ProtectedRoute><ListPropertyPage /></ProtectedRoute>} />
             <Route path="/my-listings" element={<ProtectedRoute><MyListingsPage /></ProtectedRoute>} />
+            <Route path="/realtors" element={<RealtorsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

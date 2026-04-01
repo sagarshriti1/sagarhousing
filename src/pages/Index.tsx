@@ -14,6 +14,7 @@ const Index = () => {
       <main className="flex-1">
         <HeroSection activeTab={activeTab} setActiveTab={setActiveTab} />
         <FeaturedListings heroListingType={activeTab === "buy" ? "sale" : "rent"} />
+        <FindRealtors />
       </main>
       <Footer />
     </div>
