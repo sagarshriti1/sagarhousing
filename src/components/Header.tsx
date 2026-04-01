@@ -13,7 +13,7 @@ import {
 
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, role, signOut } = useAuth();
 
   return (
     <header className='sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border'>
