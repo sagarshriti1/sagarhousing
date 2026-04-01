@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
@@ -12,6 +12,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 const MyListingsPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [listings, setListings] = useState<Tables<"user_properties">[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -107,7 +108,7 @@ const MyListingsPage = () => {
                     <span className="flex items-center gap-1"><Bath className="h-4 w-4" /> {listing.bathrooms} ba</span>
                     {listing.sqft && <span className="flex items-center gap-1"><Maximize className="h-4 w-4" /> {listing.sqft.toLocaleString()} sqft</span>}
                     <div className="ml-auto flex gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/edit-property/${listing.id}`)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(listing.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
