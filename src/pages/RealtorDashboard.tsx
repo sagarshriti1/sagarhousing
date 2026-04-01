@@ -301,9 +301,40 @@ const RealtorDashboard = () => {
                     <Label>License Number</Label>
                     <Input value={formData.license_number} onChange={(e) => setFormData({ ...formData, license_number: e.target.value })} placeholder="License #" />
                   </div>
-                  <div>
-                    <Label>Photo URL</Label>
-                    <Input value={formData.photo_url} onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })} placeholder="https://..." />
+                  </div>
+
+                {/* Profile Photo Upload */}
+                <div>
+                  <Label>Profile Photo</Label>
+                  <div className="flex items-center gap-4 mt-1">
+                    <div className="h-20 w-20 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+                      {formData.photo_url ? (
+                        <img src={formData.photo_url} alt="Profile" className="h-full w-full object-cover" />
+                      ) : (
+                        <Camera className="h-8 w-8 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handlePhotoUpload}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={uploading}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="gap-2"
+                      >
+                        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                        {uploading ? "Uploading..." : "Upload Photo"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">JPG, PNG or WebP. Max 5MB.</p>
+                    </div>
                   </div>
                 </div>
 
