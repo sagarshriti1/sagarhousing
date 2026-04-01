@@ -58,7 +58,7 @@ const PropertyDetail = () => {
   }
 
   const formatPrice = (price: number, listingType: string) =>
-    listingType === "rent" ? `$${price.toLocaleString()}/mo` : `$${price.toLocaleString()}`;
+    listingType === "rent" ? `Rs. ${price.toLocaleString()}/mo` : `Rs. ${price.toLocaleString()}`;
 
   const image = property.images?.[0] ?? "/placeholder.svg";
   const isNew = new Date(property.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;

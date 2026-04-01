@@ -244,10 +244,10 @@ const ListPropertyPage = () => {
                 <Select value={form.property_type} onValueChange={v => updateForm('property_type', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='house'>House</SelectItem>
-                    <SelectItem value='condo'>Condo</SelectItem>
-                    <SelectItem value='townhouse'>Townhouse</SelectItem>
                     <SelectItem value='apartment'>Apartment</SelectItem>
+                    <SelectItem value='commercial'>Commercial</SelectItem>
+                    <SelectItem value='house'>House</SelectItem>
+                    <SelectItem value='land'>Land</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
