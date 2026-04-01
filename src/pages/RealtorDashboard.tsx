@@ -79,7 +79,7 @@ const RealtorDashboard = () => {
         email: data.email ?? "",
         phone: data.phone ?? "",
         city: data.city,
-        state: data.state,
+        state: "Nepal",
         bio: data.bio ?? "",
         photo_url: data.photo_url ?? "",
         license_number: data.license_number ?? "",
