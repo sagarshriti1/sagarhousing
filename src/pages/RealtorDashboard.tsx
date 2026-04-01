@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Phone, Mail, Star, Award, Megaphone, DollarSign, Save, Plus } from "lucide-react";
+import { Star, Award, Megaphone, DollarSign, Save, Plus, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface RealtorProfile {
@@ -39,6 +39,8 @@ const RealtorDashboard = () => {
   const [saving, setSaving] = useState(false);
   const [newSpecialty, setNewSpecialty] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state for new profile
   const [formData, setFormData] = useState({
@@ -160,6 +162,45 @@ const RealtorDashboard = () => {
     setFormData({ ...formData, specialties: formData.specialties.filter((sp) => sp !== s) });
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/profile.${ext}`;
+
+    // Remove old photo if exists
+    await supabase.storage.from("realtor-photos").remove([filePath]);
+
+    const { error } = await supabase.storage
+      .from("realtor-photos")
+      .upload(filePath, file, { upsert: true });
+
+    if (error) {
+      toast.error("Failed to upload photo");
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("realtor-photos")
+      .getPublicUrl(filePath);
+
+    setFormData({ ...formData, photo_url: urlData.publicUrl });
+    toast.success("Photo uploaded!");
+    setUploading(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -260,9 +301,40 @@ const RealtorDashboard = () => {
                     <Label>License Number</Label>
                     <Input value={formData.license_number} onChange={(e) => setFormData({ ...formData, license_number: e.target.value })} placeholder="License #" />
                   </div>
-                  <div>
-                    <Label>Photo URL</Label>
-                    <Input value={formData.photo_url} onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })} placeholder="https://..." />
+                  </div>
+
+                {/* Profile Photo Upload */}
+                <div>
+                  <Label>Profile Photo</Label>
+                  <div className="flex items-center gap-4 mt-1">
+                    <div className="h-20 w-20 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+                      {formData.photo_url ? (
+                        <img src={formData.photo_url} alt="Profile" className="h-full w-full object-cover" />
+                      ) : (
+                        <Camera className="h-8 w-8 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handlePhotoUpload}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={uploading}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="gap-2"
+                      >
+                        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                        {uploading ? "Uploading..." : "Upload Photo"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">JPG, PNG or WebP. Max 5MB.</p>
+                    </div>
                   </div>
                 </div>
 
