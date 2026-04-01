@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Phone, Mail, Star } from "lucide-react";
+import { Search, MapPin, Phone, Mail, Star, Award } from "lucide-react";
 
 interface Realtor {
   id: string;
@@ -17,6 +17,7 @@ interface Realtor {
   bio: string | null;
   specialties: string[] | null;
   years_experience: number | null;
+  is_featured: boolean;
 }
 
 const RealtorsPage = () => {
@@ -27,7 +28,7 @@ const RealtorsPage = () => {
   useEffect(() => {
     const fetchRealtors = async () => {
       setLoading(true);
-      let query = supabase.from("realtors").select("*");
+      let query = supabase.from("realtors").select("*").order("is_featured", { ascending: false });
 
       if (citySearch.trim()) {
         query = query.ilike("city", `%${citySearch.trim()}%`);
@@ -88,8 +89,15 @@ const RealtorsPage = () => {
             {realtors.map((realtor) => (
               <div
                 key={realtor.id}
-                className="bg-card rounded-lg border border-border p-6 shadow-card hover:shadow-lg transition-shadow"
+                className={`bg-card rounded-lg border p-6 shadow-card hover:shadow-lg transition-shadow ${realtor.is_featured ? "border-accent ring-1 ring-accent/30 relative" : "border-border"}`}
               >
+                {realtor.is_featured && (
+                  <div className="absolute -top-3 left-4">
+                    <Badge className="bg-accent text-accent-foreground gap-1">
+                      <Award className="h-3 w-3" /> Featured Agent
+                    </Badge>
+                  </div>
+                )}
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-16 w-16 rounded-full bg-muted overflow-hidden shrink-0">
                     {realtor.photo_url ? (
