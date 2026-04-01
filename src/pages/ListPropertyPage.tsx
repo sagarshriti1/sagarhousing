@@ -318,10 +318,6 @@ const ListPropertyPage = () => {
                 <Input id='lotSize' type='number' value={form.lot_size} onChange={e => updateForm('lot_size', e.target.value)} placeholder='4' min='0' step='0.01' />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='garage'>Garage Spaces</Label>
-                <Input id='garage' type='number' value={form.garage_spaces} onChange={e => updateForm('garage_spaces', e.target.value)} min='0' />
-              </div>
-              <div className='space-y-2'>
                 <Label htmlFor='maintenance_fee'>Maintenance Fee (Rs.)</Label>
                 <Input id='maintenance_fee' type='number' value={form.maintenance_fee} onChange={e => updateForm('maintenance_fee', e.target.value)} placeholder='0' min='0' />
               </div>
