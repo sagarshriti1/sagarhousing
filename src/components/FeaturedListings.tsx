@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
 
-const FeaturedListings = () => {
+const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => {
   const [listingType, setListingType] = useState("all");
   const [propertyType, setPropertyType] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
