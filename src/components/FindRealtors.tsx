@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Phone, Mail, ChevronRight, Star } from "lucide-react";
+import { Search, MapPin, Phone, Mail, ChevronRight, Star, Award } from "lucide-react";
 
 interface Realtor {
   id: string;
