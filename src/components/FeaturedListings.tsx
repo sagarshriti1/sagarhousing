@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { properties, type Property } from "@/data/properties";
+import type { Property } from "@/data/properties";
 import { supabase } from "@/integrations/supabase/client";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
@@ -46,7 +46,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
     fetchDbProperties();
   }, []);
 
-  const allProperties = useMemo(() => [...dbProperties, ...properties], [dbProperties]);
+  const allProperties = dbProperties;
 
   const effectiveListingType = listingType !== "all" ? listingType : heroListingType ?? "all";
 
