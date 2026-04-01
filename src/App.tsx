@@ -32,6 +32,7 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="/list-property" element={<ProtectedRoute><ListPropertyPage /></ProtectedRoute>} />
+            <Route path="/edit-property/:id" element={<ProtectedRoute><ListPropertyPage /></ProtectedRoute>} />
             <Route path="/my-listings" element={<ProtectedRoute><MyListingsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
