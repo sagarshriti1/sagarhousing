@@ -117,7 +117,7 @@ const MyListingsPage = () => {
                       <p className="text-sm text-muted-foreground">{listing.address}, {listing.city}</p>
                     </div>
                     <p className="font-display text-xl font-bold text-price">
-                      ${listing.price.toLocaleString()}{listing.listing_type === "rent" ? "/mo" : ""}
+                      Rs. {listing.price.toLocaleString()}{listing.listing_type === "rent" ? "/mo" : ""}
                     </p>
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
