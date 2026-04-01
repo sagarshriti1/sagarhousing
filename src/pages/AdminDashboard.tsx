@@ -78,6 +78,7 @@ interface Property {
 
 const AdminDashboard = () => {
   const { user, role, loading } = useAuth();
+  const navigate = useNavigate();
   const [realtors, setRealtors] = useState<Realtor[]>([]);
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [roles, setRoles] = useState<UserRole[]>([]);
