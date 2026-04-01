@@ -11,6 +11,7 @@ import ListPropertyPage from "./pages/ListPropertyPage.tsx";
 import MyListingsPage from "./pages/MyListingsPage.tsx";
 import RealtorsPage from "./pages/RealtorsPage.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
+import RealtorDashboard from "./pages/RealtorDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/edit-property/:id" element={<ProtectedRoute><ListPropertyPage /></ProtectedRoute>} />
             <Route path="/my-listings" element={<ProtectedRoute><MyListingsPage /></ProtectedRoute>} />
             <Route path="/realtors" element={<RealtorsPage />} />
+            <Route path="/realtor-dashboard" element={<ProtectedRoute><RealtorDashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
