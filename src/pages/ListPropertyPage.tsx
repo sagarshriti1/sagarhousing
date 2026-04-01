@@ -201,7 +201,11 @@ const ListPropertyPage = () => {
       };
 
       if (isEdit) {
-        const { error } = await supabase.from('user_properties').update(payload).eq('id', editId).eq('user_id', user.id);
+        let updateQuery = supabase.from('user_properties').update(payload).eq('id', editId);
+        if (!isAdmin) {
+          updateQuery = updateQuery.eq('user_id', user.id);
+        }
+        const { error } = await updateQuery;
         if (error) throw error;
         toast.success('Listing updated successfully!');
       } else {
