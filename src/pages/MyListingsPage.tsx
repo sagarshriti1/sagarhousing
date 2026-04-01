@@ -134,7 +134,7 @@ const MyListingsPage = () => {
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <DollarSign className="h-3 w-3" />
-                        <span>$1,000</span>
+                        <span>Rs. 1,000</span>
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Free beta</Badge>
                       </div>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/edit-property/${listing.id}`)}><Pencil className="h-4 w-4" /></Button>
