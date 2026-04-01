@@ -162,6 +162,45 @@ const RealtorDashboard = () => {
     setFormData({ ...formData, specialties: formData.specialties.filter((sp) => sp !== s) });
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/profile.${ext}`;
+
+    // Remove old photo if exists
+    await supabase.storage.from("realtor-photos").remove([filePath]);
+
+    const { error } = await supabase.storage
+      .from("realtor-photos")
+      .upload(filePath, file, { upsert: true });
+
+    if (error) {
+      toast.error("Failed to upload photo");
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("realtor-photos")
+      .getPublicUrl(filePath);
+
+    setFormData({ ...formData, photo_url: urlData.publicUrl });
+    toast.success("Photo uploaded!");
+    setUploading(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
