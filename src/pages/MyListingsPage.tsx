@@ -6,7 +6,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Bed, Bath, Maximize, Trash2, Pencil } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Bed, Bath, Maximize, Trash2, Pencil, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
