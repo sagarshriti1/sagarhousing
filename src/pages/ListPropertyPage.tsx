@@ -89,7 +89,7 @@ const ListPropertyPage = () => {
         bedrooms: String(data.bedrooms),
         bathrooms: String(data.bathrooms),
         sqft: data.sqft ? String(data.sqft) : '',
-        property_type: data.property_type,
+        property_type: data.property_type as 'apartment' | 'commercial' | 'house' | 'land',
         listing_type: data.listing_type,
         year_built: data.year_built ? String(data.year_built) : '',
         lot_size: data.lot_size ? String(data.lot_size) : '',
