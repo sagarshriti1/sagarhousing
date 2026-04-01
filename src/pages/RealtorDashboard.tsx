@@ -110,7 +110,7 @@ const RealtorDashboard = () => {
       email: formData.email || null,
       phone: formData.phone || null,
       city: formData.city,
-      state: formData.state,
+      state: "Nepal",
       bio: formData.bio || null,
       photo_url: formData.photo_url || null,
       license_number: formData.license_number || null,
