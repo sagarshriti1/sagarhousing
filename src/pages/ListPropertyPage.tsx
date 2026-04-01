@@ -31,7 +31,8 @@ const COMMON_FEATURES = [
 ];
 
 const ListPropertyPage = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isAdmin = role === 'admin';
   const navigate = useNavigate();
   const { id: editId } = useParams<{ id?: string }>();
   const isEdit = !!editId;
@@ -67,12 +68,16 @@ const ListPropertyPage = () => {
   useEffect(() => {
     if (!editId || !user) return;
     const fetchProperty = async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('user_properties')
         .select('*')
-        .eq('id', editId)
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .eq('id', editId);
+
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (error || !data) {
         toast.error('Property not found');
@@ -196,7 +201,11 @@ const ListPropertyPage = () => {
       };
 
       if (isEdit) {
-        const { error } = await supabase.from('user_properties').update(payload).eq('id', editId).eq('user_id', user.id);
+        let updateQuery = supabase.from('user_properties').update(payload).eq('id', editId);
+        if (!isAdmin) {
+          updateQuery = updateQuery.eq('user_id', user.id);
+        }
+        const { error } = await updateQuery;
         if (error) throw error;
         toast.success('Listing updated successfully!');
       } else {
