@@ -106,6 +106,8 @@ export type Database = {
           address: string
           bathrooms: number
           bedrooms: number
+          bike_parking: number | null
+          car_parking: number | null
           city: string
           created_at: string
           description: string | null
@@ -115,11 +117,13 @@ export type Database = {
           images: string[] | null
           listing_type: Database["public"]["Enums"]["listing_type"]
           lot_size: number | null
+          maintenance_fee: number | null
           price: number
           property_type: Database["public"]["Enums"]["property_type"]
           sqft: number | null
           state: string
           status: Database["public"]["Enums"]["listing_status"]
+          stories: number | null
           title: string
           updated_at: string
           user_id: string
@@ -130,6 +134,8 @@ export type Database = {
           address: string
           bathrooms?: number
           bedrooms?: number
+          bike_parking?: number | null
+          car_parking?: number | null
           city: string
           created_at?: string
           description?: string | null
@@ -139,21 +145,25 @@ export type Database = {
           images?: string[] | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
           lot_size?: number | null
+          maintenance_fee?: number | null
           price: number
           property_type?: Database["public"]["Enums"]["property_type"]
           sqft?: number | null
-          state: string
+          state?: string
           status?: Database["public"]["Enums"]["listing_status"]
+          stories?: number | null
           title: string
           updated_at?: string
           user_id: string
           year_built?: number | null
-          zip_code: string
+          zip_code?: string
         }
         Update: {
           address?: string
           bathrooms?: number
           bedrooms?: number
+          bike_parking?: number | null
+          car_parking?: number | null
           city?: string
           created_at?: string
           description?: string | null
@@ -163,11 +173,13 @@ export type Database = {
           images?: string[] | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
           lot_size?: number | null
+          maintenance_fee?: number | null
           price?: number
           property_type?: Database["public"]["Enums"]["property_type"]
           sqft?: number | null
           state?: string
           status?: Database["public"]["Enums"]["listing_status"]
+          stories?: number | null
           title?: string
           updated_at?: string
           user_id?: string
