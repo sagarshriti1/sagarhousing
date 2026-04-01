@@ -42,6 +42,22 @@ const MyListingsPage = () => {
     }
   };
 
+  const toggleStatus = async (listing: Tables<"user_properties">) => {
+    const newStatus = listing.status === "active" ? "pending" : "active";
+    // Payment bypass — in future, verify $1000 payment before activating
+    // if (newStatus === "active") { await verifyPayment(); }
+    const { error } = await supabase
+      .from("user_properties")
+      .update({ status: newStatus })
+      .eq("id", listing.id);
+    if (error) {
+      toast.error("Failed to update status");
+    } else {
+      setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, status: newStatus } : l));
+      toast.success(newStatus === "active" ? "Listing activated!" : "Listing deactivated");
+    }
+  };
+
   const statusColor = (status: string) => {
     switch (status) {
       case "active": return "bg-badge-new text-badge-new-foreground";
