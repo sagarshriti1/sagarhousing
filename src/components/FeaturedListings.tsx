@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { properties, type Property } from "@/data/properties";
+import type { Property } from "@/data/properties";
 import { supabase } from "@/integrations/supabase/client";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
