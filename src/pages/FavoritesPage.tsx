@@ -76,9 +76,15 @@ const FavoritesPage = () => {
     baths: p.bathrooms,
     sqft: p.sqft ?? 0,
     image: p.images?.[0] ?? "/placeholder.svg",
+    images: p.images ?? [],
     listingType: p.listing_type as "sale" | "rent",
+    type: p.property_type as "apartment" | "commercial" | "house" | "land",
     propertyType: p.property_type,
     isNew: false,
+    yearBuilt: 0,
+    description: "",
+    features: [],
+    agent: { name: "", phone: "", email: "" },
   }));
 
   return (
