@@ -201,13 +201,13 @@ const ListPropertyPage = () => {
         listing_type: form.listing_type,
         year_built: form.year_built ? parseInt(form.year_built) : null,
         lot_size: form.lot_size ? parseFloat(form.lot_size) : null,
-        
         features: selectedFeatures,
         images: allImages,
         maintenance_fee: parseFloat(form.maintenance_fee) || 0,
         bike_parking: parseInt(form.bike_parking) || 0,
         car_parking: parseInt(form.car_parking) || 0,
         stories: parseInt(form.stories) || 0,
+        ...(isEdit ? {} : { status: 'pending' as const }),
       };
 
       if (isEdit) {
@@ -221,7 +221,7 @@ const ListPropertyPage = () => {
       } else {
         const { error } = await supabase.from('user_properties').insert(payload);
         if (error) throw error;
-        toast.success('Property listed successfully!');
+        toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
       }
       navigate('/my-listings');
     } catch (error: any) {
@@ -425,8 +425,19 @@ const ListPropertyPage = () => {
             <p className='text-xs text-muted-foreground'>Upload up to 10 photos. First photo will be the cover image.</p>
           </section>
 
+          {!isEdit && (
+            <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">Listing Fee</p>
+              <p>Your property will be saved as <strong>inactive</strong>. To activate and publish it, pay the listing fee from your My Listings page:</p>
+              <ul className="list-disc list-inside mt-1">
+                <li>For Rent: <strong>Rs. 1,000</strong></li>
+                <li>For Sale: <strong>Rs. 5,000</strong></li>
+              </ul>
+            </div>
+          )}
+
           <Button type='submit' className='w-full bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg' disabled={loading}>
-            {loading ? (<><Loader2 className='h-5 w-5 mr-2 animate-spin' /> {isEdit ? 'Updating...' : 'Publishing...'}</>) : (isEdit ? 'Update Listing' : 'Publish Listing')}
+            {loading ? (<><Loader2 className='h-5 w-5 mr-2 animate-spin' /> {isEdit ? 'Updating...' : 'Saving...'}</>) : (isEdit ? 'Update Listing' : 'Save Listing')}
           </Button>
         </form>
       </main>
