@@ -113,6 +113,8 @@ const AdminDashboard = () => {
   const [search, setSearch] = useState("");
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Realtor form dialog state
   const [realtorDialogOpen, setRealtorDialogOpen] = useState(false);
