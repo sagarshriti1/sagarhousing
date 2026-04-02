@@ -32,9 +32,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin } from "lucide-react";
+import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from '@/data/nepalLocations';
+import { format } from "date-fns";
+import RealtorFormDialog, { type RealtorFormData } from "@/components/admin/RealtorFormDialog";
 
 interface Realtor {
   id: string;
@@ -44,11 +45,17 @@ interface Realtor {
   photo_url: string | null;
   city: string;
   state: string;
+  district: string;
   bio: string | null;
   specialties: string[] | null;
   years_experience: number | null;
   is_featured: boolean;
   user_id: string | null;
+  start_date: string | null;
+  expiration_date: string | null;
+  payment_status: string;
+  payment_bypassed: boolean;
+  license_number: string | null;
 }
 
 interface UserProfile {
@@ -85,9 +92,13 @@ const AdminDashboard = () => {
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
-  const [editingRealtor, setEditingRealtor] = useState<Realtor | null>(null);
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
+
+  // Realtor form dialog state
+  const [realtorDialogOpen, setRealtorDialogOpen] = useState(false);
+  const [realtorDialogMode, setRealtorDialogMode] = useState<"create" | "edit">("create");
+  const [selectedRealtor, setSelectedRealtor] = useState<RealtorFormData | null>(null);
 
   const fetchAll = async () => {
     setDataLoading(true);
@@ -135,16 +146,70 @@ const AdminDashboard = () => {
     }
   };
 
-  const saveRealtor = async () => {
-    if (!editingRealtor) return;
-    const { id, ...rest } = editingRealtor;
-    const { error } = await supabase.from("realtors").update(rest).eq("id", id);
-    if (error) toast.error("Failed to save realtor");
-    else {
+  const handleOpenCreate = () => {
+    setSelectedRealtor(null);
+    setRealtorDialogMode("create");
+    setRealtorDialogOpen(true);
+  };
+
+  const handleOpenEdit = (realtor: Realtor) => {
+    setSelectedRealtor({
+      id: realtor.id,
+      name: realtor.name,
+      email: realtor.email ?? "",
+      phone: realtor.phone ?? "",
+      photo_url: realtor.photo_url ?? "",
+      city: realtor.city,
+      state: realtor.state,
+      district: realtor.district ?? realtor.state,
+      bio: realtor.bio ?? "",
+      years_experience: realtor.years_experience,
+      is_featured: realtor.is_featured,
+      start_date: realtor.start_date,
+      expiration_date: realtor.expiration_date,
+      payment_status: realtor.payment_status ?? "pending",
+      payment_bypassed: realtor.payment_bypassed ?? false,
+      user_id: realtor.user_id,
+      specialties: realtor.specialties,
+      license_number: realtor.license_number,
+    });
+    setRealtorDialogMode("edit");
+    setRealtorDialogOpen(true);
+  };
+
+  const handleSaveRealtor = async (data: RealtorFormData) => {
+    const payload = {
+      name: data.name,
+      email: data.email || null,
+      phone: data.phone || null,
+      photo_url: data.photo_url || null,
+      city: data.city,
+      state: data.state || data.district,
+      district: data.district || data.state,
+      bio: data.bio || null,
+      years_experience: data.years_experience,
+      is_featured: data.is_featured,
+      start_date: data.start_date,
+      expiration_date: data.expiration_date,
+      payment_status: data.payment_status,
+      payment_bypassed: data.payment_bypassed,
+      user_id: data.user_id,
+      specialties: data.specialties,
+      license_number: data.license_number,
+    };
+
+    if (realtorDialogMode === "edit" && data.id) {
+      const { error } = await supabase.from("realtors").update(payload).eq("id", data.id);
+      if (error) { toast.error("Failed to save realtor"); return; }
       toast.success("Realtor updated");
-      setRealtors((prev) => prev.map((r) => (r.id === id ? editingRealtor : r)));
-      setEditingRealtor(null);
+      setRealtors((prev) => prev.map((r) => (r.id === data.id ? { ...r, ...payload, id: data.id! } : r)));
+    } else {
+      const { data: newData, error } = await supabase.from("realtors").insert(payload).select().single();
+      if (error) { toast.error("Failed to create realtor"); return; }
+      toast.success("Realtor created");
+      setRealtors((prev) => [...prev, newData as Realtor]);
     }
+    setRealtorDialogOpen(false);
   };
 
   const saveProfile = async () => {
@@ -188,10 +253,10 @@ const AdminDashboard = () => {
       r.city.toLowerCase().includes(search.toLowerCase())
   );
 
-  const getRoleBadgeVariant = (r: string) => {
-    if (r === "admin") return "destructive" as const;
-    if (r === "realtor") return "default" as const;
-    return "secondary" as const;
+  const getPaymentBadge = (status: string) => {
+    if (status === "paid") return <Badge variant="default">Paid</Badge>;
+    if (status === "bypassed") return <Badge variant="secondary">Bypassed</Badge>;
+    return <Badge variant="destructive">Pending</Badge>;
   };
 
   return (
@@ -220,6 +285,9 @@ const AdminDashboard = () => {
               <p className="text-sm text-muted-foreground">
                 {realtors.filter((r) => r.is_featured).length} featured
               </p>
+              <Button onClick={handleOpenCreate} className="gap-2">
+                <Plus className="h-4 w-4" /> Create Realtor
+              </Button>
             </div>
 
             <div className="rounded-lg border border-border overflow-auto">
@@ -229,6 +297,8 @@ const AdminDashboard = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Experience</TableHead>
+                    <TableHead>Payment</TableHead>
+                    <TableHead>Dates</TableHead>
                     <TableHead>Featured</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -251,8 +321,15 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{realtor.city}</TableCell>
+                      <TableCell>{realtor.city}{realtor.district ? `, ${realtor.district}` : ""}</TableCell>
                       <TableCell>{realtor.years_experience ?? "—"} yrs</TableCell>
+                      <TableCell>{getPaymentBadge(realtor.payment_status)}</TableCell>
+                      <TableCell>
+                        <div className="text-xs space-y-0.5">
+                          <p>{realtor.start_date ? format(new Date(realtor.start_date), "MMM d, yyyy") : "No start"}</p>
+                          <p className="text-muted-foreground">{realtor.expiration_date ? format(new Date(realtor.expiration_date), "MMM d, yyyy") : "No expiry"}</p>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Switch checked={realtor.is_featured} onCheckedChange={() => toggleFeatured(realtor)} />
@@ -261,7 +338,7 @@ const AdminDashboard = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => setEditingRealtor(realtor)}>
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
@@ -273,7 +350,7 @@ const AdminDashboard = () => {
                   ))}
                   {filteredRealtors.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         No realtors found
                       </TableCell>
                     </TableRow>
@@ -385,76 +462,14 @@ const AdminDashboard = () => {
       </main>
       <Footer />
 
-      {/* Edit Realtor Dialog */}
-      <Dialog open={!!editingRealtor} onOpenChange={(open) => !open && setEditingRealtor(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Realtor</DialogTitle>
-          </DialogHeader>
-          {editingRealtor && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Name</Label>
-                  <Input value={editingRealtor.name} onChange={(e) => setEditingRealtor({ ...editingRealtor, name: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input value={editingRealtor.email ?? ""} onChange={(e) => setEditingRealtor({ ...editingRealtor, email: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Phone</Label>
-                  <Input value={editingRealtor.phone ?? ""} onChange={(e) => setEditingRealtor({ ...editingRealtor, phone: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Years Experience</Label>
-                  <Input type="number" value={editingRealtor.years_experience ?? ""} onChange={(e) => setEditingRealtor({ ...editingRealtor, years_experience: e.target.value ? Number(e.target.value) : null })} />
-                </div>
-                <div>
-                   <Label>City</Label>
-                   <Select value={editingRealtor.city} onValueChange={(v) => {
-                     const district = getDistrictForCity(v);
-                     setEditingRealtor({ ...editingRealtor, city: v, ...(district ? { state: district } : {}) });
-                   }}>
-                     <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
-                     <SelectContent>
-                       {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                     </SelectContent>
-                   </Select>
-                 </div>
-                 <div>
-                   <Label>District</Label>
-                   <Select value={editingRealtor.state} onValueChange={(v) => {
-                     const cityDistrict = getDistrictForCity(editingRealtor.city);
-                     setEditingRealtor({ ...editingRealtor, state: v, ...(cityDistrict !== v ? { city: '' } : {}) });
-                   }}>
-                     <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
-                     <SelectContent>
-                       {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                     </SelectContent>
-                   </Select>
-                 </div>
-              </div>
-              <div>
-                <Label>Bio</Label>
-                <Textarea value={editingRealtor.bio ?? ""} onChange={(e) => setEditingRealtor({ ...editingRealtor, bio: e.target.value })} />
-              </div>
-              <div>
-                <Label>Photo URL</Label>
-                <Input value={editingRealtor.photo_url ?? ""} onChange={(e) => setEditingRealtor({ ...editingRealtor, photo_url: e.target.value })} />
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={editingRealtor.is_featured} onCheckedChange={(checked) => setEditingRealtor({ ...editingRealtor, is_featured: checked })} />
-                <Label>Featured / Advertised</Label>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setEditingRealtor(null)}>Cancel</Button>
-                <Button onClick={saveRealtor}>Save Changes</Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Realtor Create/Edit Dialog */}
+      <RealtorFormDialog
+        open={realtorDialogOpen}
+        onOpenChange={setRealtorDialogOpen}
+        realtor={selectedRealtor}
+        onSave={handleSaveRealtor}
+        mode={realtorDialogMode}
+      />
 
       {/* Edit Profile Dialog */}
       <Dialog open={!!editingProfile} onOpenChange={(open) => !open && setEditingProfile(null)}>

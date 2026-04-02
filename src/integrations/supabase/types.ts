@@ -54,13 +54,17 @@ export type Database = {
           created_at: string
           district: string
           email: string | null
+          expiration_date: string | null
           id: string
           is_featured: boolean
           license_number: string | null
           name: string
+          payment_bypassed: boolean
+          payment_status: string
           phone: string | null
           photo_url: string | null
           specialties: string[] | null
+          start_date: string | null
           state: string
           updated_at: string
           user_id: string | null
@@ -72,13 +76,17 @@ export type Database = {
           created_at?: string
           district?: string
           email?: string | null
+          expiration_date?: string | null
           id?: string
           is_featured?: boolean
           license_number?: string | null
           name: string
+          payment_bypassed?: boolean
+          payment_status?: string
           phone?: string | null
           photo_url?: string | null
           specialties?: string[] | null
+          start_date?: string | null
           state: string
           updated_at?: string
           user_id?: string | null
@@ -90,13 +98,17 @@ export type Database = {
           created_at?: string
           district?: string
           email?: string | null
+          expiration_date?: string | null
           id?: string
           is_featured?: boolean
           license_number?: string | null
           name?: string
+          payment_bypassed?: boolean
+          payment_status?: string
           phone?: string | null
           photo_url?: string | null
           specialties?: string[] | null
+          start_date?: string | null
           state?: string
           updated_at?: string
           user_id?: string | null
