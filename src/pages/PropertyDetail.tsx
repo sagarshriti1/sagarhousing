@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Bed, Bath, Maximize, Calendar, MapPin, Heart, Share2, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFavorites } from "@/hooks/useFavorites";
+import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
 const PropertyDetail = () => {
