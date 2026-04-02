@@ -18,7 +18,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
   const [carParkingSpaces, setCarParkingSpaces] = useState("0");
   const [stories, setStories] = useState("0");
   const [keywords, setKeywords] = useState("");
-  const [dbProperties, setDbProperties] = useState<Property[]>([]);
+  const [district, setDistrict] = useState("all");
 
   useEffect(() => {
     const fetchDbProperties = async () => {
