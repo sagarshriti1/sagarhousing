@@ -47,6 +47,7 @@ interface FilterBarProps {
 const FilterBar = ({
   listingType, setListingType,
   propertyType, setPropertyType,
+  city, setCity,
   priceRange, setPriceRange,
   beds, setBeds,
   baths, setBaths,
@@ -59,6 +60,8 @@ const FilterBar = ({
   stories, setStories,
   keywords, setKeywords,
   district, setDistrict,
+  onReset,
+  availableCities = [],
   onReset,
 }: FilterBarProps) => {
   const isMobile = useIsMobile();
