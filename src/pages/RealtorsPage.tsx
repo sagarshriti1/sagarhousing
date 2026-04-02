@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSavedRealtors } from "@/hooks/useSavedRealtors";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Phone, Mail, Star, Award } from "lucide-react";
+import { Search, MapPin, Phone, Mail, Star, Award, Plus, Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface Realtor {
   id: string;
