@@ -48,17 +48,25 @@ const MyListingsPage = () => {
 
   const handlePaymentComplete = async () => {
     if (!paymentListing) return;
+    const now = new Date();
+    const expiration = new Date(now);
+    expiration.setMonth(expiration.getMonth() + 1);
+
     const { error } = await supabase
       .from("user_properties")
-      .update({ status: "active" as const })
+      .update({
+        status: "active" as const,
+        payment_date: now.toISOString(),
+        expiration_date: expiration.toISOString(),
+      } as any)
       .eq("id", paymentListing.id);
     if (error) {
       toast.error("Failed to activate listing");
     } else {
       setListings((prev) =>
-        prev.map((l) => l.id === paymentListing.id ? { ...l, status: "active" as const } : l)
+        prev.map((l) => l.id === paymentListing.id ? { ...l, status: "active" as const, payment_date: now.toISOString(), expiration_date: expiration.toISOString() } as any : l)
       );
-      toast.success("Payment successful! Your listing is now active 🎉");
+      toast.success("Payment successful! Your listing is now active for 1 month 🎉");
     }
     setPaymentListing(null);
   };
