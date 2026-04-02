@@ -30,6 +30,9 @@ interface FilterBarProps {
   setCarParkingSpaces: (v: string) => void;
   stories: string;
   setStories: (v: string) => void;
+  keywords: string;
+  setKeywords: (v: string) => void;
+  onReset: () => void;
 }
 
 const FilterBar = ({
@@ -45,9 +48,19 @@ const FilterBar = ({
   bikeParkingSpaces, setBikeParkingSpaces,
   carParkingSpaces, setCarParkingSpaces,
   stories, setStories,
+  keywords, setKeywords,
+  onReset,
 }: FilterBarProps) => {
   return (
     <div className="flex flex-wrap items-center gap-3 py-6">
+      <Input
+        type="text"
+        placeholder="Search keywords..."
+        value={keywords}
+        onChange={(e) => setKeywords(e.target.value)}
+        className="w-[200px]"
+      />
+
       <Select value={listingType} onValueChange={setListingType}>
         <SelectTrigger className="w-[130px]">
           <SelectValue placeholder="Listing Type" />
@@ -207,6 +220,10 @@ const FilterBar = ({
           </div>
         </PopoverContent>
       </Popover>
+
+      <Button variant="outline" size="sm" onClick={onReset}>
+        Reset Filters
+      </Button>
     </div>
   );
 };

@@ -17,6 +17,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
   const [bikeParkingSpaces, setBikeParkingSpaces] = useState("0");
   const [carParkingSpaces, setCarParkingSpaces] = useState("0");
   const [stories, setStories] = useState("0");
+  const [keywords, setKeywords] = useState("");
   const [dbProperties, setDbProperties] = useState<Property[]>([]);
 
   useEffect(() => {
@@ -80,9 +81,14 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
       if (parseInt(bikeParkingSpaces) > 0 && (p.bikeParkingSpaces ?? 0) < parseInt(bikeParkingSpaces)) return false;
       if (parseInt(carParkingSpaces) > 0 && (p.carParkingSpaces ?? 0) < parseInt(carParkingSpaces)) return false;
       if (parseInt(stories) > 0 && (p.stories ?? 0) < parseInt(stories)) return false;
+      if (keywords.trim()) {
+        const kw = keywords.toLowerCase();
+        const searchable = `${p.title} ${p.address} ${p.city} ${p.description} ${p.features?.join(" ") ?? ""}`.toLowerCase();
+        if (!searchable.includes(kw)) return false;
+      }
       return true;
     });
-  }, [effectiveListingType, propertyType, priceRange, beds, baths, sqmMin, sqmMax, yearBuilt, maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories, allProperties]);
+  }, [effectiveListingType, propertyType, priceRange, beds, baths, sqmMin, sqmMax, yearBuilt, maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories, keywords, allProperties]);
 
   return (
     <section className="container py-12">
@@ -118,6 +124,23 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
         setCarParkingSpaces={setCarParkingSpaces}
         stories={stories}
         setStories={setStories}
+        keywords={keywords}
+        setKeywords={setKeywords}
+        onReset={() => {
+          setListingType("all");
+          setPropertyType("all");
+          setPriceRange("all");
+          setBeds("all");
+          setBaths("all");
+          setSqmMin("");
+          setSqmMax("");
+          setYearBuilt("all");
+          setMaintenanceFee("all");
+          setBikeParkingSpaces("0");
+          setCarParkingSpaces("0");
+          setStories("0");
+          setKeywords("");
+        }}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
