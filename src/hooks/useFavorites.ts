@@ -29,6 +29,8 @@ export const useFavorites = () => {
     async (propertyId: string) => {
       if (!user) return false;
 
+      // Strip "db-" prefix for database operations
+      const dbId = propertyId.startsWith("db-") ? propertyId.slice(3) : propertyId;
       const isFav = favoriteIds.has(propertyId);
       // Optimistic update
       setFavoriteIds((prev) => {
