@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NEPAL_DISTRICTS, NEPAL_CITIES, CITY_TO_DISTRICT, getCitiesInDistrict } from "@/data/nepalLocations";
+import SearchableCombobox from "@/components/SearchableCombobox";
 
 interface FilterBarProps {
   listingType: string;
