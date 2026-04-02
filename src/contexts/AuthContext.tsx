@@ -9,6 +9,9 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   role: AppRole | null;
+  realtorExpired: boolean;
+  realtorId: string | null;
+  refreshRealtorStatus: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -17,6 +20,9 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   role: null,
+  realtorExpired: false,
+  realtorId: null,
+  refreshRealtorStatus: async () => {},
   signOut: async () => {},
 });
 
@@ -27,10 +33,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [realtorExpired, setRealtorExpired] = useState(false);
+  const [realtorId, setRealtorId] = useState<string | null>(null);
 
   const fetchRole = async (userId: string) => {
     const { data } = await supabase.rpc('get_user_role', { _user_id: userId });
-    setRole((data as AppRole) ?? 'user');
+    const userRole = (data as AppRole) ?? 'user';
+    setRole(userRole);
+
+    if (userRole === 'realtor') {
+      await checkRealtorExpiration(userId);
+    }
+  };
+
+  const checkRealtorExpiration = async (userId: string) => {
+    const { data } = await supabase
+      .from('realtors')
+      .select('id, expiration_date')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (data) {
+      setRealtorId(data.id);
+      if (data.expiration_date) {
+        const expired = new Date(data.expiration_date) < new Date();
+        setRealtorExpired(expired);
+      }
+    }
+  };
+
+  const refreshRealtorStatus = async () => {
+    if (user) {
+      await checkRealtorExpiration(user.id);
+    }
   };
 
   useEffect(() => {
@@ -41,6 +76,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setTimeout(() => fetchRole(session.user.id), 0);
       } else {
         setRole(null);
+        setRealtorExpired(false);
+        setRealtorId(null);
       }
       setLoading(false);
     });
@@ -62,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, role, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, role, realtorExpired, realtorId, refreshRealtorStatus, signOut }}>
       {children}
     </AuthContext.Provider>
   );
