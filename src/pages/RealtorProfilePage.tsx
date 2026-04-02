@@ -101,10 +101,10 @@ const RealtorProfilePage = () => {
                   </p>
                 )}
               </div>
-               </div>
-                <Button
-                  variant="outline"
-                  className="gap-2 mt-3"
+            </div>
+            <Button
+              variant="outline"
+              className="gap-2 mt-4 mx-8 sm:mx-0 sm:ml-auto"
                   onClick={() => {
                     if (!user) {
                       toast.error("Please sign in to save realtors");
