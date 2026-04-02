@@ -269,61 +269,45 @@ const RealtorDashboard = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-primary" />
-                    Listing Payment
+                    Subscription Payment
                   </CardTitle>
                   <CardDescription>
-                    A one-time listing fee is required to create your realtor profile and appear in the directory.
+                    A monthly fee of Rs. {SIGNUP_FEE.toLocaleString()} is required to create your realtor profile and appear in the directory.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <SimulatedPaymentForm
                     paid={paymentComplete}
                     onPaymentComplete={handlePaymentComplete}
-                    amount={LISTING_FEE}
-                    label="Realtor listing fee"
+                    amount={SIGNUP_FEE}
+                    label="Realtor monthly subscription"
                   />
                 </CardContent>
               </Card>
             )}
 
-            {/* Advertise Card */}
-            {profile && (
-              <Card className={profile.is_featured ? "border-accent ring-1 ring-accent/30" : ""}>
+            {/* Subscription Status Card */}
+            {profile && profile.expiration_date && (
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Award className="h-5 w-5 text-accent" />
-                    Advertise Your Profile
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Subscription Status
                   </CardTitle>
-                  <CardDescription>
-                    Get featured in the "Find Local Realtors" section on the homepage and directory.
-                    Advertised profiles appear first with a highlighted badge.
-                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          Rs. {MONTHLY_AD_PRICE.toLocaleString()}/month
-                        </span>
-                        <Badge variant="secondary" className="text-xs">Free during beta</Badge>
-                      </div>
+                      <p className="text-sm text-foreground font-medium">
+                        Active until: {new Date(profile.expiration_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {profile.is_featured
-                          ? "Your profile is currently being advertised"
-                          : "Enable to boost your visibility"}
+                        Rs. {SIGNUP_FEE.toLocaleString()}/month — auto-renewal required
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {profile.is_featured && (
-                        <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                      )}
-                      <Switch
-                        checked={profile.is_featured}
-                        onCheckedChange={toggleAdvertise}
-                      />
-                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {new Date(profile.expiration_date) > new Date() ? 'Active' : 'Expired'}
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
