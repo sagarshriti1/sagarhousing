@@ -301,21 +301,29 @@ const ListPropertyPage = () => {
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <Label>City *</Label>
-                <Select value={form.city} onValueChange={v => updateForm('city', v)}>
-                  <SelectTrigger><SelectValue placeholder='Select City' /></SelectTrigger>
-                  <SelectContent>
-                    {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableCombobox
+                  value={form.city}
+                  onValueChange={v => {
+                    updateForm('city', v);
+                    const dist = getDistrictForCity(v);
+                    if (dist) updateForm('district', dist);
+                  }}
+                  options={NEPAL_CITIES}
+                  placeholder="Select City"
+                  searchPlaceholder="Search cities..."
+                  className="w-full"
+                />
               </div>
               <div className='space-y-2'>
                 <Label>District</Label>
-                <Select value={form.district} onValueChange={v => updateForm('district', v)}>
-                  <SelectTrigger><SelectValue placeholder='Select District' /></SelectTrigger>
-                  <SelectContent>
-                    {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableCombobox
+                  value={form.district}
+                  onValueChange={v => updateForm('district', v)}
+                  options={NEPAL_DISTRICTS}
+                  placeholder="Select District"
+                  searchPlaceholder="Search districts..."
+                  className="w-full"
+                />
               </div>
             </div>
           </section>

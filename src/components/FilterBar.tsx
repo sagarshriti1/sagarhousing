@@ -193,35 +193,35 @@ const FilterBar = ({
         </SelectContent>
       </Select>
 
-      <Select value={city} onValueChange={(val) => {
-        setCity(val);
-        if (val !== "all" && CITY_TO_DISTRICT[val]) {
-          setDistrict(CITY_TO_DISTRICT[val]);
-        }
-      }}>
-        <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="City" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Cities</SelectItem>
-          {(district !== "all" ? getCitiesInDistrict(district) : [...new Set([...NEPAL_CITIES, ...availableCities])].sort()).map(c => (
-            <SelectItem key={c} value={c}>{c}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SearchableCombobox
+        value={city}
+        onValueChange={(val) => {
+          setCity(val);
+          if (val !== "all" && CITY_TO_DISTRICT[val]) {
+            setDistrict(CITY_TO_DISTRICT[val]);
+          }
+        }}
+        options={district !== "all" ? getCitiesInDistrict(district) : [...new Set([...NEPAL_CITIES, ...availableCities])].sort()}
+        placeholder="City"
+        searchPlaceholder="Search cities..."
+        allLabel="All Cities"
+        showAllOption
+        className="w-[150px]"
+      />
 
-      <Select value={district} onValueChange={(val) => {
-        setDistrict(val);
-        setCity("all");
-      }}>
-        <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="District" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Districts</SelectItem>
-          {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-        </SelectContent>
-      </Select>
+      <SearchableCombobox
+        value={district}
+        onValueChange={(val) => {
+          setDistrict(val);
+          setCity("all");
+        }}
+        options={NEPAL_DISTRICTS}
+        placeholder="District"
+        searchPlaceholder="Search districts..."
+        allLabel="All Districts"
+        showAllOption
+        className="w-[150px]"
+      />
 
       <Select value={beds} onValueChange={setBeds}>
         <SelectTrigger className="w-[120px]">
