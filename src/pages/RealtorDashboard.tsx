@@ -106,7 +106,10 @@ const RealtorDashboard = () => {
 
   const handlePaymentComplete = async () => {
     setPaymentComplete(true);
-    toast.success("Payment successful! 🎉");
+    toast.success("Payment successful! 🎉", {
+      description: "Your payment of Rs. 5,000 has been received. A confirmation will be sent to your email.",
+      duration: 5000,
+    });
 
     // If profile exists, update payment status in DB
     if (profile) {
