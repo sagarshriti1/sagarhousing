@@ -80,8 +80,27 @@ const PropertyDetail = () => {
             <ArrowLeft className="h-4 w-4" /> Back to listings
           </Link>
 
-          <div className="rounded-lg overflow-hidden mb-2 aspect-[16/9] max-h-[500px]">
+          <div className="relative rounded-lg overflow-hidden mb-2 aspect-[16/9] max-h-[500px]">
             <img src={images[activeImage]} alt={property.title} className="w-full h-full object-cover" width={1920} height={1080} />
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() => setActiveImage((prev) => (prev - 1 + images.length) % images.length)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5 text-foreground" />
+                </button>
+                <button
+                  onClick={() => setActiveImage((prev) => (prev + 1) % images.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
+                >
+                  <ChevronRight className="h-5 w-5 text-foreground" />
+                </button>
+                <span className="absolute bottom-3 right-3 px-2 py-1 rounded-md bg-card/80 backdrop-blur-sm text-xs text-foreground">
+                  {activeImage + 1} / {images.length}
+                </span>
+              </>
+            )}
           </div>
           {images.length > 1 && (
             <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
