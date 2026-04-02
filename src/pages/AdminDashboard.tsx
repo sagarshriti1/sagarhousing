@@ -424,7 +424,10 @@ const AdminDashboard = () => {
                  </div>
                  <div>
                    <Label>District</Label>
-                   <Select value={editingRealtor.state} onValueChange={(v) => setEditingRealtor({ ...editingRealtor, state: v })}>
+                   <Select value={editingRealtor.state} onValueChange={(v) => {
+                     const cityDistrict = getDistrictForCity(editingRealtor.city);
+                     setEditingRealtor({ ...editingRealtor, state: v, ...(cityDistrict !== v ? { city: '' } : {}) });
+                   }}>
                      <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                      <SelectContent>
                        {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
