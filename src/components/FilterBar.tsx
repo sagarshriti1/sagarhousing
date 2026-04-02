@@ -265,9 +265,11 @@ const FilterBar = ({
         </Popover>
       )}
 
-      <Button variant="outline" size="sm" onClick={onReset}>
-        Reset Filters
-      </Button>
+      <div className="w-full pt-1">
+        <Button variant="outline" size="sm" onClick={onReset}>
+          Reset Filters
+        </Button>
+      </div>
     </div>
   );
 };
