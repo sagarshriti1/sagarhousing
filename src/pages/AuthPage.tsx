@@ -8,12 +8,11 @@ import { Home, Shield, Building2, UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-type AccountType = 'user' | 'realtor' | 'admin';
+type AccountType = 'user' | 'realtor';
 
 const accountTypes: { value: AccountType; label: string; description: string; icon: React.ReactNode }[] = [
   { value: 'user', label: 'User', description: 'Browse & post listings', icon: <UserIcon className="h-5 w-5" /> },
   { value: 'realtor', label: 'Realtor', description: 'List properties & build your profile', icon: <Building2 className="h-5 w-5" /> },
-  { value: 'admin', label: 'Admin', description: 'Full platform access', icon: <Shield className="h-5 w-5" /> },
 ];
 
 const AuthPage = () => {
