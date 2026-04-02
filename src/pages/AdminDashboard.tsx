@@ -11,12 +11,23 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -84,6 +95,12 @@ interface Property {
   user_id: string;
 }
 
+interface ConfirmAction {
+  title: string;
+  description: string;
+  onConfirm: () => Promise<void> | void;
+}
+
 const AdminDashboard = () => {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
@@ -99,6 +116,13 @@ const AdminDashboard = () => {
   const [realtorDialogOpen, setRealtorDialogOpen] = useState(false);
   const [realtorDialogMode, setRealtorDialogMode] = useState<"create" | "edit">("create");
   const [selectedRealtor, setSelectedRealtor] = useState<RealtorFormData | null>(null);
+
+  // Confirmation dialog
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+
+  // Multi-select
+  const [selectedRealtorIds, setSelectedRealtorIds] = useState<Set<string>>(new Set());
+  const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(new Set());
 
   const fetchAll = async () => {
     setDataLoading(true);
@@ -122,28 +146,62 @@ const AdminDashboard = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
   if (!user || role !== "admin") return <Navigate to="/" replace />;
 
-  const toggleFeatured = async (realtor: Realtor) => {
-    const { error } = await supabase
-      .from("realtors")
-      .update({ is_featured: !realtor.is_featured })
-      .eq("id", realtor.id);
-    if (error) {
-      toast.error("Failed to update featured status");
-    } else {
-      toast.success(realtor.is_featured ? "Realtor unfeatured" : "Realtor featured!");
-      setRealtors((prev) =>
-        prev.map((r) => (r.id === realtor.id ? { ...r, is_featured: !r.is_featured } : r))
-      );
-    }
+  const confirm = (action: ConfirmAction) => setConfirmAction(action);
+
+  const toggleFeatured = (realtor: Realtor) => {
+    const action = realtor.is_featured ? "unfeature" : "feature";
+    confirm({
+      title: `${realtor.is_featured ? "Unfeature" : "Feature"} Realtor`,
+      description: `Are you sure you want to ${action} "${realtor.name}"?`,
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from("realtors")
+          .update({ is_featured: !realtor.is_featured })
+          .eq("id", realtor.id);
+        if (error) toast.error("Failed to update featured status");
+        else {
+          toast.success(realtor.is_featured ? "Realtor unfeatured" : "Realtor featured!");
+          setRealtors((prev) =>
+            prev.map((r) => (r.id === realtor.id ? { ...r, is_featured: !r.is_featured } : r))
+          );
+        }
+      },
+    });
   };
 
-  const deleteRealtor = async (id: string) => {
-    const { error } = await supabase.from("realtors").delete().eq("id", id);
-    if (error) toast.error("Failed to delete realtor");
-    else {
-      toast.success("Realtor deleted");
-      setRealtors((prev) => prev.filter((r) => r.id !== id));
-    }
+  const deleteRealtor = (id: string) => {
+    const realtor = realtors.find((r) => r.id === id);
+    confirm({
+      title: "Delete Realtor",
+      description: `Are you sure you want to delete "${realtor?.name ?? "this realtor"}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        const { error } = await supabase.from("realtors").delete().eq("id", id);
+        if (error) toast.error("Failed to delete realtor");
+        else {
+          toast.success("Realtor deleted");
+          setRealtors((prev) => prev.filter((r) => r.id !== id));
+          setSelectedRealtorIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+        }
+      },
+    });
+  };
+
+  const bulkDeleteRealtors = () => {
+    if (selectedRealtorIds.size === 0) return;
+    confirm({
+      title: "Delete Selected Realtors",
+      description: `Are you sure you want to delete ${selectedRealtorIds.size} realtor(s)? This action cannot be undone.`,
+      onConfirm: async () => {
+        const ids = Array.from(selectedRealtorIds);
+        const { error } = await supabase.from("realtors").delete().in("id", ids);
+        if (error) toast.error("Failed to delete realtors");
+        else {
+          toast.success(`${ids.length} realtor(s) deleted`);
+          setRealtors((prev) => prev.filter((r) => !ids.includes(r.id)));
+          setSelectedRealtorIds(new Set());
+        }
+      },
+    });
   };
 
   const handleOpenCreate = () => {
@@ -199,10 +257,17 @@ const AdminDashboard = () => {
     };
 
     if (realtorDialogMode === "edit" && data.id) {
-      const { error } = await supabase.from("realtors").update(payload).eq("id", data.id);
-      if (error) { toast.error("Failed to save realtor"); return; }
-      toast.success("Realtor updated");
-      setRealtors((prev) => prev.map((r) => (r.id === data.id ? { ...r, ...payload, id: data.id! } : r)));
+      confirm({
+        title: "Update Realtor",
+        description: `Are you sure you want to save changes to "${data.name}"?`,
+        onConfirm: async () => {
+          const { error } = await supabase.from("realtors").update(payload).eq("id", data.id!);
+          if (error) { toast.error("Failed to save realtor"); return; }
+          toast.success("Realtor updated");
+          setRealtors((prev) => prev.map((r) => (r.id === data.id ? { ...r, ...payload, id: data.id! } : r)));
+          setRealtorDialogOpen(false);
+        },
+      });
     } else {
       const { data: newData, error } = await supabase.from("realtors").insert(payload).select().single();
       if (error) { toast.error("Failed to create realtor"); return; }
@@ -215,43 +280,82 @@ const AdminDashboard = () => {
         duration: 5000,
       });
       setRealtors((prev) => [...prev, newData as Realtor]);
+      setRealtorDialogOpen(false);
     }
-    setRealtorDialogOpen(false);
   };
 
-  const saveProfile = async () => {
+  const saveProfile = () => {
     if (!editingProfile) return;
-    const { id, ...rest } = editingProfile;
-    const { error } = await supabase.from("profiles").update(rest).eq("id", id);
-    if (error) toast.error("Failed to save profile");
-    else {
-      toast.success("Profile updated");
-      setProfiles((prev) => prev.map((p) => (p.id === id ? editingProfile : p)));
-      setEditingProfile(null);
-    }
+    confirm({
+      title: "Update User Profile",
+      description: `Are you sure you want to save changes to "${editingProfile.display_name || "this user"}"?`,
+      onConfirm: async () => {
+        const { id, ...rest } = editingProfile;
+        const { error } = await supabase.from("profiles").update(rest).eq("id", id);
+        if (error) toast.error("Failed to save profile");
+        else {
+          toast.success("Profile updated");
+          setProfiles((prev) => prev.map((p) => (p.id === id ? editingProfile : p)));
+          setEditingProfile(null);
+        }
+      },
+    });
   };
 
-  const changeRole = async (userId: string, newRole: "admin" | "realtor" | "user") => {
-    const { error } = await supabase
-      .from("user_roles")
-      .update({ role: newRole })
-      .eq("user_id", userId);
-    if (error) toast.error("Failed to update role");
-    else {
-      toast.success("Role updated");
-      setRoles((prev) =>
-        prev.map((r) => (r.user_id === userId ? { ...r, role: newRole } : r))
-      );
-    }
+  const changeRole = (userId: string, newRole: "admin" | "realtor" | "user") => {
+    const profile = profiles.find((p) => p.user_id === userId);
+    confirm({
+      title: "Change User Role",
+      description: `Are you sure you want to change "${profile?.display_name || "this user"}"'s role to "${newRole}"?`,
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from("user_roles")
+          .update({ role: newRole })
+          .eq("user_id", userId);
+        if (error) toast.error("Failed to update role");
+        else {
+          toast.success("Role updated");
+          setRoles((prev) =>
+            prev.map((r) => (r.user_id === userId ? { ...r, role: newRole } : r))
+          );
+        }
+      },
+    });
   };
 
-  const deleteProperty = async (id: string) => {
-    const { error } = await supabase.from("user_properties").delete().eq("id", id);
-    if (error) toast.error("Failed to delete property");
-    else {
-      toast.success("Property deleted");
-      setProperties((prev) => prev.filter((p) => p.id !== id));
-    }
+  const deleteProperty = (id: string) => {
+    const prop = properties.find((p) => p.id === id);
+    confirm({
+      title: "Delete Property",
+      description: `Are you sure you want to delete "${prop?.title ?? "this property"}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        const { error } = await supabase.from("user_properties").delete().eq("id", id);
+        if (error) toast.error("Failed to delete property");
+        else {
+          toast.success("Property deleted");
+          setProperties((prev) => prev.filter((p) => p.id !== id));
+          setSelectedPropertyIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+        }
+      },
+    });
+  };
+
+  const bulkDeleteProperties = () => {
+    if (selectedPropertyIds.size === 0) return;
+    confirm({
+      title: "Delete Selected Properties",
+      description: `Are you sure you want to delete ${selectedPropertyIds.size} property(ies)? This action cannot be undone.`,
+      onConfirm: async () => {
+        const ids = Array.from(selectedPropertyIds);
+        const { error } = await supabase.from("user_properties").delete().in("id", ids);
+        if (error) toast.error("Failed to delete properties");
+        else {
+          toast.success(`${ids.length} property(ies) deleted`);
+          setProperties((prev) => prev.filter((p) => !ids.includes(p.id)));
+          setSelectedPropertyIds(new Set());
+        }
+      },
+    });
   };
 
   const filteredRealtors = realtors.filter(
@@ -264,6 +368,38 @@ const AdminDashboard = () => {
     if (status === "paid") return <Badge variant="default">Paid</Badge>;
     if (status === "bypassed") return <Badge variant="secondary">Bypassed</Badge>;
     return <Badge variant="destructive">Pending</Badge>;
+  };
+
+  const toggleRealtorSelection = (id: string) => {
+    setSelectedRealtorIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+
+  const toggleAllRealtors = () => {
+    if (selectedRealtorIds.size === filteredRealtors.length) {
+      setSelectedRealtorIds(new Set());
+    } else {
+      setSelectedRealtorIds(new Set(filteredRealtors.map((r) => r.id)));
+    }
+  };
+
+  const togglePropertySelection = (id: string) => {
+    setSelectedPropertyIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+
+  const toggleAllProperties = () => {
+    if (selectedPropertyIds.size === properties.length) {
+      setSelectedPropertyIds(new Set());
+    } else {
+      setSelectedPropertyIds(new Set(properties.map((p) => p.id)));
+    }
   };
 
   return (
@@ -292,6 +428,11 @@ const AdminDashboard = () => {
               <p className="text-sm text-muted-foreground">
                 {realtors.filter((r) => r.is_featured).length} featured
               </p>
+              {selectedRealtorIds.size > 0 && (
+                <Button variant="destructive" size="sm" onClick={bulkDeleteRealtors} className="gap-2">
+                  <Trash2 className="h-4 w-4" /> Delete {selectedRealtorIds.size} selected
+                </Button>
+              )}
               <Button onClick={handleOpenCreate} className="gap-2">
                 <Plus className="h-4 w-4" /> Create Realtor
               </Button>
@@ -301,6 +442,12 @@ const AdminDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={filteredRealtors.length > 0 && selectedRealtorIds.size === filteredRealtors.length}
+                        onCheckedChange={toggleAllRealtors}
+                      />
+                    </TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Experience</TableHead>
@@ -312,7 +459,13 @@ const AdminDashboard = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredRealtors.map((realtor) => (
-                    <TableRow key={realtor.id}>
+                    <TableRow key={realtor.id} className={selectedRealtorIds.has(realtor.id) ? "bg-muted/50" : ""}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedRealtorIds.has(realtor.id)}
+                          onCheckedChange={() => toggleRealtorSelection(realtor.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
@@ -357,7 +510,7 @@ const AdminDashboard = () => {
                   ))}
                   {filteredRealtors.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         No realtors found
                       </TableCell>
                     </TableRow>
@@ -422,10 +575,23 @@ const AdminDashboard = () => {
 
           {/* PROPERTIES TAB */}
           <TabsContent value="properties" className="space-y-4">
+            {selectedPropertyIds.size > 0 && (
+              <div className="flex items-center gap-2">
+                <Button variant="destructive" size="sm" onClick={bulkDeleteProperties} className="gap-2">
+                  <Trash2 className="h-4 w-4" /> Delete {selectedPropertyIds.size} selected
+                </Button>
+              </div>
+            )}
             <div className="rounded-lg border border-border overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={properties.length > 0 && selectedPropertyIds.size === properties.length}
+                        onCheckedChange={toggleAllProperties}
+                      />
+                    </TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Price</TableHead>
@@ -436,7 +602,13 @@ const AdminDashboard = () => {
                 </TableHeader>
                 <TableBody>
                   {properties.map((prop) => (
-                    <TableRow key={prop.id}>
+                    <TableRow key={prop.id} className={selectedPropertyIds.has(prop.id) ? "bg-muted/50" : ""}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedPropertyIds.has(prop.id)}
+                          onCheckedChange={() => togglePropertySelection(prop.id)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium text-foreground">{prop.title}</TableCell>
                       <TableCell>{prop.city}</TableCell>
                       <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
@@ -458,7 +630,7 @@ const AdminDashboard = () => {
                   ))}
                   {properties.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -510,6 +682,27 @@ const AdminDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAction?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmAction?.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                await confirmAction?.onConfirm();
+                setConfirmAction(null);
+              }}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
