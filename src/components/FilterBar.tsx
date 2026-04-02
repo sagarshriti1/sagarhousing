@@ -211,6 +211,17 @@ const FilterBar = ({
               onChange={(e) => setStories(e.target.value)}
             />
           </div>
+
+          {/* Keywords */}
+          <div className="space-y-2">
+            <Label>Keywords</Label>
+            <Input
+              type="text"
+              placeholder="Search keywords..."
+              value={keywords}
+              onChange={(e) => setKeywords(e.target.value)}
+            />
+          </div>
         </PopoverContent>
       </Popover>
 
