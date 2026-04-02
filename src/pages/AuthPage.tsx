@@ -84,93 +84,145 @@ const AuthPage = () => {
       </Link>
 
       <div className='w-full max-w-md bg-card rounded-lg border border-border p-8 shadow-card'>
-        <h1 className='font-display text-2xl font-bold text-foreground mb-2 text-center'>
-          {isSignUp ? 'Create Account' : 'Welcome Back'}
-        </h1>
-        <p className='text-muted-foreground text-center mb-6'>
-          {isSignUp
-            ? 'Choose your account type and sign up'
-            : 'Sign in to your account'}
-        </p>
-
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          {isSignUp && (
-            <>
+        {isForgotPassword ? (
+          <>
+            <h1 className='font-display text-2xl font-bold text-foreground mb-2 text-center'>
+              Reset Password
+            </h1>
+            <p className='text-muted-foreground text-center mb-6'>
+              Enter your email and we'll send you a reset link
+            </p>
+            <form onSubmit={handleForgotPassword} className='space-y-4'>
               <div className='space-y-2'>
-                <Label>Account Type</Label>
-                <div className='grid grid-cols-3 gap-2'>
-                  {accountTypes.map((type) => (
-                    <button
-                      key={type.value}
-                      type='button'
-                      onClick={() => setSelectedRole(type.value)}
-                      className={cn(
-                        'flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all text-center',
-                        selectedRole === type.value
-                          ? 'border-accent bg-accent/10 text-accent'
-                          : 'border-border text-muted-foreground hover:border-muted-foreground/50'
-                      )}
-                    >
-                      {type.icon}
-                      <span className='text-xs font-semibold'>{type.label}</span>
-                      <span className='text-[10px] leading-tight opacity-70'>{type.description}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='displayName'>Display Name</Label>
+                <Label htmlFor='email'>Email</Label>
                 <Input
-                  id='displayName'
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
-                  placeholder='John Doe'
-                  required={isSignUp}
+                  id='email'
+                  type='email'
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder='you@example.com'
+                  required
                 />
               </div>
-            </>
-          )}
-          <div className='space-y-2'>
-            <Label htmlFor='email'>Email</Label>
-            <Input
-              id='email'
-              type='email'
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder='you@example.com'
-              required
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='password'>Password</Label>
-            <Input
-              id='password'
-              type='password'
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder='••••••••'
-              required
-              minLength={6}
-            />
-          </div>
-          <Button
-            type='submit'
-            className='w-full bg-accent text-accent-foreground hover:bg-accent/90'
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
-          </Button>
-        </form>
+              <Button
+                type='submit'
+                className='w-full bg-accent text-accent-foreground hover:bg-accent/90'
+                disabled={loading}
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </Button>
+            </form>
+            <p className='text-center text-sm text-muted-foreground mt-6'>
+              <button
+                onClick={() => setIsForgotPassword(false)}
+                className='text-accent hover:underline font-medium'
+              >
+                Back to Sign In
+              </button>
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className='font-display text-2xl font-bold text-foreground mb-2 text-center'>
+              {isSignUp ? 'Create Account' : 'Welcome Back'}
+            </h1>
+            <p className='text-muted-foreground text-center mb-6'>
+              {isSignUp
+                ? 'Choose your account type and sign up'
+                : 'Sign in to your account'}
+            </p>
 
-        <p className='text-center text-sm text-muted-foreground mt-6'>
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className='text-accent hover:underline font-medium'
-          >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
-          </button>
-        </p>
+            <form onSubmit={handleSubmit} className='space-y-4'>
+              {isSignUp && (
+                <>
+                  <div className='space-y-2'>
+                    <Label>Account Type</Label>
+                    <div className='grid grid-cols-2 gap-2'>
+                      {accountTypes.map((type) => (
+                        <button
+                          key={type.value}
+                          type='button'
+                          onClick={() => setSelectedRole(type.value)}
+                          className={cn(
+                            'flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all text-center',
+                            selectedRole === type.value
+                              ? 'border-accent bg-accent/10 text-accent'
+                              : 'border-border text-muted-foreground hover:border-muted-foreground/50'
+                          )}
+                        >
+                          {type.icon}
+                          <span className='text-xs font-semibold'>{type.label}</span>
+                          <span className='text-[10px] leading-tight opacity-70'>{type.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='displayName'>Display Name</Label>
+                    <Input
+                      id='displayName'
+                      value={displayName}
+                      onChange={e => setDisplayName(e.target.value)}
+                      placeholder='John Doe'
+                      required={isSignUp}
+                    />
+                  </div>
+                </>
+              )}
+              <div className='space-y-2'>
+                <Label htmlFor='email'>Email</Label>
+                <Input
+                  id='email'
+                  type='email'
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder='you@example.com'
+                  required
+                />
+              </div>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between'>
+                  <Label htmlFor='password'>Password</Label>
+                  {!isSignUp && (
+                    <button
+                      type='button'
+                      onClick={() => setIsForgotPassword(true)}
+                      className='text-xs text-accent hover:underline'
+                    >
+                      Forgot Password?
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id='password'
+                  type='password'
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder='••••••••'
+                  required
+                  minLength={6}
+                />
+              </div>
+              <Button
+                type='submit'
+                className='w-full bg-accent text-accent-foreground hover:bg-accent/90'
+                disabled={loading}
+              >
+                {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+              </Button>
+            </form>
+
+            <p className='text-center text-sm text-muted-foreground mt-6'>
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button
+                onClick={() => setIsSignUp(!isSignUp)}
+                className='text-accent hover:underline font-medium'
+              >
+                {isSignUp ? 'Sign In' : 'Sign Up'}
+              </button>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
