@@ -17,6 +17,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
   const [bikeParkingSpaces, setBikeParkingSpaces] = useState("0");
   const [carParkingSpaces, setCarParkingSpaces] = useState("0");
   const [stories, setStories] = useState("0");
+  const [keywords, setKeywords] = useState("");
   const [dbProperties, setDbProperties] = useState<Property[]>([]);
 
   useEffect(() => {
