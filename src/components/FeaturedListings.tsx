@@ -81,9 +81,14 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
       if (parseInt(bikeParkingSpaces) > 0 && (p.bikeParkingSpaces ?? 0) < parseInt(bikeParkingSpaces)) return false;
       if (parseInt(carParkingSpaces) > 0 && (p.carParkingSpaces ?? 0) < parseInt(carParkingSpaces)) return false;
       if (parseInt(stories) > 0 && (p.stories ?? 0) < parseInt(stories)) return false;
+      if (keywords.trim()) {
+        const kw = keywords.toLowerCase();
+        const searchable = `${p.title} ${p.address} ${p.city} ${p.description} ${p.features?.join(" ") ?? ""}`.toLowerCase();
+        if (!searchable.includes(kw)) return false;
+      }
       return true;
     });
-  }, [effectiveListingType, propertyType, priceRange, beds, baths, sqmMin, sqmMax, yearBuilt, maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories, allProperties]);
+  }, [effectiveListingType, propertyType, priceRange, beds, baths, sqmMin, sqmMax, yearBuilt, maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories, keywords, allProperties]);
 
   return (
     <section className="container py-12">
