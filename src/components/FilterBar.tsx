@@ -48,6 +48,8 @@ const FilterBar = ({
   bikeParkingSpaces, setBikeParkingSpaces,
   carParkingSpaces, setCarParkingSpaces,
   stories, setStories,
+  keywords, setKeywords,
+  onReset,
 }: FilterBarProps) => {
   return (
     <div className="flex flex-wrap items-center gap-3 py-6">
