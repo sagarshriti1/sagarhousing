@@ -308,7 +308,10 @@ const RealtorDashboard = () => {
                    </div>
                    <div>
                      <Label>District</Label>
-                     <Select value={formData.district} onValueChange={(v) => setFormData({ ...formData, district: v })}>
+                     <Select value={formData.district} onValueChange={(v) => {
+                       const cityDistrict = getDistrictForCity(formData.city);
+                       setFormData({ ...formData, district: v, ...(cityDistrict !== v ? { city: '' } : {}) });
+                     }}>
                        <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                        <SelectContent>
                          {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
