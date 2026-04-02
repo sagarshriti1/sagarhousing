@@ -7,8 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Home, Building2, UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import SimulatedPaymentForm from '@/components/SimulatedPaymentForm';
 
 type AccountType = 'user' | 'realtor';
+
+const REALTOR_SIGNUP_FEE = 5000;
 
 const accountTypes: { value: AccountType; label: string; description: string; icon: React.ReactNode }[] = [
   { value: 'user', label: 'User', description: 'Browse & post listings', icon: <UserIcon className="h-5 w-5" /> },
@@ -23,6 +26,8 @@ const AuthPage = () => {
   const [displayName, setDisplayName] = useState('');
   const [selectedRole, setSelectedRole] = useState<AccountType>('user');
   const [loading, setLoading] = useState(false);
+  const [showRealtorPayment, setShowRealtorPayment] = useState(false);
+  const [realtorPaymentComplete, setRealtorPaymentComplete] = useState(false);
   const navigate = useNavigate();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -44,6 +49,15 @@ const AuthPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // For realtor signup, require payment first
+    if (isSignUp && selectedRole === 'realtor') {
+      if (!realtorPaymentComplete) {
+        setShowRealtorPayment(true);
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -203,12 +217,30 @@ const AuthPage = () => {
                   minLength={6}
                 />
               </div>
+              {/* Realtor payment during signup */}
+              {isSignUp && selectedRole === 'realtor' && showRealtorPayment && (
+                <div className='space-y-2'>
+                  <Label>Realtor Subscription Payment</Label>
+                  <p className='text-xs text-muted-foreground'>
+                    A monthly fee of Rs. {REALTOR_SIGNUP_FEE.toLocaleString()} is required to activate your realtor profile.
+                  </p>
+                  <SimulatedPaymentForm
+                    paid={realtorPaymentComplete}
+                    onPaymentComplete={() => {
+                      setRealtorPaymentComplete(true);
+                      toast.success('Payment received! Complete sign up to create your account.');
+                    }}
+                    amount={REALTOR_SIGNUP_FEE}
+                    label="Realtor monthly subscription"
+                  />
+                </div>
+              )}
               <Button
                 type='submit'
                 className='w-full bg-accent text-accent-foreground hover:bg-accent/90'
-                disabled={loading}
+                disabled={loading || (isSignUp && selectedRole === 'realtor' && showRealtorPayment && !realtorPaymentComplete)}
               >
-                {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+                {loading ? 'Loading...' : isSignUp ? (selectedRole === 'realtor' && !showRealtorPayment ? 'Proceed to Payment' : 'Sign Up') : 'Sign In'}
               </Button>
             </form>
 

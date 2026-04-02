@@ -7,13 +7,13 @@ import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Star, Award, Megaphone, DollarSign, Save, Plus, Camera, Loader2, CreditCard } from "lucide-react";
+import { Save, Plus, Camera, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from '@/data/nepalLocations';
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
@@ -38,8 +38,7 @@ interface RealtorProfile {
   expiration_date: string | null;
 }
 
-const MONTHLY_AD_PRICE = 1000;
-const LISTING_FEE = 5000;
+const SIGNUP_FEE = 5000;
 
 const RealtorDashboard = () => {
   const { user, role, loading } = useAuth();
@@ -106,18 +105,31 @@ const RealtorDashboard = () => {
 
   const handlePaymentComplete = async () => {
     setPaymentComplete(true);
+    const now = new Date();
+    const expiration = new Date(now);
+    expiration.setMonth(expiration.getMonth() + 1);
+
     toast.success("Payment successful! 🎉", {
-      description: "Your payment of Rs. 5,000 has been received. A confirmation will be sent to your email.",
+      description: "Your payment of Rs. 5,000 has been received. Your profile is active for 1 month.",
       duration: 5000,
     });
 
-    // If profile exists, update payment status in DB
+    // If profile exists, update payment status and dates in DB
     if (profile) {
       await supabase
         .from("realtors")
-        .update({ payment_status: "paid" })
+        .update({
+          payment_status: "paid",
+          start_date: now.toISOString().split("T")[0],
+          expiration_date: expiration.toISOString().split("T")[0],
+        })
         .eq("id", profile.id);
-      setProfile({ ...profile, payment_status: "paid" });
+      setProfile({
+        ...profile,
+        payment_status: "paid",
+        start_date: now.toISOString().split("T")[0],
+        expiration_date: expiration.toISOString().split("T")[0],
+      });
     }
   };
 
@@ -146,7 +158,11 @@ const RealtorDashboard = () => {
       years_experience: formData.years_experience ? Number(formData.years_experience) : null,
       specialties: formData.specialties,
       user_id: user!.id,
-      ...(isCreating ? { payment_status: "paid" } : {}),
+      ...(isCreating ? {
+        payment_status: "paid",
+        start_date: new Date().toISOString().split("T")[0],
+        expiration_date: (() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d.toISOString().split("T")[0]; })(),
+      } : {}),
     };
 
     if (profile) {
@@ -168,22 +184,6 @@ const RealtorDashboard = () => {
     setSaving(false);
   };
 
-  const toggleAdvertise = async () => {
-    if (!profile) return;
-    const newFeatured = !profile.is_featured;
-
-    const { error } = await supabase
-      .from("realtors")
-      .update({ is_featured: newFeatured })
-      .eq("id", profile.id);
-
-    if (error) {
-      toast.error("Failed to update advertising status");
-    } else {
-      toast.success(newFeatured ? "Your profile is now advertised! 🎉" : "Advertising disabled");
-      setProfile({ ...profile, is_featured: newFeatured });
-    }
-  };
 
   const addSpecialty = () => {
     if (newSpecialty.trim() && !formData.specialties.includes(newSpecialty.trim())) {
@@ -239,7 +239,7 @@ const RealtorDashboard = () => {
       <Header />
       <main className="flex-1 container py-8 max-w-3xl">
         <div className="flex items-center gap-3 mb-6">
-          <Megaphone className="h-7 w-7 text-accent" />
+          <CreditCard className="h-7 w-7 text-accent" />
           <h1 className="font-display text-3xl font-bold text-foreground">Realtor Dashboard</h1>
         </div>
 
@@ -257,61 +257,45 @@ const RealtorDashboard = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-primary" />
-                    Listing Payment
+                    Subscription Payment
                   </CardTitle>
                   <CardDescription>
-                    A one-time listing fee is required to create your realtor profile and appear in the directory.
+                    A monthly fee of Rs. {SIGNUP_FEE.toLocaleString()} is required to create your realtor profile and appear in the directory.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <SimulatedPaymentForm
                     paid={paymentComplete}
                     onPaymentComplete={handlePaymentComplete}
-                    amount={LISTING_FEE}
-                    label="Realtor listing fee"
+                    amount={SIGNUP_FEE}
+                    label="Realtor monthly subscription"
                   />
                 </CardContent>
               </Card>
             )}
 
-            {/* Advertise Card */}
-            {profile && (
-              <Card className={profile.is_featured ? "border-accent ring-1 ring-accent/30" : ""}>
+            {/* Subscription Status Card */}
+            {profile && profile.expiration_date && (
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Award className="h-5 w-5 text-accent" />
-                    Advertise Your Profile
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Subscription Status
                   </CardTitle>
-                  <CardDescription>
-                    Get featured in the "Find Local Realtors" section on the homepage and directory.
-                    Advertised profiles appear first with a highlighted badge.
-                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          Rs. {MONTHLY_AD_PRICE.toLocaleString()}/month
-                        </span>
-                        <Badge variant="secondary" className="text-xs">Free during beta</Badge>
-                      </div>
+                      <p className="text-sm text-foreground font-medium">
+                        Active until: {new Date(profile.expiration_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {profile.is_featured
-                          ? "Your profile is currently being advertised"
-                          : "Enable to boost your visibility"}
+                        Rs. {SIGNUP_FEE.toLocaleString()}/month — auto-renewal required
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {profile.is_featured && (
-                        <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                      )}
-                      <Switch
-                        checked={profile.is_featured}
-                        onCheckedChange={toggleAdvertise}
-                      />
-                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {new Date(profile.expiration_date) > new Date() ? 'Active' : 'Expired'}
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
