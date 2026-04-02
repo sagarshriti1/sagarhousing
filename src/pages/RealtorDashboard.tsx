@@ -235,7 +235,7 @@ const RealtorDashboard = () => {
       <Header />
       <main className="flex-1 container py-8 max-w-3xl">
         <div className="flex items-center gap-3 mb-6">
-          <Megaphone className="h-7 w-7 text-accent" />
+          <CreditCard className="h-7 w-7 text-accent" />
           <h1 className="font-display text-3xl font-bold text-foreground">Realtor Dashboard</h1>
         </div>
 
