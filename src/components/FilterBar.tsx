@@ -55,6 +55,7 @@ const FilterBar = ({
   carParkingSpaces, setCarParkingSpaces,
   stories, setStories,
   keywords, setKeywords,
+  district, setDistrict,
   onReset,
 }: FilterBarProps) => {
   const isMobile = useIsMobile();
