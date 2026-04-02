@@ -62,7 +62,6 @@ const FilterBar = ({
   district, setDistrict,
   onReset,
   availableCities = [],
-  onReset,
 }: FilterBarProps) => {
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
