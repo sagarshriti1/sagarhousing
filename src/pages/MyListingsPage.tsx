@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { format } from "date-fns";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -48,17 +49,25 @@ const MyListingsPage = () => {
 
   const handlePaymentComplete = async () => {
     if (!paymentListing) return;
+    const now = new Date();
+    const expiration = new Date(now);
+    expiration.setMonth(expiration.getMonth() + 1);
+
     const { error } = await supabase
       .from("user_properties")
-      .update({ status: "active" as const })
+      .update({
+        status: "active" as const,
+        payment_date: now.toISOString(),
+        expiration_date: expiration.toISOString(),
+      } as any)
       .eq("id", paymentListing.id);
     if (error) {
       toast.error("Failed to activate listing");
     } else {
       setListings((prev) =>
-        prev.map((l) => l.id === paymentListing.id ? { ...l, status: "active" as const } : l)
+        prev.map((l) => l.id === paymentListing.id ? { ...l, status: "active" as const, payment_date: now.toISOString(), expiration_date: expiration.toISOString() } as any : l)
       );
-      toast.success("Payment successful! Your listing is now active 🎉");
+      toast.success("Payment successful! Your listing is now active for 1 month 🎉");
     }
     setPaymentListing(null);
   };
@@ -143,25 +152,53 @@ const MyListingsPage = () => {
                     <span className="flex items-center gap-1"><Bath className="h-4 w-4" /> {listing.bathrooms} ba</span>
                     {listing.sqft && <span className="flex items-center gap-1"><Maximize className="h-4 w-4" /> {listing.sqft.toLocaleString()} sqft</span>}
                     <div className="ml-auto flex items-center gap-3">
-                      {listing.status === "pending" ? (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90"
-                          onClick={() => setPaymentListing(listing)}
-                        >
-                          <CreditCard className="h-3.5 w-3.5" />
-                          Pay Rs. {getListingFee(listing.listing_type).toLocaleString()} to Activate
-                        </Button>
-                      ) : listing.status === "active" ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeactivate(listing)}
-                        >
-                          Deactivate
-                        </Button>
-                      ) : null}
+                      {/* Expiration / date info */}
+                      {(() => {
+                        const exp = (listing as any).expiration_date;
+                        const paid = (listing as any).payment_date;
+                        const isExpired = exp && new Date(exp) < new Date();
+                        
+                        if (isExpired) {
+                          return (
+                            <div className="flex items-center gap-2">
+                              <Badge variant="destructive" className="text-xs">Expired {format(new Date(exp), "MMM d, yyyy")}</Badge>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90"
+                                onClick={() => setPaymentListing(listing)}
+                              >
+                                <CreditCard className="h-3.5 w-3.5" />
+                                Renew Rs. {getListingFee(listing.listing_type).toLocaleString()}
+                              </Button>
+                            </div>
+                          );
+                        }
+                        
+                        if (listing.status === "active" && exp) {
+                          return (
+                            <span className="text-xs text-muted-foreground">
+                              Active until {format(new Date(exp), "MMM d, yyyy")}
+                            </span>
+                          );
+                        }
+                        
+                        if (listing.status === "pending") {
+                          return (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90"
+                              onClick={() => setPaymentListing(listing)}
+                            >
+                              <CreditCard className="h-3.5 w-3.5" />
+                              Pay Rs. {getListingFee(listing.listing_type).toLocaleString()} to Activate
+                            </Button>
+                          );
+                        }
+                        
+                        return null;
+                      })()}
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/edit-property/${listing.id}`)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(listing.id)}>
                         <Trash2 className="h-4 w-4" />
