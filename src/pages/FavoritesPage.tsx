@@ -39,7 +39,7 @@ const FavoritesPage = () => {
         setLoading(false);
         return;
       }
-      const ids = Array.from(favoriteIds);
+      const ids = Array.from(favoriteIds).map(id => id.startsWith("db-") ? id.slice(3) : id);
       const { data } = await supabase
         .from("user_properties")
         .select("id, title, price, city, state, district, address, bedrooms, bathrooms, sqft, images, listing_type, property_type, status")
