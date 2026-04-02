@@ -18,6 +18,7 @@ import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import { Upload, X, Plus, Loader2 } from 'lucide-react';
 import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } from '@/data/nepalLocations';
+import SearchableCombobox from '@/components/SearchableCombobox';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
