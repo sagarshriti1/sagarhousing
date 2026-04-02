@@ -25,6 +25,9 @@ interface Realtor {
 }
 
 const RealtorsPage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { isSaved, toggleSaved } = useSavedRealtors();
   const [realtors, setRealtors] = useState<Realtor[]>([]);
   const [citySearch, setCitySearch] = useState("");
   const [loading, setLoading] = useState(true);
