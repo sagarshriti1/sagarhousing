@@ -12,9 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, Award, Megaphone, DollarSign, Save, Plus, Camera, Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Star, Award, Megaphone, DollarSign, Save, Plus, Camera, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from '@/data/nepalLocations';
+import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 
 interface RealtorProfile {
   id: string;
@@ -30,9 +32,14 @@ interface RealtorProfile {
   is_featured: boolean;
   license_number: string | null;
   user_id: string | null;
+  payment_status: string;
+  payment_bypassed: boolean;
+  start_date: string | null;
+  expiration_date: string | null;
 }
 
 const MONTHLY_AD_PRICE = 1000;
+const LISTING_FEE = 5000;
 
 const RealtorDashboard = () => {
   const { user, role, loading } = useAuth();
@@ -42,9 +49,9 @@ const RealtorDashboard = () => {
   const [newSpecialty, setNewSpecialty] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [paymentComplete, setPaymentComplete] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state for new profile
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -70,6 +77,7 @@ const RealtorDashboard = () => {
 
     if (data) {
       setProfile(data);
+      setPaymentComplete(data.payment_status === "paid" || data.payment_status === "bypassed");
       setFormData({
         name: data.name,
         email: data.email ?? "",
@@ -96,11 +104,31 @@ const RealtorDashboard = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
   if (!user || (role !== "realtor" && role !== "admin")) return <Navigate to="/" replace />;
 
+  const handlePaymentComplete = async () => {
+    setPaymentComplete(true);
+    toast.success("Payment successful! 🎉");
+
+    // If profile exists, update payment status in DB
+    if (profile) {
+      await supabase
+        .from("realtors")
+        .update({ payment_status: "paid" })
+        .eq("id", profile.id);
+      setProfile({ ...profile, payment_status: "paid" });
+    }
+  };
+
   const saveProfile = async () => {
     if (!formData.name || !formData.city) {
       toast.error("Name and city are required");
       return;
     }
+
+    if (isCreating && !paymentComplete) {
+      toast.error("Please complete payment before creating your profile");
+      return;
+    }
+
     setSaving(true);
     const payload = {
       name: formData.name,
@@ -115,6 +143,7 @@ const RealtorDashboard = () => {
       years_experience: formData.years_experience ? Number(formData.years_experience) : null,
       specialties: formData.specialties,
       user_id: user!.id,
+      ...(isCreating ? { payment_status: "paid" } : {}),
     };
 
     if (profile) {
@@ -122,7 +151,7 @@ const RealtorDashboard = () => {
       if (error) toast.error("Failed to save profile");
       else {
         toast.success("Profile updated!");
-        setProfile({ ...profile, ...payload });
+        setProfile({ ...profile, ...payload } as RealtorProfile);
       }
     } else {
       const { data, error } = await supabase.from("realtors").insert(payload).select().single();
@@ -139,9 +168,6 @@ const RealtorDashboard = () => {
   const toggleAdvertise = async () => {
     if (!profile) return;
     const newFeatured = !profile.is_featured;
-
-    // Payment bypass — in future, check payment before enabling
-    // if (newFeatured) { await verifyPayment(); }
 
     const { error } = await supabase
       .from("realtors")
@@ -184,7 +210,6 @@ const RealtorDashboard = () => {
     const ext = file.name.split(".").pop();
     const filePath = `${user.id}/profile.${ext}`;
 
-    // Remove old photo if exists
     await supabase.storage.from("realtor-photos").remove([filePath]);
 
     const { error } = await supabase.storage
@@ -223,6 +248,29 @@ const RealtorDashboard = () => {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Payment Card — shown when creating new profile */}
+            {isCreating && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Listing Payment
+                  </CardTitle>
+                  <CardDescription>
+                    A one-time listing fee is required to create your realtor profile and appear in the directory.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SimulatedPaymentForm
+                    paid={paymentComplete}
+                    onPaymentComplete={handlePaymentComplete}
+                    amount={LISTING_FEE}
+                    label="Realtor listing fee"
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Advertise Card */}
             {profile && (
               <Card className={profile.is_featured ? "border-accent ring-1 ring-accent/30" : ""}>
@@ -394,7 +442,11 @@ const RealtorDashboard = () => {
                 </div>
 
                 <div className="flex justify-end pt-2">
-                  <Button onClick={saveProfile} disabled={saving} className="gap-2">
+                  <Button
+                    onClick={saveProfile}
+                    disabled={saving || (isCreating && !paymentComplete)}
+                    className="gap-2"
+                  >
                     <Save className="h-4 w-4" />
                     {saving ? "Saving..." : isCreating ? "Create Profile" : "Save Changes"}
                   </Button>
