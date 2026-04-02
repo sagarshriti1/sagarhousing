@@ -4,6 +4,7 @@ export interface Property {
   address: string;
   city: string;
   district?: string;
+  price: number;
   beds: number;
   baths: number;
   sqft: number;
