@@ -14,12 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, Award, Megaphone, DollarSign, Save, Plus, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-const NEPAL_CITIES = [
-  'Bhaktapur','Bharatpur','Biratnagar','Birgunj','Butwal','Damak','Dhangadhi',
-  'Dharan','Ghorahi','Hetauda','Itahari','Janakpur','Kathmandu','Lalitpur',
-  'Nepalgunj','Pokhara','Siddharthanagar','Tulsipur',
-];
+import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from '@/data/nepalLocations';
 
 interface RealtorProfile {
   id: string;
@@ -55,6 +50,7 @@ const RealtorDashboard = () => {
     email: "",
     phone: "",
     city: "",
+    district: "",
     state: "Nepal",
     bio: "",
     photo_url: "",
@@ -79,6 +75,7 @@ const RealtorDashboard = () => {
         email: data.email ?? "",
         phone: data.phone ?? "",
         city: data.city,
+        district: (data as any).district ?? getDistrictForCity(data.city) ?? "",
         state: "Nepal",
         bio: data.bio ?? "",
         photo_url: data.photo_url ?? "",
@@ -110,6 +107,7 @@ const RealtorDashboard = () => {
       email: formData.email || null,
       phone: formData.phone || null,
       city: formData.city,
+      district: formData.district,
       state: "Nepal",
       bio: formData.bio || null,
       photo_url: formData.photo_url || null,
@@ -296,15 +294,27 @@ const RealtorDashboard = () => {
                     <Label>Years of Experience</Label>
                     <Input type="number" value={formData.years_experience} onChange={(e) => setFormData({ ...formData, years_experience: e.target.value })} placeholder="e.g. 10" />
                   </div>
-                  <div>
-                    <Label>City *</Label>
-                    <Select value={formData.city} onValueChange={(v) => setFormData({ ...formData, city: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
-                      <SelectContent>
-                        {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                   <div>
+                     <Label>City *</Label>
+                     <Select value={formData.city} onValueChange={(v) => {
+                       const district = getDistrictForCity(v);
+                       setFormData({ ...formData, city: v, ...(district ? { district } : {}) });
+                     }}>
+                       <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                       <SelectContent>
+                         {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                       </SelectContent>
+                     </Select>
+                   </div>
+                   <div>
+                     <Label>District</Label>
+                     <Select value={formData.district} onValueChange={(v) => setFormData({ ...formData, district: v })}>
+                       <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                       <SelectContent>
+                         {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                       </SelectContent>
+                     </Select>
+                   </div>
                   <div>
                     <Label>License Number</Label>
                     <Input value={formData.license_number} onChange={(e) => setFormData({ ...formData, license_number: e.target.value })} placeholder="License #" />
