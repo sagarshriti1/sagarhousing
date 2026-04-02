@@ -74,7 +74,8 @@ const emptyRealtor: RealtorFormData = {
   license_number: null,
 };
 
-  interface RealtorFormDialogProps {
+interface RealtorFormDialogProps {
+  open: boolean;
   onOpenChange: (open: boolean) => void;
   realtor?: RealtorFormData | null;
   onSave: (data: RealtorFormData) => void;
