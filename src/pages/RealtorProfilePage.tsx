@@ -27,6 +27,9 @@ interface Realtor {
 
 const RealtorProfilePage = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { isSaved, toggleSaved } = useSavedRealtors();
   const [realtor, setRealtor] = useState<Realtor | null>(null);
   const [loading, setLoading] = useState(true);
 
