@@ -14,6 +14,8 @@ interface FilterBarProps {
   setListingType: (v: string) => void;
   propertyType: string;
   setPropertyType: (v: string) => void;
+  city: string;
+  setCity: (v: string) => void;
   priceRange: string;
   setPriceRange: (v: string) => void;
   beds: string;
@@ -39,11 +41,13 @@ interface FilterBarProps {
   district: string;
   setDistrict: (v: string) => void;
   onReset: () => void;
+  availableCities?: string[];
 }
 
 const FilterBar = ({
   listingType, setListingType,
   propertyType, setPropertyType,
+  city, setCity,
   priceRange, setPriceRange,
   beds, setBeds,
   baths, setBaths,
@@ -57,6 +61,7 @@ const FilterBar = ({
   keywords, setKeywords,
   district, setDistrict,
   onReset,
+  availableCities = [],
 }: FilterBarProps) => {
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -197,6 +202,15 @@ const FilterBar = ({
         </SelectContent>
       </Select>
 
+      <Select value={city} onValueChange={setCity}>
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="City" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Cities</SelectItem>
+          {availableCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+        </SelectContent>
+      </Select>
       <Select value={beds} onValueChange={setBeds}>
         <SelectTrigger className="w-[120px]">
           <SelectValue placeholder="Beds" />
@@ -252,9 +266,11 @@ const FilterBar = ({
         </Popover>
       )}
 
-      <Button variant="outline" size="sm" onClick={onReset}>
-        Reset Filters
-      </Button>
+      <div className="w-full pt-1">
+        <Button variant="outline" size="sm" onClick={onReset}>
+          Reset Filters
+        </Button>
+      </div>
     </div>
   );
 };
