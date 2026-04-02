@@ -70,7 +70,6 @@ const PropertyDetail = () => {
 
   const images = (property.images && property.images.length > 0) ? property.images : ["/placeholder.svg"];
   const isNew = new Date(property.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const [activeImage, setActiveImage] = useState(0);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -81,9 +80,22 @@ const PropertyDetail = () => {
             <ArrowLeft className="h-4 w-4" /> Back to listings
           </Link>
 
-          <div className="rounded-lg overflow-hidden mb-4 aspect-[16/9] max-h-[500px]">
+          <div className="rounded-lg overflow-hidden mb-2 aspect-[16/9] max-h-[500px]">
             <img src={images[activeImage]} alt={property.title} className="w-full h-full object-cover" width={1920} height={1080} />
           </div>
+          {images.length > 1 && (
+            <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImage(i)}
+                  className={`flex-shrink-0 rounded-md overflow-hidden border-2 transition-colors ${i === activeImage ? "border-accent" : "border-transparent hover:border-muted-foreground/30"}`}
+                >
+                  <img src={img} alt={`${property.title} ${i + 1}`} className="h-16 w-24 object-cover" loading="lazy" />
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
