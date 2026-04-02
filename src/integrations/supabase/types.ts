@@ -52,6 +52,7 @@ export type Database = {
           bio: string | null
           city: string
           created_at: string
+          district: string
           email: string | null
           id: string
           is_featured: boolean
@@ -69,6 +70,7 @@ export type Database = {
           bio?: string | null
           city: string
           created_at?: string
+          district?: string
           email?: string | null
           id?: string
           is_featured?: boolean
@@ -86,6 +88,7 @@ export type Database = {
           bio?: string | null
           city?: string
           created_at?: string
+          district?: string
           email?: string | null
           id?: string
           is_featured?: boolean
@@ -111,6 +114,7 @@ export type Database = {
           city: string
           created_at: string
           description: string | null
+          district: string
           features: string[] | null
           garage_spaces: number | null
           id: string
@@ -139,6 +143,7 @@ export type Database = {
           city: string
           created_at?: string
           description?: string | null
+          district?: string
           features?: string[] | null
           garage_spaces?: number | null
           id?: string
@@ -167,6 +172,7 @@ export type Database = {
           city?: string
           created_at?: string
           description?: string | null
+          district?: string
           features?: string[] | null
           garage_spaces?: number | null
           id?: string
