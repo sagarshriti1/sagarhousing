@@ -6,16 +6,20 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Plus, Bed, Bath, Maximize, Trash2, Pencil, DollarSign } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Plus, Bed, Bath, Maximize, Trash2, Pencil, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
+
+const getListingFee = (listingType: string) => listingType === "rent" ? 1000 : 5000;
 
 const MyListingsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [listings, setListings] = useState<Tables<"user_properties">[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -42,19 +46,33 @@ const MyListingsPage = () => {
     }
   };
 
-  const toggleStatus = async (listing: Tables<"user_properties">) => {
-    const newStatus = listing.status === "active" ? "pending" : "active";
-    // Payment bypass — in future, verify Rs.1000 payment before activating
-    // if (newStatus === "active") { await verifyPayment(); }
+  const handlePaymentComplete = async () => {
+    if (!paymentListing) return;
     const { error } = await supabase
       .from("user_properties")
-      .update({ status: newStatus })
+      .update({ status: "active" as const })
+      .eq("id", paymentListing.id);
+    if (error) {
+      toast.error("Failed to activate listing");
+    } else {
+      setListings((prev) =>
+        prev.map((l) => l.id === paymentListing.id ? { ...l, status: "active" as const } : l)
+      );
+      toast.success("Payment successful! Your listing is now active 🎉");
+    }
+    setPaymentListing(null);
+  };
+
+  const handleDeactivate = async (listing: Tables<"user_properties">) => {
+    const { error } = await supabase
+      .from("user_properties")
+      .update({ status: "pending" as const })
       .eq("id", listing.id);
     if (error) {
-      toast.error("Failed to update status");
+      toast.error("Failed to deactivate listing");
     } else {
-      setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, status: newStatus } : l));
-      toast.success(newStatus === "active" ? "Listing activated!" : "Listing deactivated");
+      setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, status: "pending" as const } : l));
+      toast.success("Listing deactivated");
     }
   };
 
@@ -114,7 +132,7 @@ const MyListingsPage = () => {
                         <Badge variant="outline" className="capitalize">{listing.listing_type === "sale" ? "For Sale" : "For Rent"}</Badge>
                       </div>
                       <h3 className="font-display text-lg font-bold text-foreground">{listing.title}</h3>
-                      <p className="text-sm text-muted-foreground">{listing.address}, {listing.city}{(listing as any).district ? `, ${(listing as any).district}` : ''}</p>
+                      <p className="text-sm text-muted-foreground">{listing.address}, {listing.city}{listing.district ? `, ${listing.district}` : ''}</p>
                     </div>
                     <p className="font-display text-xl font-bold text-price">
                       Rs. {listing.price.toLocaleString()}{listing.listing_type === "rent" ? "/mo" : ""}
@@ -125,18 +143,25 @@ const MyListingsPage = () => {
                     <span className="flex items-center gap-1"><Bath className="h-4 w-4" /> {listing.bathrooms} ba</span>
                     {listing.sqft && <span className="flex items-center gap-1"><Maximize className="h-4 w-4" /> {listing.sqft.toLocaleString()} sqft</span>}
                     <div className="ml-auto flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{listing.status === "active" ? "Active" : "Inactive"}</span>
-                        <Switch
-                          checked={listing.status === "active"}
-                          onCheckedChange={() => toggleStatus(listing)}
-                        />
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <DollarSign className="h-3 w-3" />
-                        <span>Rs. 1,000</span>
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Free beta</Badge>
-                      </div>
+                      {listing.status === "pending" ? (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90"
+                          onClick={() => setPaymentListing(listing)}
+                        >
+                          <CreditCard className="h-3.5 w-3.5" />
+                          Pay Rs. {getListingFee(listing.listing_type).toLocaleString()} to Activate
+                        </Button>
+                      ) : listing.status === "active" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeactivate(listing)}
+                        >
+                          Deactivate
+                        </Button>
+                      ) : null}
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/edit-property/${listing.id}`)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(listing.id)}>
                         <Trash2 className="h-4 w-4" />
@@ -150,6 +175,26 @@ const MyListingsPage = () => {
         )}
       </main>
       <Footer />
+
+      {/* Payment Dialog */}
+      <Dialog open={!!paymentListing} onOpenChange={(open) => !open && setPaymentListing(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Activate Listing</DialogTitle>
+            <DialogDescription>
+              Pay the listing fee to make <strong>{paymentListing?.title}</strong> visible to buyers.
+            </DialogDescription>
+          </DialogHeader>
+          {paymentListing && (
+            <SimulatedPaymentForm
+              paid={false}
+              onPaymentComplete={handlePaymentComplete}
+              amount={getListingFee(paymentListing.listing_type)}
+              label={`Listing fee (${paymentListing.listing_type === "rent" ? "Rental" : "Sale"})`}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
