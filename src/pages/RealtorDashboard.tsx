@@ -158,7 +158,11 @@ const RealtorDashboard = () => {
       years_experience: formData.years_experience ? Number(formData.years_experience) : null,
       specialties: formData.specialties,
       user_id: user!.id,
-      ...(isCreating ? { payment_status: "paid" } : {}),
+      ...(isCreating ? {
+        payment_status: "paid",
+        start_date: new Date().toISOString().split("T")[0],
+        expiration_date: (() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d.toISOString().split("T")[0]; })(),
+      } : {}),
     };
 
     if (profile) {
