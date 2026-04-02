@@ -169,6 +169,7 @@ export type Database = {
           created_at: string
           description: string | null
           district: string
+          expiration_date: string | null
           features: string[] | null
           garage_spaces: number | null
           id: string
@@ -176,6 +177,7 @@ export type Database = {
           listing_type: Database["public"]["Enums"]["listing_type"]
           lot_size: number | null
           maintenance_fee: number | null
+          payment_date: string | null
           price: number
           property_type: Database["public"]["Enums"]["property_type"]
           sqft: number | null
@@ -198,6 +200,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           district?: string
+          expiration_date?: string | null
           features?: string[] | null
           garage_spaces?: number | null
           id?: string
@@ -205,6 +208,7 @@ export type Database = {
           listing_type?: Database["public"]["Enums"]["listing_type"]
           lot_size?: number | null
           maintenance_fee?: number | null
+          payment_date?: string | null
           price: number
           property_type?: Database["public"]["Enums"]["property_type"]
           sqft?: number | null
@@ -227,6 +231,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           district?: string
+          expiration_date?: string | null
           features?: string[] | null
           garage_spaces?: number | null
           id?: string
@@ -234,6 +239,7 @@ export type Database = {
           listing_type?: Database["public"]["Enums"]["listing_type"]
           lot_size?: number | null
           maintenance_fee?: number | null
+          payment_date?: string | null
           price?: number
           property_type?: Database["public"]["Enums"]["property_type"]
           sqft?: number | null
