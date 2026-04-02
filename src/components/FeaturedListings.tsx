@@ -138,9 +138,11 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
         setKeywords={setKeywords}
         district={district}
         setDistrict={setDistrict}
+        availableCities={[...new Set(allProperties.map(p => p.city).filter(Boolean))].sort()}
         onReset={() => {
           setListingType("all");
           setPropertyType("all");
+          setCity("all");
           setPriceRange("all");
           setBeds("all");
           setBaths("all");
