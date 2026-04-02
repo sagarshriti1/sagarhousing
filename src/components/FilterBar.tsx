@@ -53,13 +53,6 @@ const FilterBar = ({
 }: FilterBarProps) => {
   return (
     <div className="flex flex-wrap items-center gap-3 py-6">
-      <Input
-        type="text"
-        placeholder="Search keywords..."
-        value={keywords}
-        onChange={(e) => setKeywords(e.target.value)}
-        className="w-[200px]"
-      />
 
       <Select value={listingType} onValueChange={setListingType}>
         <SelectTrigger className="w-[130px]">
@@ -216,6 +209,17 @@ const FilterBar = ({
               placeholder="0"
               value={stories}
               onChange={(e) => setStories(e.target.value)}
+            />
+          </div>
+
+          {/* Keywords */}
+          <div className="space-y-2">
+            <Label>Keywords</Label>
+            <Input
+              type="text"
+              placeholder="Search keywords..."
+              value={keywords}
+              onChange={(e) => setKeywords(e.target.value)}
             />
           </div>
         </PopoverContent>
