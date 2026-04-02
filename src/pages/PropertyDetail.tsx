@@ -133,7 +133,24 @@ const PropertyDetail = () => {
               )}
 
               <div className="flex gap-3">
-                <Button variant="outline" className="gap-2"><Heart className="h-4 w-4" /> Save</Button>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={async () => {
+                    if (!user) {
+                      toast.error("Please sign in to save favorites");
+                      navigate("/auth");
+                      return;
+                    }
+                    const success = await toggleFavorite(favoriteId);
+                    if (success) {
+                      toast.success(isFavorite(favoriteId) ? "Removed from favorites" : "Added to favorites");
+                    }
+                  }}
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite(favoriteId) ? "text-red-500 fill-red-500" : ""}`} />
+                  {isFavorite(favoriteId) ? "Saved" : "Save"}
+                </Button>
                 <Button variant="outline" className="gap-2"><Share2 className="h-4 w-4" /> Share</Button>
               </div>
             </div>

@@ -17,7 +17,7 @@ export const useFavorites = () => {
       .from("favorites")
       .select("property_id")
       .eq("user_id", user.id);
-    setFavoriteIds(new Set((data ?? []).map((f: any) => f.property_id)));
+    setFavoriteIds(new Set((data ?? []).map((f: any) => `db-${f.property_id}`)));
     setLoading(false);
   }, [user]);
 
