@@ -137,6 +137,27 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_realtors: {
+        Row: {
+          created_at: string
+          id: string
+          realtor_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          realtor_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          realtor_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_properties: {
         Row: {
           address: string
