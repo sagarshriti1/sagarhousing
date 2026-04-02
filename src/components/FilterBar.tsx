@@ -7,7 +7,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { NEPAL_DISTRICTS } from "@/data/nepalLocations";
+import { NEPAL_DISTRICTS, NEPAL_CITIES, CITY_TO_DISTRICT, getCitiesInDistrict } from "@/data/nepalLocations";
 
 interface FilterBarProps {
   listingType: string;
@@ -192,7 +192,27 @@ const FilterBar = ({
         </SelectContent>
       </Select>
 
-      <Select value={district} onValueChange={setDistrict}>
+      <Select value={city} onValueChange={(val) => {
+        setCity(val);
+        if (val !== "all" && CITY_TO_DISTRICT[val]) {
+          setDistrict(CITY_TO_DISTRICT[val]);
+        }
+      }}>
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="City" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Cities</SelectItem>
+          {(district !== "all" ? getCitiesInDistrict(district) : [...new Set([...NEPAL_CITIES, ...availableCities])].sort()).map(c => (
+            <SelectItem key={c} value={c}>{c}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={district} onValueChange={(val) => {
+        setDistrict(val);
+        setCity("all");
+      }}>
         <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="District" />
         </SelectTrigger>
@@ -202,15 +222,6 @@ const FilterBar = ({
         </SelectContent>
       </Select>
 
-      <Select value={city} onValueChange={setCity}>
-        <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="City" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Cities</SelectItem>
-          {availableCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-        </SelectContent>
-      </Select>
       <Select value={beds} onValueChange={setBeds}>
         <SelectTrigger className="w-[120px]">
           <SelectValue placeholder="Beds" />
