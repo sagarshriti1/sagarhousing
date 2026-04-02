@@ -197,6 +197,7 @@ const FilterBar = ({
         </SelectContent>
       </Select>
 
+      <Select value={beds} onValueChange={setBeds}>
         <SelectTrigger className="w-[120px]">
           <SelectValue placeholder="Beds" />
         </SelectTrigger>
