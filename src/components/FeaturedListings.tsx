@@ -8,7 +8,12 @@ import { toast } from "sonner";
 
 const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const [listingType, setListingType] = useState("all");
+  const [listingType, setListingType] = useState(heroListingType === "rent" ? "rent" : heroListingType === "sale" ? "sale" : "all");
+
+  useEffect(() => {
+    if (heroListingType === "sale") setListingType("sale");
+    else if (heroListingType === "rent") setListingType("rent");
+  }, [heroListingType]);
   const [propertyType, setPropertyType] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
   const [beds, setBeds] = useState("all");
