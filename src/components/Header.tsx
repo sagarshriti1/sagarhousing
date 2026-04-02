@@ -160,6 +160,12 @@ const Header = () => {
                 >
                   My Listings
                 </Link>
+                <Link
+                  to='/saved-realtors'
+                  className='text-sm font-medium py-2 text-foreground'
+                >
+                  Saved Realtors
+                </Link>
                 <Button
                   size='sm'
                   variant='outline'
