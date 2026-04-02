@@ -14,6 +14,7 @@ import AdminDashboard from "./pages/AdminDashboard.tsx";
 import RealtorDashboard from "./pages/RealtorDashboard.tsx";
 import RealtorProfilePage from "./pages/RealtorProfilePage.tsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
+import FavoritesPage from "./pages/FavoritesPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
