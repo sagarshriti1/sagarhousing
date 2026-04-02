@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
-import { CreditCard, ShieldCheck } from "lucide-react";
+import { CreditCard, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 
 export interface RealtorFormData {
   id?: string;
