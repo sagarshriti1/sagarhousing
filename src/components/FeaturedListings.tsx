@@ -112,6 +112,8 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
         setListingType={setListingType}
         propertyType={propertyType}
         setPropertyType={setPropertyType}
+        city={city}
+        setCity={setCity}
         priceRange={priceRange}
         setPriceRange={setPriceRange}
         beds={beds}
