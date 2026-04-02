@@ -206,7 +206,14 @@ const AdminDashboard = () => {
     } else {
       const { data: newData, error } = await supabase.from("realtors").insert(payload).select().single();
       if (error) { toast.error("Failed to create realtor"); return; }
-      toast.success("Realtor created");
+      toast.success("Realtor created!", {
+        description: data.payment_status === "paid"
+          ? "Payment of Rs. 5,000 confirmed. Confirmation will be sent to realtor's email."
+          : data.payment_bypassed
+            ? "Payment was bypassed by admin."
+            : "Payment is pending.",
+        duration: 5000,
+      });
       setRealtors((prev) => [...prev, newData as Realtor]);
     }
     setRealtorDialogOpen(false);
