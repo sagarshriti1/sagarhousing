@@ -45,7 +45,7 @@ export const useFavorites = () => {
           .from("favorites")
           .delete()
           .eq("user_id", user.id)
-          .eq("property_id", propertyId);
+          .eq("property_id", dbId);
         if (error) {
           // Revert
           setFavoriteIds((prev) => new Set(prev).add(propertyId));
