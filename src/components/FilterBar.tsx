@@ -112,6 +112,38 @@ const FilterBar = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80 space-y-4 max-h-[70vh] overflow-y-auto" align="start">
+          {/* Price Range */}
+          <div className="space-y-2">
+            <Label>Price (Rs.)</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                placeholder="Min"
+                value={priceRange === "all" ? "" : priceRange.split("-")[0] === "0" ? "" : priceRange.split("-")[0]}
+                onChange={(e) => {
+                  const min = e.target.value;
+                  const max = priceRange !== "all" ? priceRange.split("-")[1] : "";
+                  if (!min && !max) setPriceRange("all");
+                  else setPriceRange(`${min || "0"}-${max || "99999999"}`);
+                }}
+                className="w-full"
+              />
+              <span className="text-muted-foreground text-sm">–</span>
+              <Input
+                type="number"
+                placeholder="Max"
+                value={priceRange === "all" ? "" : priceRange.split("-")[1] === "99999999" ? "" : priceRange.split("-")[1]}
+                onChange={(e) => {
+                  const max = e.target.value;
+                  const min = priceRange !== "all" ? priceRange.split("-")[0] : "";
+                  if (!min && !max) setPriceRange("all");
+                  else setPriceRange(`${min || "0"}-${max || "99999999"}`);
+                }}
+                className="w-full"
+              />
+            </div>
+          </div>
+
           {/* Square Meter Range */}
           <div className="space-y-2">
             <Label>Square Meter</Label>
