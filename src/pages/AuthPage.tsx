@@ -49,6 +49,15 @@ const AuthPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // For realtor signup, require payment first
+    if (isSignUp && selectedRole === 'realtor') {
+      if (!realtorPaymentComplete) {
+        setShowRealtorPayment(true);
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
