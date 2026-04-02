@@ -20,6 +20,7 @@ const PropertyDetail = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [property, setProperty] = useState<Tables<"user_properties"> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState(0);
   const favoriteId = id ? (id.startsWith("db-") ? id : `db-${id}`) : "";
 
   useEffect(() => {
