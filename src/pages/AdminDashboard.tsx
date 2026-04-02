@@ -73,9 +73,11 @@ interface UserProfile {
   id: string;
   user_id: string;
   display_name: string | null;
-  bio: string | null;
+  email: string | null;
   phone: string | null;
   avatar_url: string | null;
+  job_title: string | null;
+  location: string | null;
 }
 
 interface UserRole {
