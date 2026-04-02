@@ -180,22 +180,6 @@ const RealtorDashboard = () => {
     setSaving(false);
   };
 
-  const toggleAdvertise = async () => {
-    if (!profile) return;
-    const newFeatured = !profile.is_featured;
-
-    const { error } = await supabase
-      .from("realtors")
-      .update({ is_featured: newFeatured })
-      .eq("id", profile.id);
-
-    if (error) {
-      toast.error("Failed to update advertising status");
-    } else {
-      toast.success(newFeatured ? "Your profile is now advertised! 🎉" : "Advertising disabled");
-      setProfile({ ...profile, is_featured: newFeatured });
-    }
-  };
 
   const addSpecialty = () => {
     if (newSpecialty.trim() && !formData.specialties.includes(newSpecialty.trim())) {
