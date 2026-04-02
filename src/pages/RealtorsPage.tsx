@@ -97,8 +97,29 @@ const RealtorsPage = () => {
               <Link
                 to={`/realtor/${realtor.id}`}
                 key={realtor.id}
-                className={`bg-card rounded-lg border p-6 shadow-card hover:shadow-lg transition-shadow block ${realtor.is_featured ? "border-accent ring-1 ring-accent/30 relative" : "border-border"}`}
+                className={`bg-card rounded-lg border p-6 shadow-card hover:shadow-lg transition-shadow block relative ${realtor.is_featured ? "border-accent ring-1 ring-accent/30" : "border-border"}`}
               >
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!user) {
+                      toast.error("Please sign in to save realtors");
+                      navigate("/auth");
+                      return;
+                    }
+                    toggleSaved(realtor.id).then((ok) => {
+                      if (ok) toast.success(isSaved(realtor.id) ? "Removed from saved" : "Realtor saved");
+                    });
+                  }}
+                  className="absolute top-3 right-3 p-2 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors z-10"
+                >
+                  {isSaved(realtor.id) ? (
+                    <Check className="h-4 w-4 text-accent" />
+                  ) : (
+                    <Plus className="h-4 w-4 text-muted-foreground hover:text-accent" />
+                  )}
+                </button>
                 {realtor.is_featured && (
                   <div className="absolute -top-3 left-4">
                     <Badge className="bg-accent text-accent-foreground gap-1">
