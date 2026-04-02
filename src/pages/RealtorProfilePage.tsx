@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSavedRealtors } from "@/hooks/useSavedRealtors";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Mail, Star, Award, Briefcase, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MapPin, Phone, Mail, Star, Award, Briefcase, Bookmark } from "lucide-react";
+import { toast } from "sonner";
 
 interface Realtor {
   id: string;
@@ -23,6 +27,9 @@ interface Realtor {
 
 const RealtorProfilePage = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { isSaved, toggleSaved } = useSavedRealtors();
   const [realtor, setRealtor] = useState<Realtor | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -95,8 +102,24 @@ const RealtorProfilePage = () => {
                 )}
               </div>
             </div>
+            <Button
+              variant="outline"
+              className="gap-2 mt-4"
+              onClick={() => {
+                if (!user) {
+                  toast.error("Please sign in to save realtors");
+                  navigate("/auth");
+                  return;
+                }
+                toggleSaved(realtor.id).then((ok) => {
+                  if (ok) toast.success(isSaved(realtor.id) ? "Removed from saved" : "Realtor saved");
+                });
+              }}
+            >
+              <Bookmark className={`h-4 w-4 ${isSaved(realtor.id) ? "text-accent fill-accent" : ""}`} />
+              {isSaved(realtor.id) ? "Saved" : "Save Realtor"}
+            </Button>
           </div>
-
           {/* Body */}
           <div className="p-8 space-y-6">
             {realtor.bio && (

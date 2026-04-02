@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Menu, X, Heart, User, Plus, LogOut, Shield, Megaphone } from 'lucide-react';
+import { Home, Menu, X, Heart, User, Plus, LogOut, Shield, Megaphone, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -79,6 +79,9 @@ const Header = () => {
                   <DropdownMenuItem asChild>
                     <Link to='/my-listings'>My Listings</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to='/saved-realtors'><Bookmark className='h-4 w-4 mr-2' /> Saved Realtors</Link>
+                  </DropdownMenuItem>
                   {(role === 'realtor' || role === 'admin') && (
                     <DropdownMenuItem asChild>
                       <Link to='/realtor-dashboard'><Megaphone className='h-4 w-4 mr-2' /> Realtor Dashboard</Link>
@@ -156,6 +159,12 @@ const Header = () => {
                   className='text-sm font-medium py-2 text-foreground'
                 >
                   My Listings
+                </Link>
+                <Link
+                  to='/saved-realtors'
+                  className='text-sm font-medium py-2 text-foreground'
+                >
+                  Saved Realtors
                 </Link>
                 <Button
                   size='sm'
