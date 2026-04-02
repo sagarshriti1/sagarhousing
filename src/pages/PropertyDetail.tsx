@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Bed, Bath, Maximize, Calendar, MapPin, Heart, Share2, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFavorites } from "@/hooks/useFavorites";
+import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
 const PropertyDetail = () => {
   const { id } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [property, setProperty] = useState<Tables<"user_properties"> | null>(null);
   const [loading, setLoading] = useState(true);
+  const favoriteId = id ? (id.startsWith("db-") ? id : `db-${id}`) : "";
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -126,7 +133,24 @@ const PropertyDetail = () => {
               )}
 
               <div className="flex gap-3">
-                <Button variant="outline" className="gap-2"><Heart className="h-4 w-4" /> Save</Button>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={async () => {
+                    if (!user) {
+                      toast.error("Please sign in to save favorites");
+                      navigate("/auth");
+                      return;
+                    }
+                    const success = await toggleFavorite(favoriteId);
+                    if (success) {
+                      toast.success(isFavorite(favoriteId) ? "Removed from favorites" : "Added to favorites");
+                    }
+                  }}
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite(favoriteId) ? "text-red-500 fill-red-500" : ""}`} />
+                  {isFavorite(favoriteId) ? "Saved" : "Save"}
+                </Button>
                 <Button variant="outline" className="gap-2"><Share2 className="h-4 w-4" /> Share</Button>
               </div>
             </div>

@@ -17,7 +17,7 @@ export const useFavorites = () => {
       .from("favorites")
       .select("property_id")
       .eq("user_id", user.id);
-    setFavoriteIds(new Set((data ?? []).map((f: any) => f.property_id)));
+    setFavoriteIds(new Set((data ?? []).map((f: any) => `db-${f.property_id}`)));
     setLoading(false);
   }, [user]);
 
@@ -29,6 +29,8 @@ export const useFavorites = () => {
     async (propertyId: string) => {
       if (!user) return false;
 
+      // Strip "db-" prefix for database operations
+      const dbId = propertyId.startsWith("db-") ? propertyId.slice(3) : propertyId;
       const isFav = favoriteIds.has(propertyId);
       // Optimistic update
       setFavoriteIds((prev) => {
@@ -43,7 +45,7 @@ export const useFavorites = () => {
           .from("favorites")
           .delete()
           .eq("user_id", user.id)
-          .eq("property_id", propertyId);
+          .eq("property_id", dbId);
         if (error) {
           // Revert
           setFavoriteIds((prev) => new Set(prev).add(propertyId));
@@ -52,7 +54,7 @@ export const useFavorites = () => {
       } else {
         const { error } = await supabase
           .from("favorites")
-          .insert({ user_id: user.id, property_id: propertyId });
+          .insert({ user_id: user.id, property_id: dbId });
         if (error) {
           // Revert
           setFavoriteIds((prev) => {
