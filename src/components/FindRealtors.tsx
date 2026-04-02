@@ -126,7 +126,7 @@ const FindRealtors = () => {
                       </h3>
                       <p className="flex items-center gap-1 text-sm text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5 shrink-0" />
-                        {realtor.city}
+                        {realtor.city}{(realtor as any).district ? `, ${(realtor as any).district}` : ''}
                       </p>
                       {realtor.years_experience && (
                         <p className="flex items-center gap-1 text-sm text-muted-foreground">

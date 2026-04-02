@@ -55,7 +55,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           <span className="flex items-center gap-1"><Maximize className="h-4 w-4" /> {property.sqft.toLocaleString()} sqft</span>
         </div>
         <p className="text-sm text-foreground font-medium truncate">{property.address}</p>
-        <p className="text-sm text-muted-foreground">{property.city}</p>
+        <p className="text-sm text-muted-foreground">{property.city}{(property as any).district ? `, ${(property as any).district}` : ''}</p>
       </div>
     </Link>
   );

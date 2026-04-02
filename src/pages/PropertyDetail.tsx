@@ -88,7 +88,7 @@ const PropertyDetail = () => {
                     </div>
                     <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">{property.title}</h1>
                     <p className="flex items-center gap-1 text-muted-foreground mt-2">
-                      <MapPin className="h-4 w-4" /> {property.address}, {property.city}
+                      <MapPin className="h-4 w-4" /> {property.address}, {property.city}{(property as any).district ? `, ${(property as any).district}` : ''}
                     </p>
                   </div>
                   <p className="font-display text-3xl md:text-4xl font-bold text-price">
