@@ -18,6 +18,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
   const [carParkingSpaces, setCarParkingSpaces] = useState("0");
   const [stories, setStories] = useState("0");
   const [keywords, setKeywords] = useState("");
+  const [district, setDistrict] = useState("all");
   const [dbProperties, setDbProperties] = useState<Property[]>([]);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
           title: p.title,
           address: p.address,
           city: p.city,
+          district: (p as any).district ?? '',
           price: Number(p.price),
           beds: p.bedrooms,
           baths: Number(p.bathrooms),
@@ -81,14 +83,15 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
       if (parseInt(bikeParkingSpaces) > 0 && (p.bikeParkingSpaces ?? 0) < parseInt(bikeParkingSpaces)) return false;
       if (parseInt(carParkingSpaces) > 0 && (p.carParkingSpaces ?? 0) < parseInt(carParkingSpaces)) return false;
       if (parseInt(stories) > 0 && (p.stories ?? 0) < parseInt(stories)) return false;
+      if (district !== "all" && (p.district ?? '') !== district) return false;
       if (keywords.trim()) {
         const kw = keywords.toLowerCase();
-        const searchable = `${p.title} ${p.address} ${p.city} ${p.description} ${p.features?.join(" ") ?? ""}`.toLowerCase();
+        const searchable = `${p.title} ${p.address} ${p.city} ${p.district ?? ''} ${p.description} ${p.features?.join(" ") ?? ""}`.toLowerCase();
         if (!searchable.includes(kw)) return false;
       }
       return true;
     });
-  }, [effectiveListingType, propertyType, priceRange, beds, baths, sqmMin, sqmMax, yearBuilt, maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories, keywords, allProperties]);
+  }, [effectiveListingType, propertyType, priceRange, beds, baths, sqmMin, sqmMax, yearBuilt, maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories, district, keywords, allProperties]);
 
   return (
     <section className="container py-12">
@@ -126,6 +129,8 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
         setStories={setStories}
         keywords={keywords}
         setKeywords={setKeywords}
+        district={district}
+        setDistrict={setDistrict}
         onReset={() => {
           setListingType("all");
           setPropertyType("all");
@@ -140,6 +145,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
           setCarParkingSpaces("0");
           setStories("0");
           setKeywords("");
+          setDistrict("all");
         }}
       />
 

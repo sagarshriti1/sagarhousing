@@ -34,12 +34,7 @@ import {
 } from "@/components/ui/table";
 import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin } from "lucide-react";
 import { toast } from "sonner";
-
-const NEPAL_CITIES = [
-  'Bhaktapur','Bharatpur','Biratnagar','Birgunj','Butwal','Damak','Dhangadhi',
-  'Dharan','Ghorahi','Hetauda','Itahari','Janakpur','Kathmandu','Lalitpur',
-  'Nepalgunj','Pokhara','Siddharthanagar','Tulsipur',
-];
+import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from '@/data/nepalLocations';
 
 interface Realtor {
   id: string;
@@ -416,14 +411,26 @@ const AdminDashboard = () => {
                   <Input type="number" value={editingRealtor.years_experience ?? ""} onChange={(e) => setEditingRealtor({ ...editingRealtor, years_experience: e.target.value ? Number(e.target.value) : null })} />
                 </div>
                 <div>
-                  <Label>City</Label>
-                  <Select value={editingRealtor.city} onValueChange={(v) => setEditingRealtor({ ...editingRealtor, city: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
-                    <SelectContent>
-                      {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+                   <Label>City</Label>
+                   <Select value={editingRealtor.city} onValueChange={(v) => {
+                     const district = getDistrictForCity(v);
+                     setEditingRealtor({ ...editingRealtor, city: v, ...(district ? { state: district } : {}) });
+                   }}>
+                     <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                     <SelectContent>
+                       {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                     </SelectContent>
+                   </Select>
+                 </div>
+                 <div>
+                   <Label>District</Label>
+                   <Select value={editingRealtor.state} onValueChange={(v) => setEditingRealtor({ ...editingRealtor, state: v })}>
+                     <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                     <SelectContent>
+                       {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                     </SelectContent>
+                   </Select>
+                 </div>
               </div>
               <div>
                 <Label>Bio</Label>

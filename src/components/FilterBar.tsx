@@ -7,6 +7,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { NEPAL_DISTRICTS } from "@/data/nepalLocations";
 
 interface FilterBarProps {
   listingType: string;
@@ -35,6 +36,8 @@ interface FilterBarProps {
   setStories: (v: string) => void;
   keywords: string;
   setKeywords: (v: string) => void;
+  district: string;
+  setDistrict: (v: string) => void;
   onReset: () => void;
 }
 
@@ -52,6 +55,7 @@ const FilterBar = ({
   carParkingSpaces, setCarParkingSpaces,
   stories, setStories,
   keywords, setKeywords,
+  district, setDistrict,
   onReset,
 }: FilterBarProps) => {
   const isMobile = useIsMobile();
@@ -180,6 +184,16 @@ const FilterBar = ({
           <SelectItem value="commercial">Commercial</SelectItem>
           <SelectItem value="house">House</SelectItem>
           <SelectItem value="land">Land</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={district} onValueChange={setDistrict}>
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="District" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Districts</SelectItem>
+          {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
         </SelectContent>
       </Select>
 

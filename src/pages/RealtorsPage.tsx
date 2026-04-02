@@ -113,7 +113,7 @@ const RealtorsPage = () => {
                   <div className="min-w-0">
                     <h3 className="font-display text-lg font-bold text-foreground truncate">{realtor.name}</h3>
                     <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" /> {realtor.city}
+                      <MapPin className="h-3.5 w-3.5 shrink-0" /> {realtor.city}{(realtor as any).district ? `, ${(realtor as any).district}` : ''}
                     </p>
                     {realtor.years_experience && (
                       <p className="flex items-center gap-1 text-sm text-muted-foreground">

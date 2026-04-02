@@ -17,12 +17,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import { Upload, X, Plus, Loader2 } from 'lucide-react';
-
-const NEPAL_CITIES = [
-  'Bhaktapur','Bharatpur','Biratnagar','Birgunj','Butwal','Damak','Dhangadhi',
-  'Dharan','Ghorahi','Hetauda','Itahari','Janakpur','Kathmandu','Lalitpur',
-  'Nepalgunj','Pokhara','Siddharthanagar','Tulsipur',
-];
+import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } from '@/data/nepalLocations';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
@@ -50,6 +45,7 @@ const ListPropertyPage = () => {
     description: '',
     address: '',
     city: '',
+    district: '',
     price: '0',
     bedrooms: '0',
     bathrooms: '0',
@@ -90,6 +86,7 @@ const ListPropertyPage = () => {
         description: data.description ?? '',
         address: data.address,
         city: data.city,
+        district: (data as any).district ?? getDistrictForCity(data.city) ?? '',
         price: String(data.price),
         bedrooms: String(data.bedrooms),
         bathrooms: String(data.bathrooms),
@@ -112,7 +109,15 @@ const ListPropertyPage = () => {
   }, [editId, user, navigate]);
 
   const updateForm = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    setForm(prev => {
+      const updated = { ...prev, [field]: value };
+      // Auto-select district when city changes
+      if (field === 'city') {
+        const district = getDistrictForCity(value);
+        if (district) updated.district = district;
+      }
+      return updated;
+    });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,6 +186,7 @@ const ListPropertyPage = () => {
         description: form.description || null,
         address: form.address,
         city: form.city,
+        district: form.district,
         state: '',
         zip_code: '',
         price: parseFloat(form.price),
@@ -287,14 +293,25 @@ const ListPropertyPage = () => {
               <Label htmlFor='address'>Street Address *</Label>
               <Input id='address' value={form.address} onChange={e => updateForm('address', e.target.value)} placeholder='e.g. Thamel, Ward No. 26' required />
             </div>
-            <div className='space-y-2'>
-              <Label>City *</Label>
-              <Select value={form.city} onValueChange={v => updateForm('city', v)}>
-                <SelectTrigger><SelectValue placeholder='Select City' /></SelectTrigger>
-                <SelectContent>
-                  {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label>City *</Label>
+                <Select value={form.city} onValueChange={v => updateForm('city', v)}>
+                  <SelectTrigger><SelectValue placeholder='Select City' /></SelectTrigger>
+                  <SelectContent>
+                    {NEPAL_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-2'>
+                <Label>District</Label>
+                <Select value={form.district} onValueChange={v => updateForm('district', v)}>
+                  <SelectTrigger><SelectValue placeholder='Select District' /></SelectTrigger>
+                  <SelectContent>
+                    {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </section>
 
