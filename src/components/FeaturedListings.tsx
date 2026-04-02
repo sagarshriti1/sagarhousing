@@ -124,6 +124,23 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
         setCarParkingSpaces={setCarParkingSpaces}
         stories={stories}
         setStories={setStories}
+        keywords={keywords}
+        setKeywords={setKeywords}
+        onReset={() => {
+          setListingType("all");
+          setPropertyType("all");
+          setPriceRange("all");
+          setBeds("all");
+          setBaths("all");
+          setSqmMin("");
+          setSqmMax("");
+          setYearBuilt("all");
+          setMaintenanceFee("all");
+          setBikeParkingSpaces("0");
+          setCarParkingSpaces("0");
+          setStories("0");
+          setKeywords("");
+        }}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
