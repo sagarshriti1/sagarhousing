@@ -15,8 +15,12 @@ import type { Tables } from "@/integrations/supabase/types";
 
 const PropertyDetail = () => {
   const { id } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [property, setProperty] = useState<Tables<"user_properties"> | null>(null);
   const [loading, setLoading] = useState(true);
+  const favoriteId = id ? (id.startsWith("db-") ? id : `db-${id}`) : "";
 
   useEffect(() => {
     const fetchProperty = async () => {
