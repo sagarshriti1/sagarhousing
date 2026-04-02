@@ -36,6 +36,8 @@ interface FilterBarProps {
   setStories: (v: string) => void;
   keywords: string;
   setKeywords: (v: string) => void;
+  district: string;
+  setDistrict: (v: string) => void;
   onReset: () => void;
 }
 
