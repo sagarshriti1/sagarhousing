@@ -14,6 +14,8 @@ interface FilterBarProps {
   setListingType: (v: string) => void;
   propertyType: string;
   setPropertyType: (v: string) => void;
+  city: string;
+  setCity: (v: string) => void;
   priceRange: string;
   setPriceRange: (v: string) => void;
   beds: string;
@@ -39,6 +41,7 @@ interface FilterBarProps {
   district: string;
   setDistrict: (v: string) => void;
   onReset: () => void;
+  availableCities?: string[];
 }
 
 const FilterBar = ({
