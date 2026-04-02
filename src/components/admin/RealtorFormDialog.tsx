@@ -228,15 +228,12 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                 />
               </div>
 
-              {/* Payment placeholder if not bypassed */}
-              {!bypassPayment && isCreate && (
-                <div className="p-4 rounded-md border border-border bg-background text-center space-y-2">
-                  <CreditCard className="h-8 w-8 mx-auto text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Payment integration coming soon</p>
-                  <p className="text-xs text-muted-foreground">
-                    For now, use "Bypass Payment" to create the profile without payment
-                  </p>
-                </div>
+              {/* Simulated Payment Form */}
+              {!bypassPayment && (
+                <SimulatedPaymentForm
+                  paid={form.payment_status === "paid"}
+                  onPaymentComplete={() => setForm(prev => ({ ...prev, payment_status: "paid" }))}
+                />
               )}
             </div>
 
