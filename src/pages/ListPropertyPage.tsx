@@ -111,10 +111,14 @@ const ListPropertyPage = () => {
   const updateForm = (field: string, value: string) => {
     setForm(prev => {
       const updated = { ...prev, [field]: value };
-      // Auto-select district when city changes
       if (field === 'city') {
         const district = getDistrictForCity(value);
         if (district) updated.district = district;
+      }
+      if (field === 'district') {
+        // Reset city if current city doesn't belong to the new district
+        const cityDistrict = getDistrictForCity(prev.city);
+        if (cityDistrict !== value) updated.city = '';
       }
       return updated;
     });
