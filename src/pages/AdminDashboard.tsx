@@ -530,48 +530,45 @@ const AdminDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
+                    <TableHead>Admin</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>Job Title</TableHead>
+                    <TableHead>Location</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles.map((profile) => {
-                    const userRole = roles.find((r) => r.user_id === profile.user_id);
-                    return (
+                  {profiles
+                    .filter((profile) => {
+                      const userRole = roles.find((r) => r.user_id === profile.user_id);
+                      return userRole?.role === "admin";
+                    })
+                    .map((profile) => (
                       <TableRow key={profile.id}>
                         <TableCell>
-                          <div>
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
+                              {profile.avatar_url ? (
+                                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                (profile.display_name || "?").charAt(0).toUpperCase()
+                              )}
+                            </div>
                             <p className="font-medium text-foreground">{profile.display_name || "Unnamed"}</p>
-                            <p className="text-xs text-muted-foreground">{profile.user_id.slice(0, 8)}...</p>
                           </div>
                         </TableCell>
+                        <TableCell className="text-muted-foreground">{profile.email || "—"}</TableCell>
                         <TableCell>{profile.phone || "—"}</TableCell>
-                        <TableCell>
-                          {userRole ? (
-                            <Select value={userRole.role} onValueChange={(v) => changeRole(profile.user_id, v as any)}>
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="user">User</SelectItem>
-                                <SelectItem value="realtor">Realtor</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Badge variant="secondary">No role</Badge>
-                          )}
-                        </TableCell>
+                        <TableCell>{profile.job_title || "—"}</TableCell>
+                        <TableCell>{profile.location || "—"}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon" onClick={() => setEditingProfile(profile)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
+                    ))}
                 </TableBody>
               </Table>
             </div>
