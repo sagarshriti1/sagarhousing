@@ -20,6 +20,7 @@ const PropertyDetail = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [property, setProperty] = useState<Tables<"user_properties"> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState(0);
   const favoriteId = id ? (id.startsWith("db-") ? id : `db-${id}`) : "";
 
   useEffect(() => {
@@ -67,7 +68,7 @@ const PropertyDetail = () => {
   const formatPrice = (price: number, listingType: string) =>
     listingType === "rent" ? `Rs. ${price.toLocaleString()}/mo` : `Rs. ${price.toLocaleString()}`;
 
-  const image = property.images?.[0] ?? "/placeholder.svg";
+  const images = (property.images && property.images.length > 0) ? property.images : ["/placeholder.svg"];
   const isNew = new Date(property.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;
 
   return (
@@ -79,9 +80,22 @@ const PropertyDetail = () => {
             <ArrowLeft className="h-4 w-4" /> Back to listings
           </Link>
 
-          <div className="rounded-lg overflow-hidden mb-8 aspect-[16/9] max-h-[500px]">
-            <img src={image} alt={property.title} className="w-full h-full object-cover" width={1920} height={1080} />
+          <div className="rounded-lg overflow-hidden mb-2 aspect-[16/9] max-h-[500px]">
+            <img src={images[activeImage]} alt={property.title} className="w-full h-full object-cover" width={1920} height={1080} />
           </div>
+          {images.length > 1 && (
+            <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImage(i)}
+                  className={`flex-shrink-0 rounded-md overflow-hidden border-2 transition-colors ${i === activeImage ? "border-accent" : "border-transparent hover:border-muted-foreground/30"}`}
+                >
+                  <img src={img} alt={`${property.title} ${i + 1}`} className="h-16 w-24 object-cover" loading="lazy" />
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
