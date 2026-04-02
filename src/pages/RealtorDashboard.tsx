@@ -38,8 +38,7 @@ interface RealtorProfile {
   expiration_date: string | null;
 }
 
-const MONTHLY_AD_PRICE = 1000;
-const LISTING_FEE = 5000;
+const SIGNUP_FEE = 5000;
 
 const RealtorDashboard = () => {
   const { user, role, loading } = useAuth();
