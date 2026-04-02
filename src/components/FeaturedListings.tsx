@@ -154,7 +154,15 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((property) => (
-          <PropertyCard key={property.id} property={property} />
+          <PropertyCard
+            key={property.id}
+            property={property}
+            isFavorite={isFavorite(property.id)}
+            onToggleFavorite={async (id) => {
+              const success = await toggleFavorite(id);
+              if (success) toast.success(isFavorite(id) ? "Removed from favorites" : "Added to favorites");
+            }}
+          />
         ))}
       </div>
 
