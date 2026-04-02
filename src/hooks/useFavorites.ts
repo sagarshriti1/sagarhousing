@@ -54,7 +54,7 @@ export const useFavorites = () => {
       } else {
         const { error } = await supabase
           .from("favorites")
-          .insert({ user_id: user.id, property_id: propertyId });
+          .insert({ user_id: user.id, property_id: dbId });
         if (error) {
           // Revert
           setFavoriteIds((prev) => {
