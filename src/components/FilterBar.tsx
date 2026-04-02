@@ -211,6 +211,7 @@ const FilterBar = ({
           {availableCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
         </SelectContent>
       </Select>
+      <Select value={beds} onValueChange={setBeds}>
         <SelectTrigger className="w-[120px]">
           <SelectValue placeholder="Beds" />
         </SelectTrigger>
