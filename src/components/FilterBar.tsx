@@ -30,6 +30,9 @@ interface FilterBarProps {
   setCarParkingSpaces: (v: string) => void;
   stories: string;
   setStories: (v: string) => void;
+  keywords: string;
+  setKeywords: (v: string) => void;
+  onReset: () => void;
 }
 
 const FilterBar = ({
