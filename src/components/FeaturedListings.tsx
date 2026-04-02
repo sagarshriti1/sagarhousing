@@ -3,8 +3,11 @@ import type { Property } from "@/data/properties";
 import { supabase } from "@/integrations/supabase/client";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
+import { useFavorites } from "@/hooks/useFavorites";
+import { toast } from "sonner";
 
 const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [listingType, setListingType] = useState("all");
   const [propertyType, setPropertyType] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
