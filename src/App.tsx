@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import RealtorExpiredBanner from "@/components/RealtorExpiredBanner";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
 import PropertyDetail from "./pages/PropertyDetail.tsx";
@@ -27,6 +28,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const RealtorProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, role, realtorExpired, realtorId, refreshRealtorStatus } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (role === 'realtor' && realtorExpired && realtorId) {
+    return <RealtorExpiredBanner realtorId={realtorId} onRenewed={() => refreshRealtorStatus()} />;
+  }
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -46,7 +57,7 @@ const App = () => (
             <Route path="/saved-realtors" element={<ProtectedRoute><SavedRealtorsPage /></ProtectedRoute>} />
             <Route path="/realtor/:id" element={<RealtorProfilePage />} />
             <Route path="/realtors" element={<RealtorsPage />} />
-            <Route path="/realtor-dashboard" element={<ProtectedRoute><RealtorDashboard /></ProtectedRoute>} />
+            <Route path="/realtor-dashboard" element={<RealtorProtectedRoute><RealtorDashboard /></RealtorProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
