@@ -65,7 +65,7 @@ const FavoritesPage = () => {
   };
 
   const mappedProperties = properties.map((p) => ({
-    id: p.id,
+    id: `db-${p.id}`,
     title: p.title,
     price: p.price,
     address: p.address,
