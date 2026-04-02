@@ -78,18 +78,33 @@ const FilterBar = ({
         </SelectContent>
       </Select>
 
-      <Select value={priceRange} onValueChange={setPriceRange}>
-        <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="Price Range" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Any Price</SelectItem>
-          <SelectItem value="0-500000">Under Rs. 500K</SelectItem>
-          <SelectItem value="500000-1000000">Rs. 500K - 1M</SelectItem>
-          <SelectItem value="1000000-5000000">Rs. 1M - 5M</SelectItem>
-          <SelectItem value="5000000-99999999">Rs. 5M+</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          placeholder="Min"
+          value={priceRange === "all" ? "" : priceRange.split("-")[0] === "0" ? "" : priceRange.split("-")[0]}
+          onChange={(e) => {
+            const min = e.target.value;
+            const max = priceRange !== "all" ? priceRange.split("-")[1] : "";
+            if (!min && !max) setPriceRange("all");
+            else setPriceRange(`${min || "0"}-${max || "99999999"}`);
+          }}
+          className="w-[120px]"
+        />
+        <span className="text-muted-foreground text-sm">–</span>
+        <Input
+          type="number"
+          placeholder="Max"
+          value={priceRange === "all" ? "" : priceRange.split("-")[1] === "99999999" ? "" : priceRange.split("-")[1]}
+          onChange={(e) => {
+            const max = e.target.value;
+            const min = priceRange !== "all" ? priceRange.split("-")[0] : "";
+            if (!min && !max) setPriceRange("all");
+            else setPriceRange(`${min || "0"}-${max || "99999999"}`);
+          }}
+          className="w-[120px]"
+        />
+      </div>
 
       <Select value={beds} onValueChange={setBeds}>
         <SelectTrigger className="w-[120px]">
