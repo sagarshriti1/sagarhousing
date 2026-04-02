@@ -140,6 +140,12 @@ const Header = () => {
             {user ? (
               <>
                 <Link
+                  to='/favorites'
+                  className='text-sm font-medium py-2 text-foreground'
+                >
+                  Favorites
+                </Link>
+                <Link
                   to='/list-property'
                   className='text-sm font-medium py-2 text-foreground'
                 >
