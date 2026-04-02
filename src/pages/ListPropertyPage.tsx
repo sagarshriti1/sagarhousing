@@ -201,13 +201,13 @@ const ListPropertyPage = () => {
         listing_type: form.listing_type,
         year_built: form.year_built ? parseInt(form.year_built) : null,
         lot_size: form.lot_size ? parseFloat(form.lot_size) : null,
-        
         features: selectedFeatures,
         images: allImages,
         maintenance_fee: parseFloat(form.maintenance_fee) || 0,
         bike_parking: parseInt(form.bike_parking) || 0,
         car_parking: parseInt(form.car_parking) || 0,
         stories: parseInt(form.stories) || 0,
+        ...(isEdit ? {} : { status: 'pending' as const }),
       };
 
       if (isEdit) {
@@ -221,7 +221,7 @@ const ListPropertyPage = () => {
       } else {
         const { error } = await supabase.from('user_properties').insert(payload);
         if (error) throw error;
-        toast.success('Property listed successfully!');
+        toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
       }
       navigate('/my-listings');
     } catch (error: any) {
