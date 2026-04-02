@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -43,7 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus } from "lucide-react";
+import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RealtorFormDialog, { type RealtorFormData } from "@/components/admin/RealtorFormDialog";
@@ -73,9 +73,11 @@ interface UserProfile {
   id: string;
   user_id: string;
   display_name: string | null;
-  bio: string | null;
+  email: string | null;
   phone: string | null;
   avatar_url: string | null;
+  job_title: string | null;
+  location: string | null;
 }
 
 interface UserRole {
@@ -111,6 +113,8 @@ const AdminDashboard = () => {
   const [search, setSearch] = useState("");
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Realtor form dialog state
   const [realtorDialogOpen, setRealtorDialogOpen] = useState(false);
@@ -526,48 +530,45 @@ const AdminDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
+                    <TableHead>Admin</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>Job Title</TableHead>
+                    <TableHead>Location</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles.map((profile) => {
-                    const userRole = roles.find((r) => r.user_id === profile.user_id);
-                    return (
+                  {profiles
+                    .filter((profile) => {
+                      const userRole = roles.find((r) => r.user_id === profile.user_id);
+                      return userRole?.role === "admin";
+                    })
+                    .map((profile) => (
                       <TableRow key={profile.id}>
                         <TableCell>
-                          <div>
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
+                              {profile.avatar_url ? (
+                                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                (profile.display_name || "?").charAt(0).toUpperCase()
+                              )}
+                            </div>
                             <p className="font-medium text-foreground">{profile.display_name || "Unnamed"}</p>
-                            <p className="text-xs text-muted-foreground">{profile.user_id.slice(0, 8)}...</p>
                           </div>
                         </TableCell>
+                        <TableCell className="text-muted-foreground">{profile.email || "—"}</TableCell>
                         <TableCell>{profile.phone || "—"}</TableCell>
-                        <TableCell>
-                          {userRole ? (
-                            <Select value={userRole.role} onValueChange={(v) => changeRole(profile.user_id, v as any)}>
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="user">User</SelectItem>
-                                <SelectItem value="realtor">Realtor</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Badge variant="secondary">No role</Badge>
-                          )}
-                        </TableCell>
+                        <TableCell>{profile.job_title || "—"}</TableCell>
+                        <TableCell>{profile.location || "—"}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon" onClick={() => setEditingProfile(profile)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
+                    ))}
                 </TableBody>
               </Table>
             </div>
@@ -654,25 +655,78 @@ const AdminDashboard = () => {
       <Dialog open={!!editingProfile} onOpenChange={(open) => !open && setEditingProfile(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit User Profile</DialogTitle>
+            <DialogTitle>Edit Admin Profile</DialogTitle>
           </DialogHeader>
           {editingProfile && (
             <div className="space-y-4">
+              {/* Avatar Upload */}
+              <div>
+                <Label>Profile Photo</Label>
+                <div className="flex items-center gap-4 mt-1">
+                  <div className="h-16 w-16 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+                    {editingProfile.avatar_url ? (
+                      <img src={editingProfile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (!file.type.startsWith("image/")) { toast.error("Please select an image"); return; }
+                        if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+                        setUploadingAvatar(true);
+                        const ext = file.name.split(".").pop();
+                        const filePath = `${editingProfile.user_id}/avatar.${ext}`;
+                        await supabase.storage.from("realtor-photos").remove([filePath]);
+                        const { error } = await supabase.storage.from("realtor-photos").upload(filePath, file, { upsert: true });
+                        if (error) { toast.error("Failed to upload photo"); setUploadingAvatar(false); return; }
+                        const { data: urlData } = supabase.storage.from("realtor-photos").getPublicUrl(filePath);
+                        setEditingProfile({ ...editingProfile, avatar_url: urlData.publicUrl });
+                        toast.success("Photo uploaded!");
+                        setUploadingAvatar(false);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploadingAvatar}
+                      onClick={() => avatarInputRef.current?.click()}
+                      className="gap-2"
+                    >
+                      {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                      {uploadingAvatar ? "Uploading..." : "Upload Photo"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">JPG, PNG or WebP. Max 5MB.</p>
+                  </div>
+                </div>
+              </div>
               <div>
                 <Label>Display Name</Label>
                 <Input value={editingProfile.display_name ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, display_name: e.target.value })} />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input value={editingProfile.email ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, email: e.target.value })} />
               </div>
               <div>
                 <Label>Phone</Label>
                 <Input value={editingProfile.phone ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, phone: e.target.value })} />
               </div>
               <div>
-                <Label>Bio</Label>
-                <Textarea value={editingProfile.bio ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, bio: e.target.value })} />
+                <Label>Job Title</Label>
+                <Input value={editingProfile.job_title ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, job_title: e.target.value })} placeholder="e.g. Senior Agent" />
               </div>
               <div>
-                <Label>Avatar URL</Label>
-                <Input value={editingProfile.avatar_url ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, avatar_url: e.target.value })} />
+                <Label>Location</Label>
+                <Input value={editingProfile.location ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, location: e.target.value })} placeholder="e.g. Kathmandu" />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingProfile(null)}>Cancel</Button>
