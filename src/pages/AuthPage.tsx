@@ -7,8 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Home, Building2, UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import SimulatedPaymentForm from '@/components/SimulatedPaymentForm';
 
 type AccountType = 'user' | 'realtor';
+
+const REALTOR_SIGNUP_FEE = 5000;
 
 const accountTypes: { value: AccountType; label: string; description: string; icon: React.ReactNode }[] = [
   { value: 'user', label: 'User', description: 'Browse & post listings', icon: <UserIcon className="h-5 w-5" /> },
@@ -23,6 +26,8 @@ const AuthPage = () => {
   const [displayName, setDisplayName] = useState('');
   const [selectedRole, setSelectedRole] = useState<AccountType>('user');
   const [loading, setLoading] = useState(false);
+  const [showRealtorPayment, setShowRealtorPayment] = useState(false);
+  const [realtorPaymentComplete, setRealtorPaymentComplete] = useState(false);
   const navigate = useNavigate();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
