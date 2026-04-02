@@ -105,18 +105,31 @@ const RealtorDashboard = () => {
 
   const handlePaymentComplete = async () => {
     setPaymentComplete(true);
+    const now = new Date();
+    const expiration = new Date(now);
+    expiration.setMonth(expiration.getMonth() + 1);
+
     toast.success("Payment successful! 🎉", {
-      description: "Your payment of Rs. 5,000 has been received. A confirmation will be sent to your email.",
+      description: "Your payment of Rs. 5,000 has been received. Your profile is active for 1 month.",
       duration: 5000,
     });
 
-    // If profile exists, update payment status in DB
+    // If profile exists, update payment status and dates in DB
     if (profile) {
       await supabase
         .from("realtors")
-        .update({ payment_status: "paid" })
+        .update({
+          payment_status: "paid",
+          start_date: now.toISOString().split("T")[0],
+          expiration_date: expiration.toISOString().split("T")[0],
+        })
         .eq("id", profile.id);
-      setProfile({ ...profile, payment_status: "paid" });
+      setProfile({
+        ...profile,
+        payment_status: "paid",
+        start_date: now.toISOString().split("T")[0],
+        expiration_date: expiration.toISOString().split("T")[0],
+      });
     }
   };
 
