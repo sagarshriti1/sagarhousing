@@ -220,6 +220,10 @@ const FilterBar = ({
           </div>
         </PopoverContent>
       </Popover>
+
+      <Button variant="outline" size="sm" onClick={onReset}>
+        Reset Filters
+      </Button>
     </div>
   );
 };
