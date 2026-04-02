@@ -7,6 +7,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { NEPAL_DISTRICTS } from "@/data/nepalLocations";
 
 interface FilterBarProps {
   listingType: string;
