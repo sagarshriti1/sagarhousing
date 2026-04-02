@@ -60,9 +60,11 @@ const Header = () => {
                   <Plus className='h-4 w-4' /> List Property
                 </Button>
               </Link>
-              <Button variant='ghost' size='icon'>
-                <Heart className='h-5 w-5' />
-              </Button>
+              <Link to="/favorites">
+                <Button variant='ghost' size='icon'>
+                  <Heart className='h-5 w-5' />
+                </Button>
+              </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='icon'>
@@ -137,6 +139,12 @@ const Header = () => {
             </Link>
             {user ? (
               <>
+                <Link
+                  to='/favorites'
+                  className='text-sm font-medium py-2 text-foreground'
+                >
+                  Favorites
+                </Link>
                 <Link
                   to='/list-property'
                   className='text-sm font-medium py-2 text-foreground'

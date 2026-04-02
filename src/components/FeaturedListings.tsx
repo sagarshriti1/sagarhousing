@@ -3,8 +3,11 @@ import type { Property } from "@/data/properties";
 import { supabase } from "@/integrations/supabase/client";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
+import { useFavorites } from "@/hooks/useFavorites";
+import { toast } from "sonner";
 
 const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [listingType, setListingType] = useState("all");
   const [propertyType, setPropertyType] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
@@ -151,7 +154,15 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((property) => (
-          <PropertyCard key={property.id} property={property} />
+          <PropertyCard
+            key={property.id}
+            property={property}
+            isFavorite={isFavorite(property.id)}
+            onToggleFavorite={async (id) => {
+              const success = await toggleFavorite(id);
+              if (success) toast.success(isFavorite(id) ? "Removed from favorites" : "Added to favorites");
+            }}
+          />
         ))}
       </div>
 

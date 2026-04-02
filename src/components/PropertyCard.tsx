@@ -1,18 +1,36 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Heart, Bed, Bath, Maximize } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import type { Property } from "@/data/properties";
 
 interface PropertyCardProps {
   property: Property;
+  isFavorite?: boolean;
+  onToggleFavorite?: (propertyId: string) => void;
 }
 
-const PropertyCard = ({ property }: PropertyCardProps) => {
+const PropertyCard = ({ property, isFavorite = false, onToggleFavorite }: PropertyCardProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const formatPrice = (price: number, listingType: string) => {
     if (listingType === "rent") {
       return `Rs. ${price.toLocaleString()}/mo`;
     }
     return `Rs. ${price.toLocaleString()}`;
+  };
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      toast.error("Please sign in to save favorites");
+      navigate("/auth");
+      return;
+    }
+    onToggleFavorite?.(property.id);
   };
 
   return (
@@ -30,10 +48,16 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           height={600}
         />
         <button
-          onClick={(e) => { e.preventDefault(); }}
+          onClick={handleFavoriteClick}
           className="absolute top-3 right-3 p-2 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
         >
-          <Heart className="h-4 w-4 text-muted-foreground hover:text-accent" />
+          <Heart
+            className={`h-4 w-4 transition-colors ${
+              isFavorite
+                ? "text-red-500 fill-red-500"
+                : "text-muted-foreground hover:text-accent"
+            }`}
+          />
         </button>
         {property.isNew && (
           <Badge className="absolute top-3 left-3 bg-badge-new text-badge-new-foreground border-0">
