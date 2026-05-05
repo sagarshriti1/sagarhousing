@@ -119,9 +119,10 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     }));
   };
 
+  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && form.start_date && form.expiration_date;
+
   const handleSubmit = () => {
-    if (!form.name.trim()) return;
-    if (!form.expiration_date) return;
+    if (!isValid) return;
     onSave(form);
   };
 
@@ -142,11 +143,11 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div>
-              <Label>Email</Label>
-              <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Label>Email *</Label>
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <Label>Phone</Label>
+              <Label>Phone *</Label>
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div>
@@ -242,7 +243,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
             {/* Date Selection */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Start Date</Label>
+                <Label>Start Date *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.start_date && "text-muted-foreground")}>
@@ -288,7 +289,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={!form.name.trim() || !form.expiration_date}>
+            <Button onClick={handleSubmit} disabled={!isValid}>
               {isCreate ? "Create Realtor" : "Save Changes"}
             </Button>
           </div>
