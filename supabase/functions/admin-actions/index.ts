@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { action, userId, email, password, displayName, role } = await req.json();
+    const { action, userId, email, password, displayName, phone, jobTitle, location, role } = await req.json();
 
     if (action === "create_user") {
       if (!email || !password || !role) {
