@@ -16,7 +16,11 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
-import { Upload, X, Plus, Loader2, CalendarIcon } from 'lucide-react';
+import { Upload, X, Plus, Loader2, CalendarIcon, ArrowLeft } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
@@ -67,6 +71,24 @@ const ListPropertyPage = () => {
   });
   const [paymentDate, setPaymentDate] = useState<string | null>(null);
   const [expirationDate, setExpirationDate] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [confirmBackOpen, setConfirmBackOpen] = useState(false);
+
+  // Mark dirty on any user change
+  useEffect(() => { if (!fetching) setIsDirty(true); }, [form, selectedFeatures, imageFiles, existingImages, paymentDate, expirationDate]);
+
+  // Warn on browser/tab close
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  const handleBack = () => {
+    if (isDirty) setConfirmBackOpen(true);
+    else navigate(-1);
+  };
 
   useEffect(() => {
     if (!editId || !user) return;
@@ -246,7 +268,8 @@ const ListPropertyPage = () => {
         if (error) throw error;
         toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
       }
-      navigate('/my-listings');
+      setIsDirty(false);
+      navigate(-1);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -268,6 +291,9 @@ const ListPropertyPage = () => {
     <div className='min-h-screen flex flex-col'>
       <Header />
       <main className='flex-1 container py-8 max-w-3xl'>
+        <Button type='button' variant='ghost' onClick={handleBack} className='mb-4 -ml-3 gap-2'>
+          <ArrowLeft className='h-4 w-4' /> Back
+        </Button>
         <h1 className='font-display text-3xl font-bold text-foreground mb-2'>
           {isEdit ? 'Edit Listing' : 'List Your Property'}
         </h1>
@@ -520,12 +546,34 @@ const ListPropertyPage = () => {
             </div>
           )}
 
-          <Button type='submit' className='w-full bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg' disabled={loading}>
-            {loading ? (<><Loader2 className='h-5 w-5 mr-2 animate-spin' /> {isEdit ? 'Updating...' : 'Saving...'}</>) : (isEdit ? 'Update Listing' : 'Save Listing')}
-          </Button>
+          <div className='flex gap-3'>
+            <Button type='button' variant='outline' onClick={handleBack} className='py-6 text-lg gap-2' disabled={loading}>
+              <ArrowLeft className='h-5 w-5' /> Back
+            </Button>
+            <Button type='submit' className='flex-1 bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg' disabled={loading}>
+              {loading ? (<><Loader2 className='h-5 w-5 mr-2 animate-spin' /> {isEdit ? 'Updating...' : 'Saving...'}</>) : (isEdit ? 'Update Listing' : 'Save Listing')}
+            </Button>
+          </div>
         </form>
       </main>
       <Footer />
+
+      <AlertDialog open={confirmBackOpen} onOpenChange={setConfirmBackOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes that will be lost if you leave this page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay on page</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setIsDirty(false); setConfirmBackOpen(false); navigate(-1); }}>
+              Discard & leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
