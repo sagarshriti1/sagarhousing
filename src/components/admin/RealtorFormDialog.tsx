@@ -242,7 +242,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
             {/* Date Selection */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Start Date</Label>
+                <Label>Start Date *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.start_date && "text-muted-foreground")}>
