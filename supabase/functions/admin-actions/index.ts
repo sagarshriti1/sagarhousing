@@ -73,8 +73,14 @@ Deno.serve(async (req) => {
       // Replace default role with requested role, stamping the admin caller as updater
       await supabase.from("user_roles").delete().eq("user_id", created.user.id);
       await supabase.from("user_roles").insert({ user_id: created.user.id, role, updated_by: caller.id });
-      // Stamp the new profile (auto-created by handle_new_user) with the admin as updater
-      await supabase.from("profiles").update({ updated_by: caller.id }).eq("user_id", created.user.id);
+      // Stamp profile with extra fields + admin as updater
+      await supabase.from("profiles").update({
+        phone: phone ?? null,
+        job_title: jobTitle ?? null,
+        location: location ?? null,
+        display_name: displayName ?? null,
+        updated_by: caller.id,
+      }).eq("user_id", created.user.id);
 
       return new Response(JSON.stringify({ success: true, userId: created.user.id }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
