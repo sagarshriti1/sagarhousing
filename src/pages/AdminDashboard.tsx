@@ -755,6 +755,7 @@ const AdminDashboard = () => {
                         <Badge variant={prop.status === "active" ? "default" : "secondary"}>{prop.status}</Badge>
                       </TableCell>
                       <TableCell className="capitalize">{prop.listing_type}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{updatedByLabel(prop.updated_by)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/edit-property/${prop.id}`)}>
