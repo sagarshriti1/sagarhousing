@@ -121,6 +121,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
 
   const handleSubmit = () => {
     if (!form.name.trim()) return;
+    if (!form.expiration_date) return;
     onSave(form);
   };
 
