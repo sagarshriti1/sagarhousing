@@ -119,9 +119,10 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     }));
   };
 
+  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && form.start_date && form.expiration_date;
+
   const handleSubmit = () => {
-    if (!form.name.trim()) return;
-    if (!form.expiration_date) return;
+    if (!isValid) return;
     onSave(form);
   };
 
