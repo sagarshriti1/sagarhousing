@@ -919,12 +919,18 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
+              {(() => {
+                const editingRole = roles.find((r) => r.user_id === editingProfile.user_id)?.role;
+                const nameLabel = editingRole === "admin" ? "Display Name *" : "Name *";
+                return (
+                  <div>
+                    <Label>{nameLabel}</Label>
+                    <Input value={editingProfile.display_name ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, display_name: e.target.value })} />
+                  </div>
+                );
+              })()}
               <div>
-                <Label>Display Name</Label>
-                <Input value={editingProfile.display_name ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, display_name: e.target.value })} />
-              </div>
-              <div>
-                <Label>Email</Label>
+                <Label>Email *</Label>
                 <Input value={editingProfile.email ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, email: e.target.value })} />
               </div>
               <div>
