@@ -596,14 +596,16 @@ const AdminDashboard = () => {
                       <Button variant="ghost" size="icon" title="Reset password" onClick={() => resetPassword(profile)}>
                         <KeyRound className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title={profile.is_active ? "Deactivate" : "Activate"}
-                        onClick={() => toggleActive(profile)}
-                      >
-                        {profile.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                      </Button>
+                      {target !== "admin" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={profile.is_active ? "Deactivate" : "Activate"}
+                          onClick={() => toggleActive(profile)}
+                        >
+                          {profile.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" className="text-destructive" title="Delete" onClick={() => deleteUser(profile)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -942,6 +944,16 @@ const AdminDashboard = () => {
               <div>
                 <Label>Location</Label>
                 <Input value={editingProfile.location ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, location: e.target.value })} placeholder="e.g. Kathmandu" />
+              </div>
+              <div className="flex items-center justify-between rounded-md border border-border p-3">
+                <div>
+                  <Label className="text-sm">Account Status</Label>
+                  <p className="text-xs text-muted-foreground">{editingProfile.is_active ? "Active" : "Inactive"}</p>
+                </div>
+                <Switch
+                  checked={editingProfile.is_active}
+                  onCheckedChange={(checked) => setEditingProfile({ ...editingProfile, is_active: checked })}
+                />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingProfile(null)}>Cancel</Button>
