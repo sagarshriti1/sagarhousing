@@ -71,6 +71,7 @@ interface UserProfile {
   job_title: string | null;
   location: string | null;
   is_active: boolean;
+  updated_by?: string | null;
 }
 
 interface UserRole {
@@ -88,6 +89,7 @@ interface Property {
   status: string;
   listing_type: string;
   user_id: string;
+  updated_by?: string | null;
 }
 
 interface ConfirmAction {
