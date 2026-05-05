@@ -456,7 +456,60 @@ const ListPropertyPage = () => {
             <p className='text-xs text-muted-foreground'>Upload up to 10 photos. First photo will be the cover image.</p>
           </section>
 
-          {!isEdit && (
+          {isAdmin && (
+            <section className='space-y-4'>
+              <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Listing Period</h2>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label>Start Date *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type='button' variant='outline' className={cn('w-full justify-start text-left font-normal', !paymentDate && 'text-muted-foreground')}>
+                        <CalendarIcon className='mr-2 h-4 w-4' />
+                        {paymentDate ? format(new Date(paymentDate), 'PPP') : 'Pick start date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-auto p-0' align='start'>
+                      <Calendar
+                        mode='single'
+                        selected={paymentDate ? new Date(paymentDate) : undefined}
+                        onSelect={(d) => setPaymentDate(d ? format(d, 'yyyy-MM-dd') : null)}
+                        disabled={expirationDate ? { from: new Date(expirationDate), to: new Date(8640000000000000) } : undefined}
+                        initialFocus
+                        className={cn('p-3 pointer-events-auto')}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className='space-y-2'>
+                  <Label>Expiration Date *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type='button' variant='outline' className={cn('w-full justify-start text-left font-normal', !expirationDate && 'text-muted-foreground')}>
+                        <CalendarIcon className='mr-2 h-4 w-4' />
+                        {expirationDate ? format(new Date(expirationDate), 'PPP') : 'Pick expiration date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-auto p-0' align='start'>
+                      <Calendar
+                        mode='single'
+                        selected={expirationDate ? new Date(expirationDate) : undefined}
+                        onSelect={(d) => setExpirationDate(d ? format(d, 'yyyy-MM-dd') : null)}
+                        disabled={paymentDate ? { from: new Date(-8640000000000000), to: new Date(paymentDate) } : undefined}
+                        initialFocus
+                        className={cn('p-3 pointer-events-auto')}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+              {paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate) && (
+                <p className='text-xs text-destructive'>Start date must be earlier than expiration date.</p>
+              )}
+            </section>
+          )}
+
+          {!isEdit && !isAdmin && (
             <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground mb-1">Listing Fee</p>
               <p>Your property will be saved as <strong>inactive</strong>. To activate and publish it, pay the listing fee from your My Listings page:</p>
