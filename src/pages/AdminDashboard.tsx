@@ -1076,10 +1076,51 @@ const AdminDashboard = () => {
                 <Input value={newUser.jobTitle} onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })} placeholder="e.g. Senior Agent" />
               </div>
             )}
-            <div>
-              <Label>Location</Label>
-              <Input value={newUser.location} onChange={(e) => setNewUser({ ...newUser, location: e.target.value })} placeholder="e.g. Kathmandu" />
-            </div>
+            {createUserRole === "user" ? (
+              (() => {
+                const loc = parseLocation(newUser.location);
+                return (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>City</Label>
+                      <Select
+                        value={loc.city}
+                        onValueChange={(city) => {
+                          const district = getDistrictForCity(city) || loc.district;
+                          setNewUser({ ...newUser, location: joinLocation(city, district) });
+                        }}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                        <SelectContent>
+                          {NEPAL_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>District</Label>
+                      <Select
+                        value={loc.district}
+                        onValueChange={(district) => {
+                          const cityDist = getDistrictForCity(loc.city);
+                          const nextCity = cityDist && cityDist !== district ? "" : loc.city;
+                          setNewUser({ ...newUser, location: joinLocation(nextCity, district) });
+                        }}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                        <SelectContent>
+                          {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <div>
+                <Label>Location</Label>
+                <Input value={newUser.location} onChange={(e) => setNewUser({ ...newUser, location: e.target.value })} placeholder="e.g. Kathmandu" />
+              </div>
+            )}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCreateUserOpen(false)} disabled={creatingUser}>Cancel</Button>
               <Button onClick={handleCreateUser} disabled={creatingUser} className="gap-2">
