@@ -679,6 +679,7 @@ const AdminDashboard = () => {
                             {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
                           </div>
                         </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{updatedByLabel(realtor.updated_by)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor)}>
