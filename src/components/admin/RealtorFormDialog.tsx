@@ -123,10 +123,16 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     }));
   };
 
-  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && form.start_date && form.expiration_date;
+  const datesValid = !!form.start_date && !!form.expiration_date && new Date(form.start_date) < new Date(form.expiration_date);
+  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && datesValid;
 
   const handleSubmit = () => {
-    if (!isValid) return;
+    if (!isValid) {
+      if (form.start_date && form.expiration_date && !datesValid) {
+        toast.error("Start date must be earlier than expiration date");
+      }
+      return;
+    }
     onSave(form);
   };
 
@@ -297,6 +303,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                       mode="single"
                       selected={form.start_date ? new Date(form.start_date) : undefined}
                       onSelect={(date) => setForm({ ...form, start_date: date ? format(date, "yyyy-MM-dd") : null })}
+                      disabled={form.expiration_date ? { from: new Date(form.expiration_date), to: new Date(8640000000000000) } : undefined}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
@@ -317,6 +324,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                       mode="single"
                       selected={form.expiration_date ? new Date(form.expiration_date) : undefined}
                       onSelect={(date) => setForm({ ...form, expiration_date: date ? format(date, "yyyy-MM-dd") : null })}
+                      disabled={form.start_date ? { from: new Date(-8640000000000000), to: new Date(form.start_date) } : undefined}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
@@ -324,6 +332,9 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                 </Popover>
               </div>
             </div>
+            {form.start_date && form.expiration_date && new Date(form.start_date) >= new Date(form.expiration_date) && (
+              <p className="text-xs text-destructive">Start date must be earlier than expiration date.</p>
+            )}
           </div>
 
           <Separator />
