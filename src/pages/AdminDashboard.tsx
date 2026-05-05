@@ -418,11 +418,19 @@ const AdminDashboard = () => {
     });
   };
 
-  const filteredRealtors = realtors.filter(
-    (r) =>
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.city.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredRealtors = realtors.filter((r) => {
+    const q = search.toLowerCase();
+    const matchSearch =
+      !q ||
+      r.name.toLowerCase().includes(q) ||
+      r.city.toLowerCase().includes(q) ||
+      (r.email || "").toLowerCase().includes(q) ||
+      (r.phone || "").toLowerCase().includes(q);
+    if (!matchSearch) return false;
+    const linkedProfile = r.user_id ? profiles.find((p) => p.user_id === r.user_id) : null;
+    const isActive = linkedProfile ? linkedProfile.is_active : true;
+    return showInactive ? !isActive : isActive;
+  });
 
   const getProfilesByRole = (target: "admin" | "realtor" | "user") => {
     return profiles.filter((profile) => {
@@ -607,106 +615,128 @@ const AdminDashboard = () => {
             {renderAccountsTable("admin", "Admins")}
           </TabsContent>
 
-          {/* REALTORS TAB - account list */}
-          <TabsContent value="realtors" className="space-y-6">
-            {renderAccountsTable("realtor", "Realtors")}
-
-            {/* Realtor profile listings management */}
-            <div className="space-y-4 pt-4 border-t border-border">
-              <div className="flex items-center gap-4 flex-wrap">
-                <h2 className="font-display text-xl font-semibold text-foreground flex items-center gap-2">
-                  <Users className="h-5 w-5" /> Realtor Listings (Public Profiles)
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {realtors.filter((r) => r.is_featured).length} featured
-                </p>
-                {selectedRealtorIds.size > 0 && (
-                  <Button variant="destructive" size="sm" onClick={bulkDeleteRealtors} className="gap-2">
-                    <Trash2 className="h-4 w-4" /> Delete {selectedRealtorIds.size} selected
-                  </Button>
-                )}
+          {/* REALTORS TAB - unified listings */}
+          <TabsContent value="realtors" className="space-y-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search realtors..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
+              <div className="flex items-center gap-2 ml-auto">
+                <Label htmlFor="show-inactive-realtor" className="text-sm text-muted-foreground">
+                  {showInactive ? "Showing inactive" : "Showing active"}
+                </Label>
+                <Switch id="show-inactive-realtor" checked={showInactive} onCheckedChange={setShowInactive} />
+              </div>
+              <Button onClick={handleOpenCreate} className="gap-2">
+                <Plus className="h-4 w-4" /> Create Realtor
+              </Button>
+            </div>
 
-              <div className="rounded-lg border border-border overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-10">
+            <div className="flex items-center gap-4 flex-wrap">
+              <h2 className="font-display text-xl font-semibold text-foreground flex items-center gap-2">
+                <Users className="h-5 w-5" /> Realtor Listings (Public Profiles)
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {realtors.filter((r) => r.is_featured).length} featured
+              </p>
+              {selectedRealtorIds.size > 0 && (
+                <Button variant="destructive" size="sm" onClick={bulkDeleteRealtors} className="gap-2">
+                  <Trash2 className="h-4 w-4" /> Delete {selectedRealtorIds.size} selected
+                </Button>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-border overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={filteredRealtors.length > 0 && selectedRealtorIds.size === filteredRealtors.length}
+                        onCheckedChange={toggleAllRealtors}
+                      />
+                    </TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Experience</TableHead>
+                    <TableHead>Payment</TableHead>
+                    <TableHead>Dates</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Featured</TableHead>
+                    <TableHead>Updated By</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredRealtors.map((realtor) => {
+                    const linkedProfile = realtor.user_id ? profiles.find((p) => p.user_id === realtor.user_id) : null;
+                    const isActive = linkedProfile ? linkedProfile.is_active : true;
+                    return (
+                    <TableRow key={realtor.id} className={selectedRealtorIds.has(realtor.id) ? "bg-muted/50" : ""}>
+                      <TableCell>
                         <Checkbox
-                          checked={filteredRealtors.length > 0 && selectedRealtorIds.size === filteredRealtors.length}
-                          onCheckedChange={toggleAllRealtors}
+                          checked={selectedRealtorIds.has(realtor.id)}
+                          onCheckedChange={() => toggleRealtorSelection(realtor.id)}
                         />
-                      </TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Experience</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead>Dates</TableHead>
-                      <TableHead>Featured</TableHead>
-                      <TableHead>Updated By</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
+                            {realtor.photo_url ? (
+                              <img src={realtor.photo_url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              realtor.name.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <p className="font-medium text-foreground">{realtor.name}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{realtor.email || "—"}</TableCell>
+                      <TableCell>{realtor.phone || "—"}</TableCell>
+                      <TableCell>{realtor.city}{realtor.district ? `, ${realtor.district}` : ""}</TableCell>
+                      <TableCell>{realtor.years_experience ?? "—"} yrs</TableCell>
+                      <TableCell>{getPaymentBadge(realtor.payment_status)}</TableCell>
+                      <TableCell>
+                        <div className="text-xs space-y-0.5">
+                          <p>{realtor.start_date ? format(new Date(realtor.start_date), "MMM d, yyyy") : "No start"}</p>
+                          <p className="text-muted-foreground">{realtor.expiration_date ? format(new Date(realtor.expiration_date), "MMM d, yyyy") : "No expiry"}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={isActive ? "default" : "secondary"}>
+                          {isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Switch checked={realtor.is_featured} onCheckedChange={() => toggleFeatured(realtor)} />
+                          {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{updatedByLabel(realtor.updated_by)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRealtors.map((realtor) => (
-                      <TableRow key={realtor.id} className={selectedRealtorIds.has(realtor.id) ? "bg-muted/50" : ""}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedRealtorIds.has(realtor.id)}
-                            onCheckedChange={() => toggleRealtorSelection(realtor.id)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
-                              {realtor.photo_url ? (
-                                <img src={realtor.photo_url} alt="" className="h-full w-full object-cover" />
-                              ) : (
-                                realtor.name.charAt(0).toUpperCase()
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">{realtor.name}</p>
-                              <p className="text-xs text-muted-foreground">{realtor.email}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{realtor.city}{realtor.district ? `, ${realtor.district}` : ""}</TableCell>
-                        <TableCell>{realtor.years_experience ?? "—"} yrs</TableCell>
-                        <TableCell>{getPaymentBadge(realtor.payment_status)}</TableCell>
-                        <TableCell>
-                          <div className="text-xs space-y-0.5">
-                            <p>{realtor.start_date ? format(new Date(realtor.start_date), "MMM d, yyyy") : "No start"}</p>
-                            <p className="text-muted-foreground">{realtor.expiration_date ? format(new Date(realtor.expiration_date), "MMM d, yyyy") : "No expiry"}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Switch checked={realtor.is_featured} onCheckedChange={() => toggleFeatured(realtor)} />
-                            {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{updatedByLabel(realtor.updated_by)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredRealtors.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No realtors found</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                    );
+                  })}
+                  {filteredRealtors.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">No realtors found</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </TabsContent>
 
