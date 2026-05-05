@@ -1020,7 +1020,7 @@ const AdminDashboard = () => {
               </div>
             )}
             <div>
-              <Label>{createUserRole === "user" ? "Name" : "Display Name"}</Label>
+              <Label>{createUserRole === "user" ? "Name *" : "Display Name *"}</Label>
               <Input value={newUser.displayName} onChange={(e) => setNewUser({ ...newUser, displayName: e.target.value })} placeholder="Full name" />
             </div>
             <div>
