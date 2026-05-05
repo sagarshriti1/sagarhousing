@@ -86,6 +86,8 @@ interface RealtorFormDialogProps {
 
 const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: RealtorFormDialogProps) => {
   const [form, setForm] = useState<RealtorFormData>(realtor ?? emptyRealtor);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [bypassPayment, setBypassPayment] = useState(realtor?.payment_bypassed ?? false);
 
   // Reset form when realtor changes
