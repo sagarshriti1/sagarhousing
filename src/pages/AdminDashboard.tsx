@@ -129,7 +129,9 @@ const AdminDashboard = () => {
   // Create User dialog
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserRole, setCreateUserRole] = useState<"admin" | "realtor" | "user">("user");
-  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
+  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
+  const [uploadingNewUserAvatar, setUploadingNewUserAvatar] = useState(false);
+  const newUserAvatarInputRef = useRef<HTMLInputElement>(null);
   const [creatingUser, setCreatingUser] = useState(false);
 
   const fetchAll = async () => {
