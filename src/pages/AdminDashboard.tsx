@@ -90,6 +90,7 @@ interface Property {
   status: string;
   listing_type: string;
   user_id: string;
+  expiration_date?: string | null;
   updated_by?: string | null;
 }
 
