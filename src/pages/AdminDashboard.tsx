@@ -636,6 +636,7 @@ const AdminDashboard = () => {
                       <TableHead>Payment</TableHead>
                       <TableHead>Dates</TableHead>
                       <TableHead>Featured</TableHead>
+                      <TableHead>Updated By</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
