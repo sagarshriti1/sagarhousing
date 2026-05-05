@@ -175,6 +175,7 @@ const AdminDashboard = () => {
       phone: newUser.phone,
       jobTitle: newUser.jobTitle,
       location: newUser.location,
+      avatarUrl: newUser.avatarUrl,
       role: createUserRole,
     });
     setCreatingUser(false);
