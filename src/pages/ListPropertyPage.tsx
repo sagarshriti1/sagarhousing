@@ -228,7 +228,9 @@ const ListPropertyPage = () => {
         bike_parking: parseInt(form.bike_parking) || 0,
         car_parking: parseInt(form.car_parking) || 0,
         stories: parseInt(form.stories) || 0,
-        ...(isEdit ? {} : { status: 'pending' as const }),
+        ...(isAdmin && paymentDate ? { payment_date: new Date(paymentDate).toISOString() } : {}),
+        ...(isAdmin && expirationDate ? { expiration_date: new Date(expirationDate).toISOString() } : {}),
+        ...(isEdit ? {} : { status: isAdmin ? ('active' as const) : ('pending' as const) }),
       };
 
       if (isEdit) {
