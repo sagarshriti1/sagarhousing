@@ -644,7 +644,7 @@ const AdminDashboard = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Admin Dashboard</h1>
         </div>
 
-        <Tabs defaultValue="admins" className="space-y-6" onValueChange={() => { setSearch(""); setShowInactive(false); }}>
+        <Tabs value={initialTab} className="space-y-6" onValueChange={(v) => { setSearch(""); setShowInactive(false); setSearchParams({ tab: v }); }}>
           <TabsList>
             <TabsTrigger value="admins" className="gap-2"><Shield className="h-4 w-4" /> Admins</TabsTrigger>
             <TabsTrigger value="realtors" className="gap-2"><MapPin className="h-4 w-4" /> Realtors</TabsTrigger>
