@@ -164,6 +164,7 @@ const AdminDashboard = () => {
   };
 
   const handleCreateUser = async () => {
+    if (!newUser.displayName.trim()) { toast.error("Name is required"); return; }
     if (!newUser.email || !newUser.password) { toast.error("Email and password are required"); return; }
     if (newUser.password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setCreatingUser(true);
@@ -1019,7 +1020,7 @@ const AdminDashboard = () => {
               </div>
             )}
             <div>
-              <Label>{createUserRole === "user" ? "Name" : "Display Name"}</Label>
+              <Label>{createUserRole === "user" ? "Name *" : "Display Name *"}</Label>
               <Input value={newUser.displayName} onChange={(e) => setNewUser({ ...newUser, displayName: e.target.value })} placeholder="Full name" />
             </div>
             <div>
