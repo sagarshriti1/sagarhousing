@@ -509,6 +509,7 @@ const AdminDashboard = () => {
                 {target === "admin" && <TableHead>Job Title</TableHead>}
                 <TableHead>Location</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Updated By</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
