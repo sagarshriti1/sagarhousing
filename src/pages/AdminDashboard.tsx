@@ -154,6 +154,34 @@ const AdminDashboard = () => {
 
   const confirm = (action: ConfirmAction) => setConfirmAction(action);
 
+  // Resolve a user_id to a display name/email for the "Updated By" column
+  const updatedByLabel = (uid?: string | null) => {
+    if (!uid) return "—";
+    const p = profiles.find((pr) => pr.user_id === uid);
+    return p?.display_name || p?.email || uid.slice(0, 8);
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUser.email || !newUser.password) { toast.error("Email and password are required"); return; }
+    if (newUser.password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    setCreatingUser(true);
+    const ok = await callAdminAction({
+      action: "create_user",
+      email: newUser.email,
+      password: newUser.password,
+      displayName: newUser.displayName,
+      role: createUserRole,
+    });
+    setCreatingUser(false);
+    if (ok) {
+      toast.success(`${createUserRole} account created`);
+      setCreateUserOpen(false);
+      setNewUser({ email: "", password: "", displayName: "" });
+      fetchAll();
+    }
+  };
+
+
   // ===== Account actions (via admin-actions edge function) =====
   const callAdminAction = async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("admin-actions", { body });
