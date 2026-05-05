@@ -945,6 +945,16 @@ const AdminDashboard = () => {
                 <Label>Location</Label>
                 <Input value={editingProfile.location ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, location: e.target.value })} placeholder="e.g. Kathmandu" />
               </div>
+              <div className="flex items-center justify-between rounded-md border border-border p-3">
+                <div>
+                  <Label className="text-sm">Account Status</Label>
+                  <p className="text-xs text-muted-foreground">{editingProfile.is_active ? "Active" : "Inactive"}</p>
+                </div>
+                <Switch
+                  checked={editingProfile.is_active}
+                  onCheckedChange={(checked) => setEditingProfile({ ...editingProfile, is_active: checked })}
+                />
+              </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingProfile(null)}>Cancel</Button>
                 <Button onClick={saveProfile}>Save Changes</Button>
