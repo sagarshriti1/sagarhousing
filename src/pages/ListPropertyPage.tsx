@@ -268,7 +268,8 @@ const ListPropertyPage = () => {
         if (error) throw error;
         toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
       }
-      navigate('/my-listings');
+      setIsDirty(false);
+      navigate(-1);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
