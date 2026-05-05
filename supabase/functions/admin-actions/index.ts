@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
       const isActive = action === "activate";
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ is_active: isActive })
+        .update({ is_active: isActive, updated_by: caller.id })
         .eq("user_id", userId);
       if (profileError) {
         return new Response(JSON.stringify({ error: profileError.message }), {
