@@ -59,6 +59,7 @@ interface Realtor {
   payment_status: string;
   payment_bypassed: boolean;
   license_number: string | null;
+  updated_by?: string | null;
 }
 
 interface UserProfile {
