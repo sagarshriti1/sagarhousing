@@ -537,6 +537,7 @@ const AdminDashboard = () => {
                       {profile.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{updatedByLabel(profile.updated_by)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" title="Edit" onClick={() => setEditingProfile(profile)}>
