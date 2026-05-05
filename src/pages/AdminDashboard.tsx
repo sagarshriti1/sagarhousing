@@ -418,11 +418,19 @@ const AdminDashboard = () => {
     });
   };
 
-  const filteredRealtors = realtors.filter(
-    (r) =>
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.city.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredRealtors = realtors.filter((r) => {
+    const q = search.toLowerCase();
+    const matchSearch =
+      !q ||
+      r.name.toLowerCase().includes(q) ||
+      r.city.toLowerCase().includes(q) ||
+      (r.email || "").toLowerCase().includes(q) ||
+      (r.phone || "").toLowerCase().includes(q);
+    if (!matchSearch) return false;
+    const linkedProfile = r.user_id ? profiles.find((p) => p.user_id === r.user_id) : null;
+    const isActive = linkedProfile ? linkedProfile.is_active : true;
+    return showInactive ? !isActive : isActive;
+  });
 
   const getProfilesByRole = (target: "admin" | "realtor" | "user") => {
     return profiles.filter((profile) => {
