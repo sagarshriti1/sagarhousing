@@ -71,6 +71,24 @@ const ListPropertyPage = () => {
   });
   const [paymentDate, setPaymentDate] = useState<string | null>(null);
   const [expirationDate, setExpirationDate] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [confirmBackOpen, setConfirmBackOpen] = useState(false);
+
+  // Mark dirty on any user change
+  useEffect(() => { if (!fetching) setIsDirty(true); }, [form, selectedFeatures, imageFiles, existingImages, paymentDate, expirationDate]);
+
+  // Warn on browser/tab close
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  const handleBack = () => {
+    if (isDirty) setConfirmBackOpen(true);
+    else navigate(-1);
+  };
 
   useEffect(() => {
     if (!editId || !user) return;
