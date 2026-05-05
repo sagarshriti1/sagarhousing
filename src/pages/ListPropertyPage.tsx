@@ -65,6 +65,8 @@ const ListPropertyPage = () => {
     car_parking: '0',
     stories: '0',
   });
+  const [paymentDate, setPaymentDate] = useState<string | null>(null);
+  const [expirationDate, setExpirationDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (!editId || !user) return;
