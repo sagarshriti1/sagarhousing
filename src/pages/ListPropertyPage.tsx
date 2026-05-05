@@ -85,9 +85,11 @@ const ListPropertyPage = () => {
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
+  const backTarget = isAdmin ? '/admin?tab=properties' : -1 as const;
+  const goBack = () => { if (typeof backTarget === 'string') navigate(backTarget); else navigate(backTarget); };
   const handleBack = () => {
     if (isDirty) setConfirmBackOpen(true);
-    else navigate(-1);
+    else goBack();
   };
 
   useEffect(() => {
