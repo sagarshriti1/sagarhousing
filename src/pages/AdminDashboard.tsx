@@ -620,9 +620,6 @@ const AdminDashboard = () => {
                     <Trash2 className="h-4 w-4" /> Delete {selectedRealtorIds.size} selected
                   </Button>
                 )}
-                <Button onClick={handleOpenCreate} className="gap-2 ml-auto">
-                  <Plus className="h-4 w-4" /> Create Realtor
-                </Button>
               </div>
 
               <div className="rounded-lg border border-border overflow-auto">
