@@ -59,6 +59,7 @@ interface Realtor {
   payment_status: string;
   payment_bypassed: boolean;
   license_number: string | null;
+  updated_by?: string | null;
 }
 
 interface UserProfile {
@@ -71,6 +72,7 @@ interface UserProfile {
   job_title: string | null;
   location: string | null;
   is_active: boolean;
+  updated_by?: string | null;
 }
 
 interface UserRole {
@@ -88,6 +90,7 @@ interface Property {
   status: string;
   listing_type: string;
   user_id: string;
+  updated_by?: string | null;
 }
 
 interface ConfirmAction {
@@ -123,12 +126,18 @@ const AdminDashboard = () => {
   const [selectedRealtorIds, setSelectedRealtorIds] = useState<Set<string>>(new Set());
   const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(new Set());
 
+  // Create User dialog
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [createUserRole, setCreateUserRole] = useState<"admin" | "realtor" | "user">("user");
+  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "" });
+  const [creatingUser, setCreatingUser] = useState(false);
+
   const fetchAll = async () => {
     const [r, p, ro, pr] = await Promise.all([
       supabase.from("realtors").select("*"),
       supabase.from("profiles").select("*"),
       supabase.from("user_roles").select("*"),
-      supabase.from("user_properties").select("id, title, city, state, price, status, listing_type, user_id"),
+      supabase.from("user_properties").select("id, title, city, state, price, status, listing_type, user_id, updated_by"),
     ]);
     setRealtors(r.data ?? []);
     setProfiles((p.data ?? []) as UserProfile[]);
@@ -144,6 +153,34 @@ const AdminDashboard = () => {
   if (!user || role !== "admin") return <Navigate to="/" replace />;
 
   const confirm = (action: ConfirmAction) => setConfirmAction(action);
+
+  // Resolve a user_id to a display name/email for the "Updated By" column
+  const updatedByLabel = (uid?: string | null) => {
+    if (!uid) return "—";
+    const p = profiles.find((pr) => pr.user_id === uid);
+    return p?.display_name || p?.email || uid.slice(0, 8);
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUser.email || !newUser.password) { toast.error("Email and password are required"); return; }
+    if (newUser.password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    setCreatingUser(true);
+    const ok = await callAdminAction({
+      action: "create_user",
+      email: newUser.email,
+      password: newUser.password,
+      displayName: newUser.displayName,
+      role: createUserRole,
+    });
+    setCreatingUser(false);
+    if (ok) {
+      toast.success(`${createUserRole} account created`);
+      setCreateUserOpen(false);
+      setNewUser({ email: "", password: "", displayName: "" });
+      fetchAll();
+    }
+  };
+
 
   // ===== Account actions (via admin-actions edge function) =====
   const callAdminAction = async (body: Record<string, unknown>) => {
@@ -450,6 +487,16 @@ const AdminDashboard = () => {
             </Label>
             <Switch id="show-inactive" checked={showInactive} onCheckedChange={setShowInactive} />
           </div>
+          <Button
+            onClick={() => {
+              setCreateUserRole(target);
+              setNewUser({ email: "", password: "", displayName: "" });
+              setCreateUserOpen(true);
+            }}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" /> Create {target === "user" ? "Non-Realtor" : target.charAt(0).toUpperCase() + target.slice(1)}
+          </Button>
         </div>
 
         <div className="rounded-lg border border-border overflow-auto">
@@ -462,6 +509,7 @@ const AdminDashboard = () => {
                 {target === "admin" && <TableHead>Job Title</TableHead>}
                 <TableHead>Location</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Updated By</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -489,6 +537,7 @@ const AdminDashboard = () => {
                       {profile.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{updatedByLabel(profile.updated_by)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" title="Edit" onClick={() => setEditingProfile(profile)}>
@@ -514,7 +563,7 @@ const AdminDashboard = () => {
               ))}
               {list.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={target === "admin" ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={target === "admin" ? 8 : 7} className="text-center py-8 text-muted-foreground">
                     No {showInactive ? "inactive" : "active"} {title.toLowerCase()} found
                   </TableCell>
                 </TableRow>
@@ -587,6 +636,7 @@ const AdminDashboard = () => {
                       <TableHead>Payment</TableHead>
                       <TableHead>Dates</TableHead>
                       <TableHead>Featured</TableHead>
+                      <TableHead>Updated By</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -629,6 +679,7 @@ const AdminDashboard = () => {
                             {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
                           </div>
                         </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{updatedByLabel(realtor.updated_by)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor)}>
@@ -643,7 +694,7 @@ const AdminDashboard = () => {
                     ))}
                     {filteredRealtors.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No realtors found</TableCell>
+                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No realtors found</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -659,13 +710,16 @@ const AdminDashboard = () => {
 
           {/* PROPERTIES TAB */}
           <TabsContent value="properties" className="space-y-4">
-            {selectedPropertyIds.size > 0 && (
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              {selectedPropertyIds.size > 0 && (
                 <Button variant="destructive" size="sm" onClick={bulkDeleteProperties} className="gap-2">
                   <Trash2 className="h-4 w-4" /> Delete {selectedPropertyIds.size} selected
                 </Button>
-              </div>
-            )}
+              )}
+              <Button onClick={() => navigate("/list-property")} className="gap-2 ml-auto">
+                <Plus className="h-4 w-4" /> Create Property
+              </Button>
+            </div>
             <div className="rounded-lg border border-border overflow-auto">
               <Table>
                 <TableHeader>
@@ -681,6 +735,7 @@ const AdminDashboard = () => {
                     <TableHead>Price</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead>Updated By</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -700,6 +755,7 @@ const AdminDashboard = () => {
                         <Badge variant={prop.status === "active" ? "default" : "secondary"}>{prop.status}</Badge>
                       </TableCell>
                       <TableCell className="capitalize">{prop.listing_type}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{updatedByLabel(prop.updated_by)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/edit-property/${prop.id}`)}>
@@ -714,7 +770,7 @@ const AdminDashboard = () => {
                   ))}
                   {properties.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -813,7 +869,40 @@ const AdminDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation Dialog */}
+      {/* Create User Dialog */}
+      <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Create {createUserRole === "user" ? "Non-Realtor" : createUserRole.charAt(0).toUpperCase() + createUserRole.slice(1)} Account
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Display Name</Label>
+              <Input value={newUser.displayName} onChange={(e) => setNewUser({ ...newUser, displayName: e.target.value })} placeholder="Full name" />
+            </div>
+            <div>
+              <Label>Email *</Label>
+              <Input type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} placeholder="user@example.com" />
+            </div>
+            <div>
+              <Label>Temporary Password *</Label>
+              <Input type="text" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} placeholder="Min. 6 characters" />
+              <p className="text-xs text-muted-foreground mt-1">User can reset it later via password recovery.</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setCreateUserOpen(false)} disabled={creatingUser}>Cancel</Button>
+              <Button onClick={handleCreateUser} disabled={creatingUser} className="gap-2">
+                {creatingUser && <Loader2 className="h-4 w-4 animate-spin" />}
+                Create Account
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
