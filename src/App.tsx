@@ -16,6 +16,7 @@ import RealtorDashboard from "./pages/RealtorDashboard.tsx";
 import RealtorProfilePage from "./pages/RealtorProfilePage.tsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
 import FavoritesPage from "./pages/FavoritesPage.tsx";
+import ProfilePage from "./pages/ProfilePage.tsx";
 import SavedRealtorsPage from "./pages/SavedRealtorsPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
