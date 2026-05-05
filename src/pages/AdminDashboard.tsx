@@ -691,7 +691,7 @@ const AdminDashboard = () => {
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Location</TableHead>
-                    <TableHead>Experience</TableHead>
+                    
                     <TableHead>Payment</TableHead>
                     <TableHead>Dates</TableHead>
                     <TableHead>Status</TableHead>
