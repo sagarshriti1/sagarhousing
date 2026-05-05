@@ -77,6 +77,9 @@ const Header = () => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
+                    <Link to='/profile'><User className='h-4 w-4 mr-2' /> My Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to='/my-listings'>My Listings</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
