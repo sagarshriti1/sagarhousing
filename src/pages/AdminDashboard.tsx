@@ -596,14 +596,16 @@ const AdminDashboard = () => {
                       <Button variant="ghost" size="icon" title="Reset password" onClick={() => resetPassword(profile)}>
                         <KeyRound className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title={profile.is_active ? "Deactivate" : "Activate"}
-                        onClick={() => toggleActive(profile)}
-                      >
-                        {profile.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                      </Button>
+                      {target !== "admin" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={profile.is_active ? "Deactivate" : "Activate"}
+                          onClick={() => toggleActive(profile)}
+                        >
+                          {profile.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" className="text-destructive" title="Delete" onClick={() => deleteUser(profile)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
