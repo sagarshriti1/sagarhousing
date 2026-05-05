@@ -600,16 +600,6 @@ const AdminDashboard = () => {
                       <Button variant="ghost" size="icon" title="Reset password" onClick={() => resetPassword(profile)}>
                         <KeyRound className="h-4 w-4" />
                       </Button>
-                      {target !== "admin" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title={profile.is_active ? "Deactivate" : "Activate"}
-                          onClick={() => toggleActive(profile)}
-                        >
-                          {profile.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                        </Button>
-                      )}
                       <Button variant="ghost" size="icon" className="text-destructive" title="Delete" onClick={() => deleteUser(profile)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -941,10 +931,12 @@ const AdminDashboard = () => {
                 <Label>Phone</Label>
                 <Input value={editingProfile.phone ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, phone: e.target.value })} />
               </div>
-              <div>
-                <Label>Job Title</Label>
-                <Input value={editingProfile.job_title ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, job_title: e.target.value })} placeholder="e.g. Senior Agent" />
-              </div>
+              {roles.find((r) => r.user_id === editingProfile.user_id)?.role === "admin" && (
+                <div>
+                  <Label>Job Title</Label>
+                  <Input value={editingProfile.job_title ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, job_title: e.target.value })} placeholder="e.g. Senior Agent" />
+                </div>
+              )}
               <div>
                 <Label>Location</Label>
                 <Input value={editingProfile.location ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, location: e.target.value })} placeholder="e.g. Kathmandu" />
