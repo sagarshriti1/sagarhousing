@@ -869,7 +869,40 @@ const AdminDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation Dialog */}
+      {/* Create User Dialog */}
+      <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Create {createUserRole === "user" ? "Non-Realtor" : createUserRole.charAt(0).toUpperCase() + createUserRole.slice(1)} Account
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Display Name</Label>
+              <Input value={newUser.displayName} onChange={(e) => setNewUser({ ...newUser, displayName: e.target.value })} placeholder="Full name" />
+            </div>
+            <div>
+              <Label>Email *</Label>
+              <Input type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} placeholder="user@example.com" />
+            </div>
+            <div>
+              <Label>Temporary Password *</Label>
+              <Input type="text" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} placeholder="Min. 6 characters" />
+              <p className="text-xs text-muted-foreground mt-1">User can reset it later via password recovery.</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setCreateUserOpen(false)} disabled={creatingUser}>Cancel</Button>
+              <Button onClick={handleCreateUser} disabled={creatingUser} className="gap-2">
+                {creatingUser && <Loader2 className="h-4 w-4 animate-spin" />}
+                Create Account
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
