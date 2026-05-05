@@ -262,7 +262,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                 </Popover>
               </div>
               <div className="space-y-2">
-                <Label>Expiration Date</Label>
+                <Label>Expiration Date *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.expiration_date && "text-muted-foreground")}>
