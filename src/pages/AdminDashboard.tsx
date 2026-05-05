@@ -456,7 +456,9 @@ const AdminDashboard = () => {
         (r.email || "").toLowerCase().includes(q) ||
         (r.phone || "").toLowerCase().includes(q);
       if (!matchSearch) return false;
-      const isActive = r.profile ? r.profile.is_active : true;
+      const profileActive = r.profile ? r.profile.is_active : true;
+      const notExpired = !r.expiration_date || new Date(r.expiration_date) >= new Date(new Date().toDateString());
+      const isActive = profileActive && notExpired;
       return showInactive ? !isActive : isActive;
     });
   })();
