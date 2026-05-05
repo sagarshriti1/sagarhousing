@@ -16,7 +16,11 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
-import { Upload, X, Plus, Loader2 } from 'lucide-react';
+import { Upload, X, Plus, Loader2, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } from '@/data/nepalLocations';
 import SearchableCombobox from '@/components/SearchableCombobox';
 
