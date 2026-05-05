@@ -570,7 +570,7 @@ const ListPropertyPage = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Stay on page</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setIsDirty(false); setConfirmBackOpen(false); navigate(-1); }}>
+            <AlertDialogAction onClick={() => { setIsDirty(false); setConfirmBackOpen(false); goBack(); }}>
               Discard & leave
             </AlertDialogAction>
           </AlertDialogFooter>
