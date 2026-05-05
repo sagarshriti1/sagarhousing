@@ -665,7 +665,7 @@ const AdminDashboard = () => {
 
             <div className="flex items-center gap-4 flex-wrap">
               <h2 className="font-display text-xl font-semibold text-foreground flex items-center gap-2">
-                <Users className="h-5 w-5" /> Realtor Listings (Public Profiles)
+                <Users className="h-5 w-5" /> Realtor Listings
               </h2>
               <p className="text-sm text-muted-foreground">
                 {realtors.filter((r) => r.is_featured).length} featured
@@ -691,7 +691,7 @@ const AdminDashboard = () => {
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Location</TableHead>
-                    <TableHead>Experience</TableHead>
+                    
                     <TableHead>Payment</TableHead>
                     <TableHead>Dates</TableHead>
                     <TableHead>Status</TableHead>
@@ -727,7 +727,7 @@ const AdminDashboard = () => {
                       <TableCell className="text-muted-foreground">{realtor.email || "—"}</TableCell>
                       <TableCell>{realtor.phone || "—"}</TableCell>
                       <TableCell>{realtor.city}{realtor.district ? `, ${realtor.district}` : ""}</TableCell>
-                      <TableCell>{realtor.years_experience ?? "—"} yrs</TableCell>
+                      
                       <TableCell>{getPaymentBadge(realtor.payment_status)}</TableCell>
                       <TableCell>
                         <div className="text-xs space-y-0.5">
@@ -774,7 +774,7 @@ const AdminDashboard = () => {
                   })}
                   {filteredRealtors.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">No realtors found</TableCell>
+                      <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No realtors found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
