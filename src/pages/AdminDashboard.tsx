@@ -770,7 +770,7 @@ const AdminDashboard = () => {
                   ))}
                   {properties.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
