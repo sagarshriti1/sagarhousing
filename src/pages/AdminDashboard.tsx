@@ -418,19 +418,49 @@ const AdminDashboard = () => {
     });
   };
 
-  const filteredRealtors = realtors.filter((r) => {
+  // Unified list: realtor listings + realtor-role accounts without a listing
+  const unifiedRealtors = (() => {
     const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      r.name.toLowerCase().includes(q) ||
-      r.city.toLowerCase().includes(q) ||
-      (r.email || "").toLowerCase().includes(q) ||
-      (r.phone || "").toLowerCase().includes(q);
-    if (!matchSearch) return false;
-    const linkedProfile = r.user_id ? profiles.find((p) => p.user_id === r.user_id) : null;
-    const isActive = linkedProfile ? linkedProfile.is_active : true;
-    return showInactive ? !isActive : isActive;
-  });
+    const realtorRoleProfiles = profiles.filter((p) => {
+      const ur = roles.find((r) => r.user_id === p.user_id);
+      return ur?.role === "realtor";
+    });
+    const linkedUserIds = new Set(realtors.map((r) => r.user_id).filter(Boolean) as string[]);
+    const orphanProfiles = realtorRoleProfiles
+      .filter((p) => !linkedUserIds.has(p.user_id))
+      .map((p) => ({
+        id: `profile-${p.id}`,
+        isProfileOnly: true as const,
+        profile: p,
+        name: p.display_name || p.email || "Unnamed",
+        email: p.email,
+        phone: p.phone,
+        photo_url: p.avatar_url,
+        city: p.location || "",
+        district: "",
+        years_experience: null,
+        payment_status: "—",
+        start_date: null,
+        expiration_date: null,
+        is_featured: false,
+        updated_by: p.updated_by,
+        user_id: p.user_id,
+      }));
+    const realtorRows = realtors.map((r) => ({ ...r, isProfileOnly: false as const, profile: profiles.find((p) => p.user_id === r.user_id) || null }));
+    const all = [...realtorRows, ...orphanProfiles];
+    return all.filter((r: any) => {
+      const matchSearch =
+        !q ||
+        (r.name || "").toLowerCase().includes(q) ||
+        (r.city || "").toLowerCase().includes(q) ||
+        (r.email || "").toLowerCase().includes(q) ||
+        (r.phone || "").toLowerCase().includes(q);
+      if (!matchSearch) return false;
+      const isActive = r.profile ? r.profile.is_active : true;
+      return showInactive ? !isActive : isActive;
+    });
+  })();
+  const filteredRealtors = unifiedRealtors;
 
   const getProfilesByRole = (target: "admin" | "realtor" | "user") => {
     return profiles.filter((profile) => {
@@ -711,20 +741,32 @@ const AdminDashboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch checked={realtor.is_featured} onCheckedChange={() => toggleFeatured(realtor)} />
-                          {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                        </div>
+                        {realtor.isProfileOnly ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Switch checked={realtor.is_featured} onCheckedChange={() => toggleFeatured(realtor as Realtor)} />
+                            {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{updatedByLabel(realtor.updated_by)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {realtor.isProfileOnly ? (
+                            <Button variant="ghost" size="icon" title="Edit profile" onClick={() => setEditingProfile(realtor.profile!)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor as Realtor)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
