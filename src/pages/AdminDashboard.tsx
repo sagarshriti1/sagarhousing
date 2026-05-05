@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -29,13 +28,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -43,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2 } from "lucide-react";
+import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RealtorFormDialog, { type RealtorFormData } from "@/components/admin/RealtorFormDialog";
@@ -78,6 +70,7 @@ interface UserProfile {
   avatar_url: string | null;
   job_title: string | null;
   location: string | null;
+  is_active: boolean;
 }
 
 interface UserRole {
@@ -112,9 +105,11 @@ const AdminDashboard = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
-  const [dataLoading, setDataLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Show inactive toggle (per-tab)
+  const [showInactive, setShowInactive] = useState(false);
 
   // Realtor form dialog state
   const [realtorDialogOpen, setRealtorDialogOpen] = useState(false);
@@ -129,7 +124,6 @@ const AdminDashboard = () => {
   const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(new Set());
 
   const fetchAll = async () => {
-    setDataLoading(true);
     const [r, p, ro, pr] = await Promise.all([
       supabase.from("realtors").select("*"),
       supabase.from("profiles").select("*"),
@@ -137,10 +131,9 @@ const AdminDashboard = () => {
       supabase.from("user_properties").select("id, title, city, state, price, status, listing_type, user_id"),
     ]);
     setRealtors(r.data ?? []);
-    setProfiles(p.data ?? []);
+    setProfiles((p.data ?? []) as UserProfile[]);
     setRoles(ro.data ?? []);
     setProperties(pr.data ?? []);
-    setDataLoading(false);
   };
 
   useEffect(() => {
@@ -152,6 +145,59 @@ const AdminDashboard = () => {
 
   const confirm = (action: ConfirmAction) => setConfirmAction(action);
 
+  // ===== Account actions (via admin-actions edge function) =====
+  const callAdminAction = async (body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke("admin-actions", { body });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Action failed");
+      return false;
+    }
+    return true;
+  };
+
+  const resetPassword = (profile: UserProfile) => {
+    if (!profile.email) { toast.error("No email on file"); return; }
+    confirm({
+      title: "Send Password Reset",
+      description: `Send a password reset email to "${profile.email}"?`,
+      onConfirm: async () => {
+        const ok = await callAdminAction({ action: "reset_password", email: profile.email });
+        if (ok) toast.success("Password reset email sent");
+      },
+    });
+  };
+
+  const toggleActive = (profile: UserProfile) => {
+    const action = profile.is_active ? "deactivate" : "activate";
+    confirm({
+      title: profile.is_active ? "Deactivate Account" : "Activate Account",
+      description: `Are you sure you want to ${action} "${profile.display_name || profile.email || "this user"}"?`,
+      onConfirm: async () => {
+        const ok = await callAdminAction({ action, userId: profile.user_id });
+        if (ok) {
+          toast.success(`Account ${action}d`);
+          setProfiles((prev) => prev.map((p) => p.user_id === profile.user_id ? { ...p, is_active: !profile.is_active } : p));
+        }
+      },
+    });
+  };
+
+  const deleteUser = (profile: UserProfile) => {
+    confirm({
+      title: "Delete User Account",
+      description: `Permanently delete "${profile.display_name || profile.email || "this user"}"? This cannot be undone.`,
+      onConfirm: async () => {
+        const ok = await callAdminAction({ action: "delete_user", userId: profile.user_id });
+        if (ok) {
+          toast.success("User deleted");
+          setProfiles((prev) => prev.filter((p) => p.user_id !== profile.user_id));
+          setRoles((prev) => prev.filter((r) => r.user_id !== profile.user_id));
+        }
+      },
+    });
+  };
+
+  // ===== Realtor table actions =====
   const toggleFeatured = (realtor: Realtor) => {
     const action = realtor.is_featured ? "unfeature" : "feature";
     confirm({
@@ -165,9 +211,7 @@ const AdminDashboard = () => {
         if (error) toast.error("Failed to update featured status");
         else {
           toast.success(realtor.is_featured ? "Realtor unfeatured" : "Realtor featured!");
-          setRealtors((prev) =>
-            prev.map((r) => (r.id === realtor.id ? { ...r, is_featured: !r.is_featured } : r))
-          );
+          setRealtors((prev) => prev.map((r) => (r.id === realtor.id ? { ...r, is_featured: !r.is_featured } : r)));
         }
       },
     });
@@ -275,14 +319,7 @@ const AdminDashboard = () => {
     } else {
       const { data: newData, error } = await supabase.from("realtors").insert(payload).select().single();
       if (error) { toast.error("Failed to create realtor"); return; }
-      toast.success("Realtor created!", {
-        description: data.payment_status === "paid"
-          ? "Payment of Rs. 5,000 confirmed. Confirmation will be sent to realtor's email."
-          : data.payment_bypassed
-            ? "Payment was bypassed by admin."
-            : "Payment is pending.",
-        duration: 5000,
-      });
+      toast.success("Realtor created!");
       setRealtors((prev) => [...prev, newData as Realtor]);
       setRealtorDialogOpen(false);
     }
@@ -301,27 +338,6 @@ const AdminDashboard = () => {
           toast.success("Profile updated");
           setProfiles((prev) => prev.map((p) => (p.id === id ? editingProfile : p)));
           setEditingProfile(null);
-        }
-      },
-    });
-  };
-
-  const changeRole = (userId: string, newRole: "admin" | "realtor" | "user") => {
-    const profile = profiles.find((p) => p.user_id === userId);
-    confirm({
-      title: "Change User Role",
-      description: `Are you sure you want to change "${profile?.display_name || "this user"}"'s role to "${newRole}"?`,
-      onConfirm: async () => {
-        const { error } = await supabase
-          .from("user_roles")
-          .update({ role: newRole })
-          .eq("user_id", userId);
-        if (error) toast.error("Failed to update role");
-        else {
-          toast.success("Role updated");
-          setRoles((prev) =>
-            prev.map((r) => (r.user_id === userId ? { ...r, role: newRole } : r))
-          );
         }
       },
     });
@@ -368,6 +384,24 @@ const AdminDashboard = () => {
       r.city.toLowerCase().includes(search.toLowerCase())
   );
 
+  const getProfilesByRole = (target: "admin" | "realtor" | "user") => {
+    return profiles.filter((profile) => {
+      const userRole = roles.find((r) => r.user_id === profile.user_id);
+      const matchRole = target === "user"
+        ? (!userRole || userRole.role === "user")
+        : userRole?.role === target;
+      if (!matchRole) return false;
+      const matchActive = showInactive ? !profile.is_active : profile.is_active;
+      if (!matchActive) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        return (profile.display_name || "").toLowerCase().includes(q) ||
+          (profile.email || "").toLowerCase().includes(q);
+      }
+      return true;
+    });
+  };
+
   const getPaymentBadge = (status: string) => {
     if (status === "paid") return <Badge variant="default">Paid</Badge>;
     if (status === "bypassed") return <Badge variant="secondary">Bypassed</Badge>;
@@ -383,11 +417,8 @@ const AdminDashboard = () => {
   };
 
   const toggleAllRealtors = () => {
-    if (selectedRealtorIds.size === filteredRealtors.length) {
-      setSelectedRealtorIds(new Set());
-    } else {
-      setSelectedRealtorIds(new Set(filteredRealtors.map((r) => r.id)));
-    }
+    if (selectedRealtorIds.size === filteredRealtors.length) setSelectedRealtorIds(new Set());
+    else setSelectedRealtorIds(new Set(filteredRealtors.map((r) => r.id)));
   };
 
   const togglePropertySelection = (id: string) => {
@@ -399,11 +430,100 @@ const AdminDashboard = () => {
   };
 
   const toggleAllProperties = () => {
-    if (selectedPropertyIds.size === properties.length) {
-      setSelectedPropertyIds(new Set());
-    } else {
-      setSelectedPropertyIds(new Set(properties.map((p) => p.id)));
-    }
+    if (selectedPropertyIds.size === properties.length) setSelectedPropertyIds(new Set());
+    else setSelectedPropertyIds(new Set(properties.map((p) => p.id)));
+  };
+
+  // Reusable user-account table
+  const renderAccountsTable = (target: "admin" | "realtor" | "user", title: string) => {
+    const list = getProfilesByRole(target);
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder={`Search ${title.toLowerCase()}...`} className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <Label htmlFor="show-inactive" className="text-sm text-muted-foreground">
+              {showInactive ? "Showing inactive" : "Showing active"}
+            </Label>
+            <Switch id="show-inactive" checked={showInactive} onCheckedChange={setShowInactive} />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                {target === "admin" && <TableHead>Job Title</TableHead>}
+                <TableHead>Location</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {list.map((profile) => (
+                <TableRow key={profile.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
+                        {profile.avatar_url ? (
+                          <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          (profile.display_name || profile.email || "?").charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <p className="font-medium text-foreground">{profile.display_name || "Unnamed"}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{profile.email || "—"}</TableCell>
+                  <TableCell>{profile.phone || "—"}</TableCell>
+                  {target === "admin" && <TableCell>{profile.job_title || "—"}</TableCell>}
+                  <TableCell>{profile.location || "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant={profile.is_active ? "default" : "secondary"}>
+                      {profile.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" title="Edit" onClick={() => setEditingProfile(profile)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Reset password" onClick={() => resetPassword(profile)}>
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={profile.is_active ? "Deactivate" : "Activate"}
+                        onClick={() => toggleActive(profile)}
+                      >
+                        {profile.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" title="Delete" onClick={() => deleteUser(profile)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {list.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={target === "admin" ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                    No {showInactive ? "inactive" : "active"} {title.toLowerCase()} found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -415,163 +535,126 @@ const AdminDashboard = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Admin Dashboard</h1>
         </div>
 
-        <Tabs defaultValue="realtors" className="space-y-6">
+        <Tabs defaultValue="admins" className="space-y-6" onValueChange={() => { setSearch(""); setShowInactive(false); }}>
           <TabsList>
+            <TabsTrigger value="admins" className="gap-2"><Shield className="h-4 w-4" /> Admins</TabsTrigger>
             <TabsTrigger value="realtors" className="gap-2"><MapPin className="h-4 w-4" /> Realtors</TabsTrigger>
-            <TabsTrigger value="users" className="gap-2"><Users className="h-4 w-4" /> Users & Roles</TabsTrigger>
+            <TabsTrigger value="non-realtors" className="gap-2"><User className="h-4 w-4" /> Non-Realtors</TabsTrigger>
             <TabsTrigger value="properties" className="gap-2"><Home className="h-4 w-4" /> Properties</TabsTrigger>
           </TabsList>
 
-          {/* REALTORS TAB */}
-          <TabsContent value="realtors" className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search realtors..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {realtors.filter((r) => r.is_featured).length} featured
-              </p>
-              {selectedRealtorIds.size > 0 && (
-                <Button variant="destructive" size="sm" onClick={bulkDeleteRealtors} className="gap-2">
-                  <Trash2 className="h-4 w-4" /> Delete {selectedRealtorIds.size} selected
-                </Button>
-              )}
-              <Button onClick={handleOpenCreate} className="gap-2">
-                <Plus className="h-4 w-4" /> Create Realtor
-              </Button>
-            </div>
-
-            <div className="rounded-lg border border-border overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={filteredRealtors.length > 0 && selectedRealtorIds.size === filteredRealtors.length}
-                        onCheckedChange={toggleAllRealtors}
-                      />
-                    </TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Experience</TableHead>
-                    <TableHead>Payment</TableHead>
-                    <TableHead>Dates</TableHead>
-                    <TableHead>Featured</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRealtors.map((realtor) => (
-                    <TableRow key={realtor.id} className={selectedRealtorIds.has(realtor.id) ? "bg-muted/50" : ""}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedRealtorIds.has(realtor.id)}
-                          onCheckedChange={() => toggleRealtorSelection(realtor.id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
-                            {realtor.photo_url ? (
-                              <img src={realtor.photo_url} alt="" className="h-full w-full object-cover" />
-                            ) : (
-                              realtor.name.charAt(0).toUpperCase()
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium text-foreground">{realtor.name}</p>
-                            <p className="text-xs text-muted-foreground">{realtor.email}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{realtor.city}{realtor.district ? `, ${realtor.district}` : ""}</TableCell>
-                      <TableCell>{realtor.years_experience ?? "—"} yrs</TableCell>
-                      <TableCell>{getPaymentBadge(realtor.payment_status)}</TableCell>
-                      <TableCell>
-                        <div className="text-xs space-y-0.5">
-                          <p>{realtor.start_date ? format(new Date(realtor.start_date), "MMM d, yyyy") : "No start"}</p>
-                          <p className="text-muted-foreground">{realtor.expiration_date ? format(new Date(realtor.expiration_date), "MMM d, yyyy") : "No expiry"}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch checked={realtor.is_featured} onCheckedChange={() => toggleFeatured(realtor)} />
-                          {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredRealtors.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                        No realtors found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+          {/* ADMINS TAB */}
+          <TabsContent value="admins">
+            {renderAccountsTable("admin", "Admins")}
           </TabsContent>
 
-          {/* USERS TAB */}
-          <TabsContent value="users" className="space-y-4">
-            <div className="rounded-lg border border-border overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Admin</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Job Title</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {profiles
-                    .filter((profile) => {
-                      const userRole = roles.find((r) => r.user_id === profile.user_id);
-                      return userRole?.role === "admin";
-                    })
-                    .map((profile) => (
-                      <TableRow key={profile.id}>
+          {/* REALTORS TAB - account list */}
+          <TabsContent value="realtors" className="space-y-6">
+            {renderAccountsTable("realtor", "Realtors")}
+
+            {/* Realtor profile listings management */}
+            <div className="space-y-4 pt-4 border-t border-border">
+              <div className="flex items-center gap-4 flex-wrap">
+                <h2 className="font-display text-xl font-semibold text-foreground flex items-center gap-2">
+                  <Users className="h-5 w-5" /> Realtor Listings (Public Profiles)
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {realtors.filter((r) => r.is_featured).length} featured
+                </p>
+                {selectedRealtorIds.size > 0 && (
+                  <Button variant="destructive" size="sm" onClick={bulkDeleteRealtors} className="gap-2">
+                    <Trash2 className="h-4 w-4" /> Delete {selectedRealtorIds.size} selected
+                  </Button>
+                )}
+                <Button onClick={handleOpenCreate} className="gap-2 ml-auto">
+                  <Plus className="h-4 w-4" /> Create Realtor
+                </Button>
+              </div>
+
+              <div className="rounded-lg border border-border overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={filteredRealtors.length > 0 && selectedRealtorIds.size === filteredRealtors.length}
+                          onCheckedChange={toggleAllRealtors}
+                        />
+                      </TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Experience</TableHead>
+                      <TableHead>Payment</TableHead>
+                      <TableHead>Dates</TableHead>
+                      <TableHead>Featured</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRealtors.map((realtor) => (
+                      <TableRow key={realtor.id} className={selectedRealtorIds.has(realtor.id) ? "bg-muted/50" : ""}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedRealtorIds.has(realtor.id)}
+                            onCheckedChange={() => toggleRealtorSelection(realtor.id)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
-                              {profile.avatar_url ? (
-                                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                              {realtor.photo_url ? (
+                                <img src={realtor.photo_url} alt="" className="h-full w-full object-cover" />
                               ) : (
-                                (profile.display_name || "?").charAt(0).toUpperCase()
+                                realtor.name.charAt(0).toUpperCase()
                               )}
                             </div>
-                            <p className="font-medium text-foreground">{profile.display_name || "Unnamed"}</p>
+                            <div>
+                              <p className="font-medium text-foreground">{realtor.name}</p>
+                              <p className="text-xs text-muted-foreground">{realtor.email}</p>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{profile.email || "—"}</TableCell>
-                        <TableCell>{profile.phone || "—"}</TableCell>
-                        <TableCell>{profile.job_title || "—"}</TableCell>
-                        <TableCell>{profile.location || "—"}</TableCell>
+                        <TableCell>{realtor.city}{realtor.district ? `, ${realtor.district}` : ""}</TableCell>
+                        <TableCell>{realtor.years_experience ?? "—"} yrs</TableCell>
+                        <TableCell>{getPaymentBadge(realtor.payment_status)}</TableCell>
+                        <TableCell>
+                          <div className="text-xs space-y-0.5">
+                            <p>{realtor.start_date ? format(new Date(realtor.start_date), "MMM d, yyyy") : "No start"}</p>
+                            <p className="text-muted-foreground">{realtor.expiration_date ? format(new Date(realtor.expiration_date), "MMM d, yyyy") : "No expiry"}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Switch checked={realtor.is_featured} onCheckedChange={() => toggleFeatured(realtor)} />
+                            {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" onClick={() => setEditingProfile(profile)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
-                </TableBody>
-              </Table>
+                    {filteredRealtors.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No realtors found</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
+          </TabsContent>
+
+          {/* NON-REALTORS TAB */}
+          <TabsContent value="non-realtors">
+            {renderAccountsTable("user", "Non-Realtors")}
           </TabsContent>
 
           {/* PROPERTIES TAB */}
@@ -655,7 +738,7 @@ const AdminDashboard = () => {
       <Dialog open={!!editingProfile} onOpenChange={(open) => !open && setEditingProfile(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Admin Profile</DialogTitle>
+            <DialogTitle>Edit User Profile</DialogTitle>
           </DialogHeader>
           {editingProfile && (
             <div className="space-y-4">
@@ -693,14 +776,7 @@ const AdminDashboard = () => {
                         setUploadingAvatar(false);
                       }}
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={uploadingAvatar}
-                      onClick={() => avatarInputRef.current?.click()}
-                      className="gap-2"
-                    >
+                    <Button type="button" variant="outline" size="sm" disabled={uploadingAvatar} onClick={() => avatarInputRef.current?.click()} className="gap-2">
                       {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                       {uploadingAvatar ? "Uploading..." : "Upload Photo"}
                     </Button>
