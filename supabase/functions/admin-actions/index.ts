@@ -49,7 +49,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { action, userId, email } = await req.json();
+    const { action, userId, email, password, displayName, role } = await req.json();
+
+    if (action === "create_user") {
+      if (!email || !password || !role) {
+        return new Response(JSON.stringify({ error: "email, password, role are required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { display_name: displayName ?? "", role },
+      });
+      if (createErr || !created.user) {
+        return new Response(JSON.stringify({ error: createErr?.message ?? "Failed to create user" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Ensure role row reflects requested role (handle_new_user_role inserts default)
+      await supabase.from("user_roles").upsert(
+        { user_id: created.user.id, role },
+        { onConflict: "user_id" }
+      );
+      return new Response(JSON.stringify({ success: true, userId: created.user.id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     if (action === "reset_password") {
       if (!email) {
