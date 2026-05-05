@@ -181,6 +181,16 @@ const ListPropertyPage = () => {
       return;
     }
 
+    if (isAdmin) {
+      if (!paymentDate || !expirationDate) {
+        toast.error('Start date and expiration date are required');
+        return;
+      }
+      if (new Date(paymentDate) >= new Date(expirationDate)) {
+        toast.error('Start date must be earlier than expiration date');
+        return;
+      }
+    }
     setLoading(true);
     try {
       const newImageUrls: string[] = [];
