@@ -110,6 +110,10 @@ const ListPropertyPage = () => {
       });
       setSelectedFeatures(data.features ?? []);
       setExistingImages(data.images ?? []);
+      const pd = (data as any).payment_date;
+      const ed = (data as any).expiration_date;
+      setPaymentDate(pd ? format(new Date(pd), 'yyyy-MM-dd') : null);
+      setExpirationDate(ed ? format(new Date(ed), 'yyyy-MM-dd') : null);
       setFetching(false);
     };
     fetchProperty();
