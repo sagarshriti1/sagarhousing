@@ -48,6 +48,7 @@ export type Database = {
           location: string | null
           phone: string | null
           updated_at: string
+          updated_by: string | null
           user_id: string
         }
         Insert: {
@@ -62,6 +63,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           updated_at?: string
+          updated_by?: string | null
           user_id: string
         }
         Update: {
@@ -76,6 +78,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           updated_at?: string
+          updated_by?: string | null
           user_id?: string
         }
         Relationships: []
@@ -100,6 +103,7 @@ export type Database = {
           start_date: string | null
           state: string
           updated_at: string
+          updated_by: string | null
           user_id: string | null
           years_experience: number | null
         }
@@ -122,6 +126,7 @@ export type Database = {
           start_date?: string | null
           state: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
           years_experience?: number | null
         }
@@ -144,6 +149,7 @@ export type Database = {
           start_date?: string | null
           state?: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
           years_experience?: number | null
         }
@@ -198,6 +204,7 @@ export type Database = {
           stories: number | null
           title: string
           updated_at: string
+          updated_by: string | null
           user_id: string
           year_built: number | null
           zip_code: string
@@ -229,6 +236,7 @@ export type Database = {
           stories?: number | null
           title: string
           updated_at?: string
+          updated_by?: string | null
           user_id: string
           year_built?: number | null
           zip_code?: string
@@ -260,6 +268,7 @@ export type Database = {
           stories?: number | null
           title?: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string
           year_built?: number | null
           zip_code?: string
@@ -270,16 +279,19 @@ export type Database = {
         Row: {
           id: string
           role: Database["public"]["Enums"]["app_role"]
+          updated_by: string | null
           user_id: string
         }
         Insert: {
           id?: string
           role: Database["public"]["Enums"]["app_role"]
+          updated_by?: string | null
           user_id: string
         }
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          updated_by?: string | null
           user_id?: string
         }
         Relationships: []
