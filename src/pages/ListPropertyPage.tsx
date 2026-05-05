@@ -291,6 +291,9 @@ const ListPropertyPage = () => {
     <div className='min-h-screen flex flex-col'>
       <Header />
       <main className='flex-1 container py-8 max-w-3xl'>
+        <Button type='button' variant='ghost' onClick={handleBack} className='mb-4 -ml-3 gap-2'>
+          <ArrowLeft className='h-4 w-4' /> Back
+        </Button>
         <h1 className='font-display text-3xl font-bold text-foreground mb-2'>
           {isEdit ? 'Edit Listing' : 'List Your Property'}
         </h1>
