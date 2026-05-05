@@ -741,20 +741,32 @@ const AdminDashboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch checked={realtor.is_featured} onCheckedChange={() => toggleFeatured(realtor)} />
-                          {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                        </div>
+                        {realtor.isProfileOnly ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Switch checked={realtor.is_featured} onCheckedChange={() => toggleFeatured(realtor as Realtor)} />
+                            {realtor.is_featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{updatedByLabel(realtor.updated_by)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {realtor.isProfileOnly ? (
+                            <Button variant="ghost" size="icon" title="Edit profile" onClick={() => setEditingProfile(realtor.profile!)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor as Realtor)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
