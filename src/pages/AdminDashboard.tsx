@@ -879,6 +879,9 @@ const AdminDashboard = () => {
                 </TableBody>
               </Table>
             </div>
+            </>
+              );
+            })()}
           </TabsContent>
         </Tabs>
       </main>
