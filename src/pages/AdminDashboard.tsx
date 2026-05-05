@@ -905,6 +905,7 @@ const AdminDashboard = () => {
             <div>
               <Label>Location</Label>
               <Input value={newUser.location} onChange={(e) => setNewUser({ ...newUser, location: e.target.value })} placeholder="e.g. Kathmandu" />
+            </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCreateUserOpen(false)} disabled={creatingUser}>Cancel</Button>
               <Button onClick={handleCreateUser} disabled={creatingUser} className="gap-2">
