@@ -129,7 +129,9 @@ const AdminDashboard = () => {
   // Create User dialog
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserRole, setCreateUserRole] = useState<"admin" | "realtor" | "user">("user");
-  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
+  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
+  const [uploadingNewUserAvatar, setUploadingNewUserAvatar] = useState(false);
+  const newUserAvatarInputRef = useRef<HTMLInputElement>(null);
   const [creatingUser, setCreatingUser] = useState(false);
 
   const fetchAll = async () => {
@@ -173,13 +175,14 @@ const AdminDashboard = () => {
       phone: newUser.phone,
       jobTitle: newUser.jobTitle,
       location: newUser.location,
+      avatarUrl: newUser.avatarUrl,
       role: createUserRole,
     });
     setCreatingUser(false);
     if (ok) {
       toast.success(`${createUserRole} account created`);
       setCreateUserOpen(false);
-      setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
+      setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
       fetchAll();
     }
   };
@@ -539,7 +542,7 @@ const AdminDashboard = () => {
             <Button
               onClick={() => {
                 setCreateUserRole(target);
-                setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
+                setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
                 setCreateUserOpen(true);
               }}
               className="gap-2"
@@ -973,8 +976,50 @@ const AdminDashboard = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {createUserRole === "user" && (
+              <div>
+                <Label>Profile Photo</Label>
+                <div className="flex items-center gap-4 mt-1">
+                  <div className="h-16 w-16 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+                    {newUser.avatarUrl ? (
+                      <img src={newUser.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <input
+                      ref={newUserAvatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (!file.type.startsWith("image/")) { toast.error("Please select an image"); return; }
+                        if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+                        setUploadingNewUserAvatar(true);
+                        const ext = file.name.split(".").pop();
+                        const filePath = `new-${Date.now()}/avatar.${ext}`;
+                        const { error } = await supabase.storage.from("realtor-photos").upload(filePath, file, { upsert: true });
+                        if (error) { toast.error("Failed to upload photo"); setUploadingNewUserAvatar(false); return; }
+                        const { data: urlData } = supabase.storage.from("realtor-photos").getPublicUrl(filePath);
+                        setNewUser({ ...newUser, avatarUrl: urlData.publicUrl });
+                        toast.success("Photo uploaded!");
+                        setUploadingNewUserAvatar(false);
+                      }}
+                    />
+                    <Button type="button" variant="outline" size="sm" disabled={uploadingNewUserAvatar} onClick={() => newUserAvatarInputRef.current?.click()} className="gap-2">
+                      {uploadingNewUserAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                      {uploadingNewUserAvatar ? "Uploading..." : "Upload Photo"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">JPG, PNG or WebP. Max 5MB.</p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div>
-              <Label>Display Name</Label>
+              <Label>{createUserRole === "user" ? "Name" : "Display Name"}</Label>
               <Input value={newUser.displayName} onChange={(e) => setNewUser({ ...newUser, displayName: e.target.value })} placeholder="Full name" />
             </div>
             <div>
@@ -990,10 +1035,12 @@ const AdminDashboard = () => {
               <Label>Phone</Label>
               <Input value={newUser.phone} onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })} placeholder="e.g. 98XXXXXXXX" />
             </div>
-            <div>
-              <Label>Job Title</Label>
-              <Input value={newUser.jobTitle} onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })} placeholder="e.g. Senior Agent" />
-            </div>
+            {createUserRole !== "user" && (
+              <div>
+                <Label>Job Title</Label>
+                <Input value={newUser.jobTitle} onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })} placeholder="e.g. Senior Agent" />
+              </div>
+            )}
             <div>
               <Label>Location</Label>
               <Input value={newUser.location} onChange={(e) => setNewUser({ ...newUser, location: e.target.value })} placeholder="e.g. Kathmandu" />
