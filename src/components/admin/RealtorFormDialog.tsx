@@ -142,11 +142,11 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div>
-              <Label>Email</Label>
-              <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Label>Email *</Label>
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <Label>Phone</Label>
+              <Label>Phone *</Label>
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div>
