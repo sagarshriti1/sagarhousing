@@ -710,13 +710,16 @@ const AdminDashboard = () => {
 
           {/* PROPERTIES TAB */}
           <TabsContent value="properties" className="space-y-4">
-            {selectedPropertyIds.size > 0 && (
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              {selectedPropertyIds.size > 0 && (
                 <Button variant="destructive" size="sm" onClick={bulkDeleteProperties} className="gap-2">
                   <Trash2 className="h-4 w-4" /> Delete {selectedPropertyIds.size} selected
                 </Button>
-              </div>
-            )}
+              )}
+              <Button onClick={() => navigate("/list-property")} className="gap-2 ml-auto">
+                <Plus className="h-4 w-4" /> Create Property
+              </Button>
+            </div>
             <div className="rounded-lg border border-border overflow-auto">
               <Table>
                 <TableHeader>
