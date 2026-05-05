@@ -71,10 +71,10 @@ Deno.serve(async (req) => {
         });
       }
       // Ensure role row reflects requested role (handle_new_user_role inserts default)
-      await supabase.from("user_roles").upsert(
-        { user_id: created.user.id, role },
-        { onConflict: "user_id" }
-      );
+      // Replace default role with requested role
+      await supabase.from("user_roles").delete().eq("user_id", created.user.id);
+      await supabase.from("user_roles").insert({ user_id: created.user.id, role });
+
       return new Response(JSON.stringify({ success: true, userId: created.user.id }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
