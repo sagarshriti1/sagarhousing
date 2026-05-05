@@ -39,6 +39,15 @@ import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RealtorFormDialog, { type RealtorFormData } from "@/components/admin/RealtorFormDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
+
+const parseLocation = (loc: string | null | undefined): { city: string; district: string } => {
+  if (!loc) return { city: "", district: "" };
+  const [city = "", district = ""] = loc.split(",").map((s) => s.trim());
+  return { city, district };
+};
+const joinLocation = (city: string, district: string) => [city, district].filter(Boolean).join(", ");
 
 interface Realtor {
   id: string;
