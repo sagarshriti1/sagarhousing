@@ -894,6 +894,17 @@ const AdminDashboard = () => {
               <Input type="text" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} placeholder="Min. 6 characters" />
               <p className="text-xs text-muted-foreground mt-1">User can reset it later via password recovery.</p>
             </div>
+            <div>
+              <Label>Phone</Label>
+              <Input value={newUser.phone} onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })} placeholder="e.g. 98XXXXXXXX" />
+            </div>
+            <div>
+              <Label>Job Title</Label>
+              <Input value={newUser.jobTitle} onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })} placeholder="e.g. Senior Agent" />
+            </div>
+            <div>
+              <Label>Location</Label>
+              <Input value={newUser.location} onChange={(e) => setNewUser({ ...newUser, location: e.target.value })} placeholder="e.g. Kathmandu" />
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCreateUserOpen(false)} disabled={creatingUser}>Cancel</Button>
               <Button onClick={handleCreateUser} disabled={creatingUser} className="gap-2">
