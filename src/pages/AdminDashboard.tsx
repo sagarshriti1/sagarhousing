@@ -129,7 +129,7 @@ const AdminDashboard = () => {
   // Create User dialog
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserRole, setCreateUserRole] = useState<"admin" | "realtor" | "user">("user");
-  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "" });
+  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
   const [creatingUser, setCreatingUser] = useState(false);
 
   const fetchAll = async () => {
@@ -170,13 +170,16 @@ const AdminDashboard = () => {
       email: newUser.email,
       password: newUser.password,
       displayName: newUser.displayName,
+      phone: newUser.phone,
+      jobTitle: newUser.jobTitle,
+      location: newUser.location,
       role: createUserRole,
     });
     setCreatingUser(false);
     if (ok) {
       toast.success(`${createUserRole} account created`);
       setCreateUserOpen(false);
-      setNewUser({ email: "", password: "", displayName: "" });
+      setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
       fetchAll();
     }
   };
@@ -490,7 +493,7 @@ const AdminDashboard = () => {
           <Button
             onClick={() => {
               setCreateUserRole(target);
-              setNewUser({ email: "", password: "", displayName: "" });
+              setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
               setCreateUserOpen(true);
             }}
             className="gap-2"
@@ -890,6 +893,18 @@ const AdminDashboard = () => {
               <Label>Temporary Password *</Label>
               <Input type="text" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} placeholder="Min. 6 characters" />
               <p className="text-xs text-muted-foreground mt-1">User can reset it later via password recovery.</p>
+            </div>
+            <div>
+              <Label>Phone</Label>
+              <Input value={newUser.phone} onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })} placeholder="e.g. 98XXXXXXXX" />
+            </div>
+            <div>
+              <Label>Job Title</Label>
+              <Input value={newUser.jobTitle} onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })} placeholder="e.g. Senior Agent" />
+            </div>
+            <div>
+              <Label>Location</Label>
+              <Input value={newUser.location} onChange={(e) => setNewUser({ ...newUser, location: e.target.value })} placeholder="e.g. Kathmandu" />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCreateUserOpen(false)} disabled={creatingUser}>Cancel</Button>
