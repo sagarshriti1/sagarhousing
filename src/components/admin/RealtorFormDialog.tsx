@@ -121,6 +121,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
 
   const handleSubmit = () => {
     if (!form.name.trim()) return;
+    if (!form.expiration_date) return;
     onSave(form);
   };
 
@@ -261,7 +262,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                 </Popover>
               </div>
               <div className="space-y-2">
-                <Label>Expiration Date</Label>
+                <Label>Expiration Date *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.expiration_date && "text-muted-foreground")}>
@@ -287,7 +288,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={!form.name.trim()}>
+            <Button onClick={handleSubmit} disabled={!form.name.trim() || !form.expiration_date}>
               {isCreate ? "Create Realtor" : "Save Changes"}
             </Button>
           </div>
