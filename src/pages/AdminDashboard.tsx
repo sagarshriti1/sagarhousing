@@ -941,10 +941,12 @@ const AdminDashboard = () => {
                 <Label>Phone</Label>
                 <Input value={editingProfile.phone ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, phone: e.target.value })} />
               </div>
-              <div>
-                <Label>Job Title</Label>
-                <Input value={editingProfile.job_title ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, job_title: e.target.value })} placeholder="e.g. Senior Agent" />
-              </div>
+              {roles.find((r) => r.user_id === editingProfile.user_id)?.role === "admin" && (
+                <div>
+                  <Label>Job Title</Label>
+                  <Input value={editingProfile.job_title ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, job_title: e.target.value })} placeholder="e.g. Senior Agent" />
+                </div>
+              )}
               <div>
                 <Label>Location</Label>
                 <Input value={editingProfile.location ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, location: e.target.value })} placeholder="e.g. Kathmandu" />
