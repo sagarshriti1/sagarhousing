@@ -705,7 +705,9 @@ const AdminDashboard = () => {
                 <TableBody>
                   {filteredRealtors.map((realtor) => {
                     const linkedProfile = realtor.user_id ? profiles.find((p) => p.user_id === realtor.user_id) : null;
-                    const isActive = linkedProfile ? linkedProfile.is_active : true;
+                    const profileActive = linkedProfile ? linkedProfile.is_active : true;
+                    const notExpired = !realtor.expiration_date || new Date(realtor.expiration_date) >= new Date(new Date().toDateString());
+                    const isActive = profileActive && notExpired;
                     return (
                     <TableRow key={realtor.id} className={selectedRealtorIds.has(realtor.id) ? "bg-muted/50" : ""}>
                       <TableCell>
