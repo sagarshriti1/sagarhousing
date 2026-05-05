@@ -456,7 +456,9 @@ const AdminDashboard = () => {
         (r.email || "").toLowerCase().includes(q) ||
         (r.phone || "").toLowerCase().includes(q);
       if (!matchSearch) return false;
-      const isActive = r.profile ? r.profile.is_active : true;
+      const profileActive = r.profile ? r.profile.is_active : true;
+      const notExpired = !r.expiration_date || new Date(r.expiration_date) >= new Date(new Date().toDateString());
+      const isActive = profileActive && notExpired;
       return showInactive ? !isActive : isActive;
     });
   })();
@@ -703,7 +705,9 @@ const AdminDashboard = () => {
                 <TableBody>
                   {filteredRealtors.map((realtor) => {
                     const linkedProfile = realtor.user_id ? profiles.find((p) => p.user_id === realtor.user_id) : null;
-                    const isActive = linkedProfile ? linkedProfile.is_active : true;
+                    const profileActive = linkedProfile ? linkedProfile.is_active : true;
+                    const notExpired = !realtor.expiration_date || new Date(realtor.expiration_date) >= new Date(new Date().toDateString());
+                    const isActive = profileActive && notExpired;
                     return (
                     <TableRow key={realtor.id} className={selectedRealtorIds.has(realtor.id) ? "bg-muted/50" : ""}>
                       <TableCell>
