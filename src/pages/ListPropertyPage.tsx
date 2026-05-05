@@ -85,9 +85,11 @@ const ListPropertyPage = () => {
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
+  const backTarget = isAdmin ? '/admin?tab=properties' : -1 as const;
+  const goBack = () => { if (typeof backTarget === 'string') navigate(backTarget); else navigate(backTarget); };
   const handleBack = () => {
     if (isDirty) setConfirmBackOpen(true);
-    else navigate(-1);
+    else goBack();
   };
 
   useEffect(() => {
@@ -568,7 +570,7 @@ const ListPropertyPage = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Stay on page</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setIsDirty(false); setConfirmBackOpen(false); navigate(-1); }}>
+            <AlertDialogAction onClick={() => { setIsDirty(false); setConfirmBackOpen(false); goBack(); }}>
               Discard & leave
             </AlertDialogAction>
           </AlertDialogFooter>

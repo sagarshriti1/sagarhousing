@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -112,6 +112,8 @@ interface ConfirmAction {
 const AdminDashboard = () => {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") ?? "admins";
   const [realtors, setRealtors] = useState<Realtor[]>([]);
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [roles, setRoles] = useState<UserRole[]>([]);
@@ -642,7 +644,7 @@ const AdminDashboard = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Admin Dashboard</h1>
         </div>
 
-        <Tabs defaultValue="admins" className="space-y-6" onValueChange={() => { setSearch(""); setShowInactive(false); }}>
+        <Tabs value={initialTab} className="space-y-6" onValueChange={(v) => { setSearch(""); setShowInactive(false); setSearchParams({ tab: v }); }}>
           <TabsList>
             <TabsTrigger value="admins" className="gap-2"><Shield className="h-4 w-4" /> Admins</TabsTrigger>
             <TabsTrigger value="realtors" className="gap-2"><MapPin className="h-4 w-4" /> Realtors</TabsTrigger>
