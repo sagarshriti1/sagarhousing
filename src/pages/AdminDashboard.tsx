@@ -170,6 +170,9 @@ const AdminDashboard = () => {
       email: newUser.email,
       password: newUser.password,
       displayName: newUser.displayName,
+      phone: newUser.phone,
+      jobTitle: newUser.jobTitle,
+      location: newUser.location,
       role: createUserRole,
     });
     setCreatingUser(false);
