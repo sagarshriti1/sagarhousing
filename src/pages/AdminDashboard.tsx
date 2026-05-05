@@ -371,6 +371,8 @@ const AdminDashboard = () => {
 
   const saveProfile = () => {
     if (!editingProfile) return;
+    if (!editingProfile.display_name?.trim()) { toast.error("Name is required"); return; }
+    if (!editingProfile.email?.trim()) { toast.error("Email is required"); return; }
     confirm({
       title: "Update User Profile",
       description: `Are you sure you want to save changes to "${editingProfile.display_name || "this user"}"?`,
