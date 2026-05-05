@@ -16,7 +16,11 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
-import { Upload, X, Plus, Loader2 } from 'lucide-react';
+import { Upload, X, Plus, Loader2, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } from '@/data/nepalLocations';
 import SearchableCombobox from '@/components/SearchableCombobox';
 
@@ -61,6 +65,8 @@ const ListPropertyPage = () => {
     car_parking: '0',
     stories: '0',
   });
+  const [paymentDate, setPaymentDate] = useState<string | null>(null);
+  const [expirationDate, setExpirationDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (!editId || !user) return;
@@ -104,6 +110,10 @@ const ListPropertyPage = () => {
       });
       setSelectedFeatures(data.features ?? []);
       setExistingImages(data.images ?? []);
+      const pd = (data as any).payment_date;
+      const ed = (data as any).expiration_date;
+      setPaymentDate(pd ? format(new Date(pd), 'yyyy-MM-dd') : null);
+      setExpirationDate(ed ? format(new Date(ed), 'yyyy-MM-dd') : null);
       setFetching(false);
     };
     fetchProperty();
@@ -171,6 +181,16 @@ const ListPropertyPage = () => {
       return;
     }
 
+    if (isAdmin) {
+      if (!paymentDate || !expirationDate) {
+        toast.error('Start date and expiration date are required');
+        return;
+      }
+      if (new Date(paymentDate) >= new Date(expirationDate)) {
+        toast.error('Start date must be earlier than expiration date');
+        return;
+      }
+    }
     setLoading(true);
     try {
       const newImageUrls: string[] = [];
@@ -208,7 +228,9 @@ const ListPropertyPage = () => {
         bike_parking: parseInt(form.bike_parking) || 0,
         car_parking: parseInt(form.car_parking) || 0,
         stories: parseInt(form.stories) || 0,
-        ...(isEdit ? {} : { status: 'pending' as const }),
+        ...(isAdmin && paymentDate ? { payment_date: new Date(paymentDate).toISOString() } : {}),
+        ...(isAdmin && expirationDate ? { expiration_date: new Date(expirationDate).toISOString() } : {}),
+        ...(isEdit ? {} : { status: isAdmin ? ('active' as const) : ('pending' as const) }),
       };
 
       if (isEdit) {
@@ -434,7 +456,60 @@ const ListPropertyPage = () => {
             <p className='text-xs text-muted-foreground'>Upload up to 10 photos. First photo will be the cover image.</p>
           </section>
 
-          {!isEdit && (
+          {isAdmin && (
+            <section className='space-y-4'>
+              <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Listing Period</h2>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label>Start Date *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type='button' variant='outline' className={cn('w-full justify-start text-left font-normal', !paymentDate && 'text-muted-foreground')}>
+                        <CalendarIcon className='mr-2 h-4 w-4' />
+                        {paymentDate ? format(new Date(paymentDate), 'PPP') : 'Pick start date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-auto p-0' align='start'>
+                      <Calendar
+                        mode='single'
+                        selected={paymentDate ? new Date(paymentDate) : undefined}
+                        onSelect={(d) => setPaymentDate(d ? format(d, 'yyyy-MM-dd') : null)}
+                        disabled={expirationDate ? { from: new Date(expirationDate), to: new Date(8640000000000000) } : undefined}
+                        initialFocus
+                        className={cn('p-3 pointer-events-auto')}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className='space-y-2'>
+                  <Label>Expiration Date *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type='button' variant='outline' className={cn('w-full justify-start text-left font-normal', !expirationDate && 'text-muted-foreground')}>
+                        <CalendarIcon className='mr-2 h-4 w-4' />
+                        {expirationDate ? format(new Date(expirationDate), 'PPP') : 'Pick expiration date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-auto p-0' align='start'>
+                      <Calendar
+                        mode='single'
+                        selected={expirationDate ? new Date(expirationDate) : undefined}
+                        onSelect={(d) => setExpirationDate(d ? format(d, 'yyyy-MM-dd') : null)}
+                        disabled={paymentDate ? { from: new Date(-8640000000000000), to: new Date(paymentDate) } : undefined}
+                        initialFocus
+                        className={cn('p-3 pointer-events-auto')}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+              {paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate) && (
+                <p className='text-xs text-destructive'>Start date must be earlier than expiration date.</p>
+              )}
+            </section>
+          )}
+
+          {!isEdit && !isAdmin && (
             <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground mb-1">Listing Fee</p>
               <p>Your property will be saved as <strong>inactive</strong>. To activate and publish it, pay the listing fee from your My Listings page:</p>
