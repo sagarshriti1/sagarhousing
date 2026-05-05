@@ -123,10 +123,16 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     }));
   };
 
-  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && form.start_date && form.expiration_date;
+  const datesValid = !!form.start_date && !!form.expiration_date && new Date(form.start_date) < new Date(form.expiration_date);
+  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && datesValid;
 
   const handleSubmit = () => {
-    if (!isValid) return;
+    if (!isValid) {
+      if (form.start_date && form.expiration_date && !datesValid) {
+        toast.error("Start date must be earlier than expiration date");
+      }
+      return;
+    }
     onSave(form);
   };
 
