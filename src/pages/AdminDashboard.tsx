@@ -129,7 +129,7 @@ const AdminDashboard = () => {
   // Create User dialog
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserRole, setCreateUserRole] = useState<"admin" | "realtor" | "user">("user");
-  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "" });
+  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
   const [creatingUser, setCreatingUser] = useState(false);
 
   const fetchAll = async () => {
