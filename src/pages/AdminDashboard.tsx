@@ -181,7 +181,7 @@ const AdminDashboard = () => {
     if (ok) {
       toast.success(`${createUserRole} account created`);
       setCreateUserOpen(false);
-      setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
+      setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
       fetchAll();
     }
   };
@@ -541,7 +541,7 @@ const AdminDashboard = () => {
             <Button
               onClick={() => {
                 setCreateUserRole(target);
-                setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "" });
+                setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
                 setCreateUserOpen(true);
               }}
               className="gap-2"
