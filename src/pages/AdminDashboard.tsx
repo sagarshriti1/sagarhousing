@@ -980,8 +980,8 @@ const AdminDashboard = () => {
                 </div>
               )}
               {(() => {
-                const editingRole = roles.find((r) => r.user_id === editingProfile.user_id)?.role;
-                if (editingRole === "user") {
+                const editingRole = roles.find((r) => r.user_id === editingProfile.user_id)?.role ?? "user";
+                if (editingRole !== "admin" && editingRole !== "realtor") {
                   const loc = parseLocation(editingProfile.location);
                   return (
                     <div className="grid grid-cols-2 gap-4">
