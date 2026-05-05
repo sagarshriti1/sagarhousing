@@ -183,8 +183,45 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
             <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
           </div>
           <div>
-            <Label>Photo URL</Label>
-            <Input value={form.photo_url} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} />
+            <Label>Profile Photo</Label>
+            <div className="flex items-center gap-4 mt-1">
+              <div className="h-16 w-16 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+                {form.photo_url ? (
+                  <img src={form.photo_url} alt="Realtor" className="h-full w-full object-cover" />
+                ) : (
+                  <Camera className="h-6 w-6 text-muted-foreground" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (!file.type.startsWith("image/")) { toast.error("Please select an image"); return; }
+                    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+                    setUploadingPhoto(true);
+                    const ext = file.name.split(".").pop();
+                    const folder = form.user_id || form.id || `new-${Date.now()}`;
+                    const filePath = `${folder}/photo-${Date.now()}.${ext}`;
+                    const { error } = await supabase.storage.from("realtor-photos").upload(filePath, file, { upsert: true });
+                    if (error) { toast.error("Failed to upload photo"); setUploadingPhoto(false); return; }
+                    const { data: urlData } = supabase.storage.from("realtor-photos").getPublicUrl(filePath);
+                    setForm({ ...form, photo_url: urlData.publicUrl });
+                    toast.success("Photo uploaded!");
+                    setUploadingPhoto(false);
+                  }}
+                />
+                <Button type="button" variant="outline" size="sm" disabled={uploadingPhoto} onClick={() => photoInputRef.current?.click()} className="gap-2">
+                  {uploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                  {uploadingPhoto ? "Uploading..." : "Upload Photo"}
+                </Button>
+                <p className="text-xs text-muted-foreground">JPG, PNG or WebP. Max 5MB.</p>
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={form.is_featured} onCheckedChange={(checked) => setForm({ ...form, is_featured: checked })} />
