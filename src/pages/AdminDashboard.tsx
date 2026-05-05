@@ -735,6 +735,7 @@ const AdminDashboard = () => {
                     <TableHead>Price</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead>Updated By</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
