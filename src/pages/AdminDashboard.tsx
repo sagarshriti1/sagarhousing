@@ -112,6 +112,8 @@ interface ConfirmAction {
 const AdminDashboard = () => {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") ?? "admins";
   const [realtors, setRealtors] = useState<Realtor[]>([]);
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [roles, setRoles] = useState<UserRole[]>([]);
