@@ -371,6 +371,8 @@ const AdminDashboard = () => {
 
   const saveProfile = () => {
     if (!editingProfile) return;
+    if (!editingProfile.display_name?.trim()) { toast.error("Name is required"); return; }
+    if (!editingProfile.email?.trim()) { toast.error("Email is required"); return; }
     confirm({
       title: "Update User Profile",
       description: `Are you sure you want to save changes to "${editingProfile.display_name || "this user"}"?`,
@@ -919,12 +921,18 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
+              {(() => {
+                const editingRole = roles.find((r) => r.user_id === editingProfile.user_id)?.role;
+                const nameLabel = editingRole === "admin" ? "Display Name *" : "Name *";
+                return (
+                  <div>
+                    <Label>{nameLabel}</Label>
+                    <Input value={editingProfile.display_name ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, display_name: e.target.value })} />
+                  </div>
+                );
+              })()}
               <div>
-                <Label>Display Name</Label>
-                <Input value={editingProfile.display_name ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, display_name: e.target.value })} />
-              </div>
-              <div>
-                <Label>Email</Label>
+                <Label>Email *</Label>
                 <Input value={editingProfile.email ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, email: e.target.value })} />
               </div>
               <div>
