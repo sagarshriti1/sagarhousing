@@ -487,6 +487,16 @@ const AdminDashboard = () => {
             </Label>
             <Switch id="show-inactive" checked={showInactive} onCheckedChange={setShowInactive} />
           </div>
+          <Button
+            onClick={() => {
+              setCreateUserRole(target);
+              setNewUser({ email: "", password: "", displayName: "" });
+              setCreateUserOpen(true);
+            }}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" /> Create {target === "user" ? "Non-Realtor" : target.charAt(0).toUpperCase() + target.slice(1)}
+          </Button>
         </div>
 
         <div className="rounded-lg border border-border overflow-auto">
