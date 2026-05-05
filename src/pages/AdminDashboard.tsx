@@ -90,6 +90,7 @@ interface Property {
   status: string;
   listing_type: string;
   user_id: string;
+  expiration_date?: string | null;
   updated_by?: string | null;
 }
 
@@ -139,7 +140,7 @@ const AdminDashboard = () => {
       supabase.from("realtors").select("*"),
       supabase.from("profiles").select("*"),
       supabase.from("user_roles").select("*"),
-      supabase.from("user_properties").select("id, title, city, state, price, status, listing_type, user_id, updated_by"),
+      supabase.from("user_properties").select("id, title, city, state, price, status, listing_type, user_id, updated_by, expiration_date"),
     ]);
     setRealtors(r.data ?? []);
     setProfiles((p.data ?? []) as UserProfile[]);
@@ -791,13 +792,27 @@ const AdminDashboard = () => {
 
           {/* PROPERTIES TAB */}
           <TabsContent value="properties" className="space-y-4">
-            <div className="flex items-center gap-2">
+            {(() => {
+              const filteredProperties = properties.filter((p) => {
+                const notExpired = !p.expiration_date || new Date(p.expiration_date) >= new Date(new Date().toDateString());
+                const isActive = p.status === "active" && notExpired;
+                return showInactive ? !isActive : isActive;
+              });
+              return (
+            <>
+            <div className="flex items-center gap-2 flex-wrap">
               {selectedPropertyIds.size > 0 && (
                 <Button variant="destructive" size="sm" onClick={bulkDeleteProperties} className="gap-2">
                   <Trash2 className="h-4 w-4" /> Delete {selectedPropertyIds.size} selected
                 </Button>
               )}
-              <Button onClick={() => navigate("/list-property")} className="gap-2 ml-auto">
+              <div className="flex items-center gap-2 ml-auto">
+                <Label htmlFor="show-inactive-property" className="text-sm text-muted-foreground">
+                  {showInactive ? "Showing inactive" : "Showing active"}
+                </Label>
+                <Switch id="show-inactive-property" checked={showInactive} onCheckedChange={setShowInactive} />
+              </div>
+              <Button onClick={() => navigate("/list-property")} className="gap-2">
                 <Plus className="h-4 w-4" /> Create Property
               </Button>
             </div>
@@ -807,8 +822,11 @@ const AdminDashboard = () => {
                   <TableRow>
                     <TableHead className="w-10">
                       <Checkbox
-                        checked={properties.length > 0 && selectedPropertyIds.size === properties.length}
-                        onCheckedChange={toggleAllProperties}
+                        checked={filteredProperties.length > 0 && selectedPropertyIds.size === filteredProperties.length}
+                        onCheckedChange={() => {
+                          if (selectedPropertyIds.size === filteredProperties.length) setSelectedPropertyIds(new Set());
+                          else setSelectedPropertyIds(new Set(filteredProperties.map((p) => p.id)));
+                        }}
                       />
                     </TableHead>
                     <TableHead>Title</TableHead>
@@ -821,7 +839,10 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {properties.map((prop) => (
+                  {filteredProperties.map((prop) => {
+                    const expired = prop.expiration_date && new Date(prop.expiration_date) < new Date(new Date().toDateString());
+                    const isActive = prop.status === "active" && !expired;
+                    return (
                     <TableRow key={prop.id} className={selectedPropertyIds.has(prop.id) ? "bg-muted/50" : ""}>
                       <TableCell>
                         <Checkbox
@@ -833,7 +854,7 @@ const AdminDashboard = () => {
                       <TableCell>{prop.city}</TableCell>
                       <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
                       <TableCell>
-                        <Badge variant={prop.status === "active" ? "default" : "secondary"}>{prop.status}</Badge>
+                        <Badge variant={isActive ? "default" : "secondary"}>{expired ? "expired" : prop.status}</Badge>
                       </TableCell>
                       <TableCell className="capitalize">{prop.listing_type}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{updatedByLabel(prop.updated_by)}</TableCell>
@@ -848,8 +869,9 @@ const AdminDashboard = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
-                  {properties.length === 0 && (
+                    );
+                  })}
+                  {filteredProperties.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
                     </TableRow>
@@ -857,6 +879,9 @@ const AdminDashboard = () => {
                 </TableBody>
               </Table>
             </div>
+            </>
+              );
+            })()}
           </TabsContent>
         </Tabs>
       </main>
