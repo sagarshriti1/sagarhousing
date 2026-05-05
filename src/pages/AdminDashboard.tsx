@@ -727,7 +727,7 @@ const AdminDashboard = () => {
                       <TableCell className="text-muted-foreground">{realtor.email || "—"}</TableCell>
                       <TableCell>{realtor.phone || "—"}</TableCell>
                       <TableCell>{realtor.city}{realtor.district ? `, ${realtor.district}` : ""}</TableCell>
-                      <TableCell>{realtor.years_experience ?? "—"} yrs</TableCell>
+                      
                       <TableCell>{getPaymentBadge(realtor.payment_status)}</TableCell>
                       <TableCell>
                         <div className="text-xs space-y-0.5">
