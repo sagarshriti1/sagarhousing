@@ -1,18 +1,23 @@
-## Remove duplicate Payment History tab from My Profile
+## Header dropdown cleanup
 
-The Payment History tab on `/profile` overlaps with payment views already shown elsewhere:
-- Realtors see realtor-related payments in **Realtor Dashboard**
-- Property owners see per-listing payments from **My Listings → Receipt** dialog
-- Admins see full per-user history in the **Admin** views
+Edit `src/components/Header.tsx` only.
 
-### Changes
+### Desktop header
+1. Remove the "List Property" outline button (the `Link to='/list-property'` block with the `Plus` icon).
+2. Remove the standalone Heart icon button (`Link to="/favorites"` wrapping the ghost icon button).
+3. In the user dropdown menu, reorder items and add a "My Favorites" entry with the `Heart` icon. Add a list-style icon (e.g. `List`) next to "My Listings". Final order:
+   - My Profile (User icon)
+   - My Listings (List icon)
+   - My Favorites (Heart icon)
+   - Saved Realtors (Bookmark icon)
+   - Realtor Dashboard (Megaphone icon, realtor/admin only)
+   - Admin Dashboard (Shield, admin only — kept below)
 
-1. **`src/pages/ProfilePage.tsx`**
-   - Remove the `payments` `TabsTrigger` (line 238).
-   - Remove the entire `<TabsContent value="payments">` block (lines 399–408).
-   - Remove the now-unused `PaymentHistoryList` import and `Receipt` icon import (if not used elsewhere in the file).
+### Mobile menu
+4. Remove the "List Property" link.
+5. Reorder the auth'd links to match: My Listings, Favorites, Saved Realtors. (Mobile already shows Favorites; just reorder and drop List Property.)
 
-No other files change. No DB or routing changes.
+### Imports
+6. Drop `Plus` from lucide-react imports (no longer used). Add `List` for the My Listings icon. Keep `Heart`, `Bookmark`, `User`, `Megaphone`, `Shield`, `LogOut`, `Home`, `Menu`, `X`.
 
-### Note on why it existed
-Earlier iterations added the tab as a single place for users to see their full account-wide payment history. Since you've consolidated payment views into the Realtor Dashboard (for realtors) and per-listing receipts (for property owners), the profile tab is redundant and will be removed.
+No routing, business logic, or other files change.
