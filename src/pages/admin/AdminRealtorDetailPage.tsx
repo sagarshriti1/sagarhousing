@@ -156,6 +156,33 @@ const AdminRealtorDetailPage = () => {
       expiration_date: data.expiration_date ? new Date(data.expiration_date).toISOString() : null,
       notes: status === "bypassed" ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}` : null,
     });
+
+    // Featured payment log if newly featured or renewed
+    const featuredChanged = data.is_featured && (
+      !realtor.is_featured ||
+      (realtor.featured_expiration_date ?? null) !== (data.featured_expiration_date ?? null)
+    );
+    if (featuredChanged) {
+      const { data: featFlag } = await supabase.from("feature_flags").select("*").eq("key", FEATURE_KEYS.FEATURED_REALTOR).maybeSingle();
+      const featFee = Number(featFlag?.fee ?? 0);
+      const featPromoActive = !!featFlag?.bypass_payment && (!featFlag?.promo_ends_at || new Date(featFlag.promo_ends_at).getTime() > Date.now());
+      const featStatus: "paid" | "bypassed" | "promotion" =
+        data.featured_payment_status === "paid" ? "paid" : featPromoActive ? "promotion" : "bypassed";
+      await logPayment({
+        user_id: data.user_id ?? actor!.id,
+        service_key: FEATURE_KEYS.FEATURED_REALTOR,
+        service_label: "Featured Realtor",
+        related_type: "realtor",
+        related_id: data.id!,
+        related_label: data.name,
+        amount: featStatus === "paid" ? featFee : 0,
+        status: featStatus,
+        promo_label: featPromoActive ? featFlag?.promo_label : null,
+        expiration_date: data.featured_expiration_date ? new Date(data.featured_expiration_date).toISOString() : null,
+        notes: featStatus === "bypassed" ? `Featured payment bypassed by admin. Reason: ${data.featured_bypass_reason?.trim() || "(no reason provided)"}` : null,
+      });
+    }
+
     toast.success("Realtor updated");
     setEditOpen(false);
     fetchRealtor();
