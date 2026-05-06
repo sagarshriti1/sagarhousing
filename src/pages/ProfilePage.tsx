@@ -38,8 +38,19 @@ interface ProfileData {
   avatar_url: string | null;
 }
 
+interface RealtorRow {
+  id: string;
+  name: string;
+  payment_status: string;
+  start_date: string | null;
+  expiration_date: string | null;
+}
+
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const { fee: SIGNUP_FEE, isFree: signupFree, promoLabel: signupPromoLabel } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
+  const [realtor, setRealtor] = useState<RealtorRow | null>(null);
+  const [activating, setActivating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
