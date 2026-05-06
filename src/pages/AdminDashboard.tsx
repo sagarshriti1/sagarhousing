@@ -324,19 +324,44 @@ const AdminDashboard = () => {
 
   // ===== Realtor table actions =====
   const toggleFeatured = (realtor: Realtor) => {
-    const action = realtor.is_featured ? "unfeature" : "feature";
+    const turningOn = !realtor.is_featured;
+    const action = turningOn ? "feature" : "unfeature";
     confirm({
-      title: `${realtor.is_featured ? "Unfeature" : "Feature"} Realtor`,
+      title: `${turningOn ? "Feature" : "Unfeature"} Realtor`,
       description: `Are you sure you want to ${action} "${realtor.name}"?`,
       onConfirm: async () => {
-        const { error } = await supabase
-          .from("realtors")
-          .update({ is_featured: !realtor.is_featured })
-          .eq("id", realtor.id);
-        if (error) toast.error("Failed to update featured status");
-        else {
-          toast.success(realtor.is_featured ? "Realtor unfeatured" : "Realtor featured!");
-          setRealtors((prev) => prev.map((r) => (r.id === realtor.id ? { ...r, is_featured: !r.is_featured } : r)));
+        const today = new Date().toISOString().split("T")[0];
+        const exp = new Date(); exp.setMonth(exp.getMonth() + 1);
+        const expStr = exp.toISOString().split("T")[0];
+        const updates: any = turningOn
+          ? {
+              is_featured: true,
+              featured_start_date: today,
+              featured_expiration_date: expStr,
+              featured_payment_status: "bypassed",
+              featured_payment_bypassed: true,
+            }
+          : { is_featured: false };
+        const { error } = await supabase.from("realtors").update(updates).eq("id", realtor.id);
+        if (error) { toast.error("Failed to update featured status"); return; }
+        toast.success(turningOn ? "Realtor featured!" : "Realtor unfeatured");
+        setRealtors((prev) => prev.map((r) => (r.id === realtor.id ? { ...r, ...updates } : r)));
+        if (turningOn) {
+          const { logPayment } = await import("@/lib/paymentHistory");
+          const { FEATURE_KEYS } = await import("@/hooks/useFeatureFlag");
+          const { data: { user: actor } } = await supabase.auth.getUser();
+          await logPayment({
+            user_id: realtor.user_id ?? actor!.id,
+            service_key: FEATURE_KEYS.FEATURED_REALTOR,
+            service_label: "Featured Realtor",
+            related_type: "realtor",
+            related_id: realtor.id,
+            related_label: realtor.name,
+            amount: 0,
+            status: "bypassed",
+            expiration_date: new Date(expStr).toISOString(),
+            notes: "Featured toggled on by admin (no payment).",
+          });
         }
       },
     });
