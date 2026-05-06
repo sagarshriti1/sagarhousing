@@ -719,7 +719,7 @@ const AdminDashboard = () => {
               {list.map((profile) => {
                 const isExpanded = expandedAccountId === profile.id;
                 return (
-                <>
+                <React.Fragment key={profile.id}>
                 <TableRow
                   key={profile.id}
                   className="cursor-pointer hover:bg-muted/40"
