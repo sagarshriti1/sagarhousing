@@ -49,8 +49,10 @@ const AdminUserDetailPage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<string>("user");
   const [properties, setProperties] = useState<any[]>([]);
-  const [draft, setDraft] = useState<Profile | null>(null);
+  const [draft, setDraftState] = useState<Profile | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [editDirty, setEditDirty] = useState(false);
+  const setDraft = (next: Profile | null) => { setEditDirty(true); setDraftState(next); };
   const [confirm, setConfirm] = useState<{ title: string; description: string; onConfirm: () => Promise<void> | void } | null>(null);
 
   useEffect(() => {
