@@ -426,6 +426,22 @@ const ListPropertyPage = () => {
           </Alert>
         )}
 
+        {realtorInactive && !isEdit && (
+          <Alert variant='destructive' className='mb-6'>
+            <AlertTitle>Realtor profile inactive</AlertTitle>
+            <AlertDescription>
+              {realtorInactiveMessage}{' '}
+              <button
+                type='button'
+                className='underline font-medium'
+                onClick={() => navigate('/realtor-dashboard')}
+              >
+                Go to Realtor Dashboard
+              </button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className='space-y-8'>
           {/* Basic Info */}
           <section className='space-y-4'>
