@@ -95,6 +95,56 @@ const ProfilePage = () => {
     if (!user) return;
     const { data } = await supabase
       .from("realtors")
+      .select("id, name, is_featured")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setRealtor(data);
+  };
+
+  useEffect(() => {
+    if (role === "realtor") fetchRealtor();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, user]);
+
+  const handleBecomeFeatured = async () => {
+    if (!user || !realtor) return;
+    setActivating(true);
+
+    const { error } = await supabase
+      .from("realtors")
+      .update({ is_featured: true })
+      .eq("id", realtor.id);
+
+    if (error) {
+      toast.error("Failed to mark as featured");
+      setActivating(false);
+      return;
+    }
+    setRealtor({ ...realtor, is_featured: true });
+
+    await logPayment({
+      user_id: user.id,
+      service_key: FEATURE_KEYS.FEATURED_REALTOR,
+      service_label: "Featured Realtor",
+      related_type: "realtor",
+      related_id: realtor.id,
+      related_label: realtor.name,
+      amount: featuredFree ? 0 : FEATURED_FEE,
+      status: featuredFree ? "promotion" : "paid",
+      promo_label: featuredFree ? featuredPromoLabel : null,
+    });
+
+    toast.success("You're now featured! ⭐", {
+      description: featuredFree
+        ? "Free promotion applied — your profile is boosted in the directory."
+        : `Payment of Rs. ${FEATURED_FEE.toLocaleString()} received.`,
+    });
+    setActivating(false);
+  };
+
+    if (!user) return;
+    const { data } = await supabase
+      .from("realtors")
       .select("id, name, payment_status, start_date, expiration_date")
       .eq("user_id", user.id)
       .maybeSingle();
