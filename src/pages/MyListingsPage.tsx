@@ -320,7 +320,8 @@ const MyListingsPage = () => {
               </div>
             ))}
           </div>
-        )}
+          );
+        })()}
       </main>
       <Footer />
 
