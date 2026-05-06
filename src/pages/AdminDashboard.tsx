@@ -582,7 +582,16 @@ const AdminDashboard = () => {
 
   // Reusable user-account table
   const renderAccountsTable = (target: "admin" | "realtor" | "user", title: string) => {
-    const list = getProfilesByRole(target);
+    const rawList = getProfilesByRole(target);
+    const list = sortList(rawList, target, {
+      name: (p) => (p.display_name || '').toLowerCase(),
+      email: (p) => (p.email || '').toLowerCase(),
+      phone: (p) => p.phone || '',
+      job_title: (p) => (p.job_title || '').toLowerCase(),
+      location: (p) => { const l = parseLocation(p.location); return `${l.city} ${l.district}`.toLowerCase(); },
+      status: (p) => (p.is_active ? 1 : 0),
+      updated_by: (p) => updatedByLabel(p.updated_by).toLowerCase(),
+    });
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-4 flex-wrap">
