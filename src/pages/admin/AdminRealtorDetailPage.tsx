@@ -25,6 +25,7 @@ const AdminRealtorDetailPage = () => {
   const { user, role, loading } = useAuth();
   const [realtor, setRealtor] = useState<any>(null);
   const [linkedEmail, setLinkedEmail] = useState<string | null>(null);
+  const [properties, setProperties] = useState<any[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [confirm, setConfirm] = useState<{ title: string; description: string; onConfirm: () => Promise<void> | void } | null>(null);
 
