@@ -729,6 +729,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="realtors" className="gap-2"><MapPin className="h-4 w-4" /> Realtors</TabsTrigger>
             <TabsTrigger value="non-realtors" className="gap-2"><User className="h-4 w-4" /> Non-Realtors</TabsTrigger>
             <TabsTrigger value="properties" className="gap-2"><Home className="h-4 w-4" /> Properties</TabsTrigger>
+            <TabsTrigger value="features" className="gap-2"><Sliders className="h-4 w-4" /> Features</TabsTrigger>
           </TabsList>
 
           {/* ADMINS TAB */}
