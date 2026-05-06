@@ -78,7 +78,7 @@ const Header = () => {
                   <DropdownMenuItem asChild>
                     <Link to='/saved-realtors'><Bookmark className='h-4 w-4 mr-2' /> Saved Realtors</Link>
                   </DropdownMenuItem>
-                  {(role === 'realtor' || role === 'admin') && (
+                  {role === 'realtor' && (
                     <DropdownMenuItem asChild>
                       <Link to='/realtor-dashboard'><Megaphone className='h-4 w-4 mr-2' /> Realtor Dashboard</Link>
                     </DropdownMenuItem>
@@ -150,7 +150,7 @@ const Header = () => {
                 <Link to='/saved-realtors' className='text-sm font-medium py-2 text-foreground'>
                   Saved Realtors
                 </Link>
-                {(role === 'realtor' || role === 'admin') && (
+                {role === 'realtor' && (
                   <Link to='/realtor-dashboard' className='text-sm font-medium py-2 text-foreground'>
                     Realtor Dashboard
                   </Link>
