@@ -73,6 +73,10 @@ interface Realtor {
   payment_bypassed: boolean;
   license_number: string | null;
   updated_by?: string | null;
+  featured_start_date: string | null;
+  featured_expiration_date: string | null;
+  featured_payment_status: string | null;
+  featured_payment_bypassed: boolean;
 }
 
 interface UserProfile {
@@ -320,19 +324,44 @@ const AdminDashboard = () => {
 
   // ===== Realtor table actions =====
   const toggleFeatured = (realtor: Realtor) => {
-    const action = realtor.is_featured ? "unfeature" : "feature";
+    const turningOn = !realtor.is_featured;
+    const action = turningOn ? "feature" : "unfeature";
     confirm({
-      title: `${realtor.is_featured ? "Unfeature" : "Feature"} Realtor`,
+      title: `${turningOn ? "Feature" : "Unfeature"} Realtor`,
       description: `Are you sure you want to ${action} "${realtor.name}"?`,
       onConfirm: async () => {
-        const { error } = await supabase
-          .from("realtors")
-          .update({ is_featured: !realtor.is_featured })
-          .eq("id", realtor.id);
-        if (error) toast.error("Failed to update featured status");
-        else {
-          toast.success(realtor.is_featured ? "Realtor unfeatured" : "Realtor featured!");
-          setRealtors((prev) => prev.map((r) => (r.id === realtor.id ? { ...r, is_featured: !r.is_featured } : r)));
+        const today = new Date().toISOString().split("T")[0];
+        const exp = new Date(); exp.setMonth(exp.getMonth() + 1);
+        const expStr = exp.toISOString().split("T")[0];
+        const updates: any = turningOn
+          ? {
+              is_featured: true,
+              featured_start_date: today,
+              featured_expiration_date: expStr,
+              featured_payment_status: "bypassed",
+              featured_payment_bypassed: true,
+            }
+          : { is_featured: false };
+        const { error } = await supabase.from("realtors").update(updates).eq("id", realtor.id);
+        if (error) { toast.error("Failed to update featured status"); return; }
+        toast.success(turningOn ? "Realtor featured!" : "Realtor unfeatured");
+        setRealtors((prev) => prev.map((r) => (r.id === realtor.id ? { ...r, ...updates } : r)));
+        if (turningOn) {
+          const { logPayment } = await import("@/lib/paymentHistory");
+          const { FEATURE_KEYS } = await import("@/hooks/useFeatureFlag");
+          const { data: { user: actor } } = await supabase.auth.getUser();
+          await logPayment({
+            user_id: realtor.user_id ?? actor!.id,
+            service_key: FEATURE_KEYS.FEATURED_REALTOR,
+            service_label: "Featured Realtor",
+            related_type: "realtor",
+            related_id: realtor.id,
+            related_label: realtor.name,
+            amount: 0,
+            status: "bypassed",
+            expiration_date: new Date(expStr).toISOString(),
+            notes: "Featured toggled on by admin (no payment).",
+          });
         }
       },
     });
@@ -400,6 +429,11 @@ const AdminDashboard = () => {
       user_id: realtor.user_id,
       specialties: realtor.specialties,
       license_number: realtor.license_number,
+      featured_start_date: realtor.featured_start_date ?? null,
+      featured_expiration_date: realtor.featured_expiration_date ?? null,
+      featured_payment_status: realtor.featured_payment_status ?? "none",
+      featured_payment_bypassed: realtor.featured_payment_bypassed ?? false,
+      featured_bypass_reason: null,
     });
     setRealtorDialogMode("edit");
     setRealtorDialogOpen(true);
@@ -425,6 +459,10 @@ const AdminDashboard = () => {
       user_id: data.user_id,
       specialties: data.specialties,
       license_number: data.license_number,
+      featured_start_date: data.featured_start_date,
+      featured_expiration_date: data.featured_expiration_date,
+      featured_payment_status: data.featured_payment_status,
+      featured_payment_bypassed: data.featured_payment_bypassed,
     };
 
     const { logPayment } = await import("@/lib/paymentHistory");
@@ -439,6 +477,40 @@ const AdminDashboard = () => {
       promoActive ? "promotion" :
       "bypassed";
     const amount = status === "paid" ? flagFee : 0;
+
+    // Determine if a featured payment log is needed (newly activated or renewed)
+    const original = realtors.find((r) => r.id === data.id);
+    const featuredChanged =
+      data.is_featured && (
+        !original?.is_featured ||
+        (original?.featured_expiration_date ?? null) !== (data.featured_expiration_date ?? null)
+      );
+    const { data: featFlag } = await supabase.from("feature_flags").select("*").eq("key", FEATURE_KEYS.FEATURED_REALTOR).maybeSingle();
+    const featFee = Number(featFlag?.fee ?? 0);
+    const featPromoActive = !!featFlag?.bypass_payment && (!featFlag?.promo_ends_at || new Date(featFlag.promo_ends_at).getTime() > Date.now());
+    const featStatus: "paid" | "bypassed" | "promotion" =
+      data.featured_payment_status === "paid" ? "paid" :
+      featPromoActive ? "promotion" :
+      "bypassed";
+    const featAmount = featStatus === "paid" ? featFee : 0;
+    const logFeatured = async (relatedId: string, relatedLabel: string, userId: string) => {
+      if (!featuredChanged) return;
+      await logPayment({
+        user_id: userId,
+        service_key: FEATURE_KEYS.FEATURED_REALTOR,
+        service_label: "Featured Realtor",
+        related_type: "realtor",
+        related_id: relatedId,
+        related_label: relatedLabel,
+        amount: featAmount,
+        status: featStatus,
+        promo_label: featPromoActive ? featFlag?.promo_label : null,
+        expiration_date: data.featured_expiration_date ? new Date(data.featured_expiration_date).toISOString() : null,
+        notes: featStatus === "bypassed"
+          ? `Featured payment bypassed by admin. Reason: ${data.featured_bypass_reason?.trim() || "(no reason provided)"}`
+          : null,
+      });
+    };
 
     if (realtorDialogMode === "edit" && data.id) {
       confirm({
@@ -464,6 +536,7 @@ const AdminDashboard = () => {
                 ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}`
                 : null,
             });
+            await logFeatured(data.id!, data.name, data.user_id ?? actor!.id);
           }
           toast.success("Realtor updated");
           setRealtors((prev) => prev.map((r) => (r.id === data.id ? { ...r, ...payload, id: data.id! } : r)));
@@ -490,6 +563,7 @@ const AdminDashboard = () => {
             ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}`
             : null,
         });
+        await logFeatured(newData.id, newData.name, newData?.user_id ?? actor!.id);
       }
       toast.success("Realtor created!");
       setRealtors((prev) => [...prev, newData as Realtor]);

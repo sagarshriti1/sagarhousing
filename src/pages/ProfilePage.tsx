@@ -20,6 +20,7 @@ import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 import { logPayment } from "@/lib/paymentHistory";
 import { Badge } from "@/components/ui/badge";
 import { CardDescription } from "@/components/ui/card";
+import { isFeaturedActive, addOneMonthISO, todayISO, markFeaturedExpiredIfNeeded } from "@/lib/featuredStatus";
 
 const parseLocation = (loc: string | null | undefined): { city: string; district: string } => {
   if (!loc) return { city: "", district: "" };
@@ -43,6 +44,9 @@ interface RealtorRow {
   id: string;
   name: string;
   is_featured: boolean;
+  featured_start_date: string | null;
+  featured_expiration_date: string | null;
+  featured_payment_status: string | null;
 }
 
 const ProfilePage = () => {
@@ -102,10 +106,20 @@ const ProfilePage = () => {
     if (!user) return;
     const { data } = await supabase
       .from("realtors")
-      .select("id, name, is_featured")
+      .select("id, name, is_featured, featured_start_date, featured_expiration_date, featured_payment_status")
       .eq("user_id", user.id)
       .maybeSingle();
-    setRealtor(data);
+    if (data) {
+      // Lazy expire if needed
+      const expired = await markFeaturedExpiredIfNeeded(data.id, data);
+      if (expired) {
+        setRealtor({ ...data, is_featured: false, featured_payment_status: "expired" });
+      } else {
+        setRealtor(data);
+      }
+    } else {
+      setRealtor(null);
+    }
   };
 
   useEffect(() => {
@@ -116,6 +130,10 @@ const ProfilePage = () => {
   const handleBecomeFeatured = async () => {
     if (!user) return;
     setActivating(true);
+
+    const start = todayISO();
+    const expiration = addOneMonthISO(start);
+    const status = featuredFree ? "promotion" : "paid";
 
     let current = realtor;
 
@@ -134,8 +152,11 @@ const ProfilePage = () => {
           state: "Nepal",
           payment_status: "paid",
           is_featured: true,
+          featured_start_date: start,
+          featured_expiration_date: expiration,
+          featured_payment_status: status,
         })
-        .select("id, name, is_featured")
+        .select("id, name, is_featured, featured_start_date, featured_expiration_date, featured_payment_status")
         .single();
       if (error || !data) {
         toast.error("Failed to create realtor profile");
@@ -147,14 +168,25 @@ const ProfilePage = () => {
     } else {
       const { error } = await supabase
         .from("realtors")
-        .update({ is_featured: true })
+        .update({
+          is_featured: true,
+          featured_start_date: start,
+          featured_expiration_date: expiration,
+          featured_payment_status: status,
+        })
         .eq("id", current.id);
       if (error) {
         toast.error("Failed to mark as featured");
         setActivating(false);
         return;
       }
-      setRealtor({ ...current, is_featured: true });
+      setRealtor({
+        ...current,
+        is_featured: true,
+        featured_start_date: start,
+        featured_expiration_date: expiration,
+        featured_payment_status: status,
+      });
     }
 
     await logPayment({
@@ -167,6 +199,7 @@ const ProfilePage = () => {
       amount: featuredFree ? 0 : FEATURED_FEE,
       status: featuredFree ? "promotion" : "paid",
       promo_label: featuredFree ? featuredPromoLabel : null,
+      expiration_date: new Date(expiration).toISOString(),
     });
 
     toast.success("You're now featured! ⭐", {
@@ -369,37 +402,68 @@ const ProfilePage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {realtor && (
-                    <div className="flex items-center justify-between rounded-md border p-3">
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium">{realtor.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {realtor.is_featured ? "Boosted in the directory" : "Standard listing"}
-                        </p>
-                      </div>
-                      <Badge variant={realtor.is_featured ? "default" : "secondary"} className="text-xs">
-                        {realtor.is_featured ? "Featured ⭐" : "Not Featured"}
-                      </Badge>
-                    </div>
-                  )}
+                  {realtor && (() => {
+                    const featuredActive = isFeaturedActive(realtor);
+                    const expiredButFlagged =
+                      realtor.featured_expiration_date &&
+                      new Date(realtor.featured_expiration_date) < new Date(new Date().toDateString());
+                    return (
+                      <>
+                        <div className="flex items-center justify-between rounded-md border p-3">
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-medium">{realtor.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {featuredActive
+                                ? `Boosted in the directory · until ${new Date(realtor.featured_expiration_date!).toLocaleDateString()}`
+                                : expiredButFlagged
+                                  ? `Featured placement expired on ${new Date(realtor.featured_expiration_date!).toLocaleDateString()}`
+                                  : "Standard listing"}
+                            </p>
+                          </div>
+                          <Badge variant={featuredActive ? "default" : "secondary"} className="text-xs">
+                            {featuredActive ? "Featured ⭐" : expiredButFlagged ? "Expired" : "Not Featured"}
+                          </Badge>
+                        </div>
 
-                  {realtor?.is_featured ? (
-                    <Button disabled className="w-full">Already Featured ✓</Button>
-                  ) : featuredFree ? (
-                    <Button
-                      onClick={handleBecomeFeatured}
-                      disabled={activating}
-                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-                    >
-                      {activating ? "Activating..." : "Become Featured (Free)"}
-                    </Button>
-                  ) : (
-                    <SimulatedPaymentForm
-                      paid={false}
-                      onPaymentComplete={handleBecomeFeatured}
-                      amount={FEATURED_FEE}
-                      label="Featured Realtor placement"
-                    />
+                        {featuredActive ? (
+                          <Button disabled className="w-full">Already Featured ✓</Button>
+                        ) : featuredFree ? (
+                          <Button
+                            onClick={handleBecomeFeatured}
+                            disabled={activating}
+                            className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                          >
+                            {activating ? "Activating..." : expiredButFlagged ? "Renew Featured (Free)" : "Become Featured (Free)"}
+                          </Button>
+                        ) : (
+                          <SimulatedPaymentForm
+                            paid={false}
+                            onPaymentComplete={handleBecomeFeatured}
+                            amount={FEATURED_FEE}
+                            label={expiredButFlagged ? "Featured Realtor renewal" : "Featured Realtor placement"}
+                          />
+                        )}
+                      </>
+                    );
+                  })()}
+
+                  {!realtor && (
+                    featuredFree ? (
+                      <Button
+                        onClick={handleBecomeFeatured}
+                        disabled={activating}
+                        className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                      >
+                        {activating ? "Activating..." : "Become Featured (Free)"}
+                      </Button>
+                    ) : (
+                      <SimulatedPaymentForm
+                        paid={false}
+                        onPaymentComplete={handleBecomeFeatured}
+                        amount={FEATURED_FEE}
+                        label="Featured Realtor placement"
+                      />
+                    )
                   )}
                 </CardContent>
               </Card>

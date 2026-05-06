@@ -128,6 +128,10 @@ const AdminRealtorDetailPage = () => {
       user_id: data.user_id,
       specialties: data.specialties,
       license_number: data.license_number,
+      featured_start_date: data.featured_start_date,
+      featured_expiration_date: data.featured_expiration_date,
+      featured_payment_status: data.featured_payment_status,
+      featured_payment_bypassed: data.featured_payment_bypassed,
     };
     const { data: flagRow } = await supabase.from("feature_flags").select("*").eq("key", FEATURE_KEYS.REALTOR_RENEWAL).maybeSingle();
     const flagFee = Number(flagRow?.fee ?? 0);
@@ -152,6 +156,33 @@ const AdminRealtorDetailPage = () => {
       expiration_date: data.expiration_date ? new Date(data.expiration_date).toISOString() : null,
       notes: status === "bypassed" ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}` : null,
     });
+
+    // Featured payment log if newly featured or renewed
+    const featuredChanged = data.is_featured && (
+      !realtor.is_featured ||
+      (realtor.featured_expiration_date ?? null) !== (data.featured_expiration_date ?? null)
+    );
+    if (featuredChanged) {
+      const { data: featFlag } = await supabase.from("feature_flags").select("*").eq("key", FEATURE_KEYS.FEATURED_REALTOR).maybeSingle();
+      const featFee = Number(featFlag?.fee ?? 0);
+      const featPromoActive = !!featFlag?.bypass_payment && (!featFlag?.promo_ends_at || new Date(featFlag.promo_ends_at).getTime() > Date.now());
+      const featStatus: "paid" | "bypassed" | "promotion" =
+        data.featured_payment_status === "paid" ? "paid" : featPromoActive ? "promotion" : "bypassed";
+      await logPayment({
+        user_id: data.user_id ?? actor!.id,
+        service_key: FEATURE_KEYS.FEATURED_REALTOR,
+        service_label: "Featured Realtor",
+        related_type: "realtor",
+        related_id: data.id!,
+        related_label: data.name,
+        amount: featStatus === "paid" ? featFee : 0,
+        status: featStatus,
+        promo_label: featPromoActive ? featFlag?.promo_label : null,
+        expiration_date: data.featured_expiration_date ? new Date(data.featured_expiration_date).toISOString() : null,
+        notes: featStatus === "bypassed" ? `Featured payment bypassed by admin. Reason: ${data.featured_bypass_reason?.trim() || "(no reason provided)"}` : null,
+      });
+    }
+
     toast.success("Realtor updated");
     setEditOpen(false);
     fetchRealtor();
@@ -183,6 +214,11 @@ const AdminRealtorDetailPage = () => {
     user_id: realtor.user_id,
     specialties: realtor.specialties,
     license_number: realtor.license_number,
+    featured_start_date: realtor.featured_start_date ?? null,
+    featured_expiration_date: realtor.featured_expiration_date ?? null,
+    featured_payment_status: realtor.featured_payment_status ?? "none",
+    featured_payment_bypassed: realtor.featured_payment_bypassed ?? false,
+    featured_bypass_reason: null,
   };
 
   const notExpired = !realtor.expiration_date || new Date(realtor.expiration_date) >= new Date(new Date().toDateString());
@@ -227,6 +263,7 @@ const AdminRealtorDetailPage = () => {
             <div><span className="text-muted-foreground">License #:</span> <span className="text-foreground">{realtor.license_number || "—"}</span></div>
             <div><span className="text-muted-foreground">Years Experience:</span> <span className="text-foreground">{realtor.years_experience ?? "—"}</span></div>
             <div><span className="text-muted-foreground">Subscription:</span> <span className="text-foreground">{realtor.start_date ? format(new Date(realtor.start_date), "MMM d, yyyy") : "—"} → {realtor.expiration_date ? format(new Date(realtor.expiration_date), "MMM d, yyyy") : "—"}</span></div>
+            <div><span className="text-muted-foreground">Featured:</span> <span className="text-foreground">{realtor.featured_start_date ? format(new Date(realtor.featured_start_date), "MMM d, yyyy") : "—"} → {realtor.featured_expiration_date ? format(new Date(realtor.featured_expiration_date), "MMM d, yyyy") : "—"} {realtor.is_featured && realtor.featured_expiration_date && new Date(realtor.featured_expiration_date) < new Date(new Date().toDateString()) ? <Badge variant="destructive" className="ml-2">Expired</Badge> : realtor.is_featured ? <Badge className="ml-2">Active</Badge> : null}</span></div>
             {realtor.bio && <div className="sm:col-span-2"><span className="text-muted-foreground">Bio:</span> <span className="text-foreground">{realtor.bio}</span></div>}
           </CardContent>
         </Card>

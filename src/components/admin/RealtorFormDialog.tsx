@@ -60,6 +60,12 @@ export interface RealtorFormData {
   license_number: string | null;
   /** Reason admin entered when bypassing payment. Not stored on the realtor row — passed through to payment_history.notes. */
   bypass_reason?: string | null;
+  // Featured subscription
+  featured_start_date: string | null;
+  featured_expiration_date: string | null;
+  featured_payment_status: string;
+  featured_payment_bypassed: boolean;
+  featured_bypass_reason?: string | null;
 }
 
 const addMonths = (dateStr: string, months: number) => {
@@ -91,6 +97,11 @@ const buildEmptyRealtor = (): RealtorFormData => {
     specialties: null,
     license_number: null,
     bypass_reason: null,
+    featured_start_date: null,
+    featured_expiration_date: null,
+    featured_payment_status: "none",
+    featured_payment_bypassed: false,
+    featured_bypass_reason: null,
   };
 };
 
@@ -106,6 +117,8 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const isCreate = mode === "create";
   const { fee: realtorFee, isFree: realtorPromoFree, promoLabel: realtorPromoLabel } =
     useFeatureFlag(isCreate ? FEATURE_KEYS.REALTOR_SIGNUP : FEATURE_KEYS.REALTOR_RENEWAL);
+  const { fee: featuredFee, isFree: featuredPromoFree, promoLabel: featuredPromoLabel } =
+    useFeatureFlag(FEATURE_KEYS.FEATURED_REALTOR);
   const [form, setFormState] = useState<RealtorFormData>(realtor ?? buildEmptyRealtor());
   const [dirty, setDirty] = useState(false);
   const setForm: typeof setFormState = (next) => {
@@ -115,6 +128,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [bypassPayment, setBypassPayment] = useState(realtor?.payment_bypassed ?? false);
+  const [bypassFeatured, setBypassFeatured] = useState(realtor?.featured_payment_bypassed ?? false);
 
   // Reset form when realtor changes
   const currentId = realtor?.id ?? null;
@@ -123,6 +137,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     setLastId(currentId);
     setFormState(realtor ?? buildEmptyRealtor());
     setBypassPayment(realtor?.payment_bypassed ?? false);
+    setBypassFeatured(realtor?.featured_payment_bypassed ?? false);
     setDirty(false);
   }
 
@@ -158,9 +173,47 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     }));
   };
 
+  const handleBypassFeaturedToggle = (checked: boolean) => {
+    setBypassFeatured(checked);
+    setForm(prev => {
+      const start = prev.featured_start_date || todayStr();
+      const end = prev.featured_expiration_date || addMonths(start, 1);
+      return {
+        ...prev,
+        featured_payment_bypassed: checked,
+        featured_payment_status: checked ? "bypassed" : (prev.featured_payment_status === "bypassed" ? "none" : prev.featured_payment_status),
+        is_featured: checked ? true : prev.is_featured,
+        featured_start_date: checked ? start : prev.featured_start_date,
+        featured_expiration_date: checked ? end : prev.featured_expiration_date,
+        featured_bypass_reason: checked ? prev.featured_bypass_reason ?? "" : null,
+      };
+    });
+  };
+
+  const handleFeaturedToggle = (checked: boolean) => {
+    setForm(prev => {
+      if (checked) {
+        const start = prev.featured_start_date || todayStr();
+        const end = prev.featured_expiration_date || addMonths(start, 1);
+        return {
+          ...prev,
+          is_featured: true,
+          featured_start_date: start,
+          featured_expiration_date: end,
+          featured_payment_status: prev.featured_payment_status === "none" || !prev.featured_payment_status
+            ? (featuredPromoFree ? "promotion" : "bypassed")
+            : prev.featured_payment_status,
+        };
+      }
+      return { ...prev, is_featured: false };
+    });
+  };
+
   const datesValid = !!form.start_date && !!form.expiration_date && new Date(form.start_date) < new Date(form.expiration_date);
   const bypassReasonValid = !bypassPayment || realtorPromoFree || !!(form.bypass_reason && form.bypass_reason.trim().length >= 3);
-  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && (form.district || form.state) && datesValid && bypassReasonValid;
+  const featuredDatesValid = !form.is_featured || (!!form.featured_start_date && !!form.featured_expiration_date && new Date(form.featured_start_date) < new Date(form.featured_expiration_date));
+  const featuredBypassReasonValid = !bypassFeatured || featuredPromoFree || !!(form.featured_bypass_reason && form.featured_bypass_reason.trim().length >= 3);
+  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && (form.district || form.state) && datesValid && bypassReasonValid && featuredDatesValid && featuredBypassReasonValid;
 
   const handleSubmit = () => {
     if (!isValid) {
@@ -168,6 +221,10 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
         toast.error("Start date must be earlier than expiration date");
       } else if (!bypassReasonValid) {
         toast.error("Please provide a reason for bypassing payment");
+      } else if (!featuredDatesValid) {
+        toast.error("Featured start date must be earlier than featured expiration date");
+      } else if (!featuredBypassReasonValid) {
+        toast.error("Please provide a reason for bypassing featured payment");
       }
       return;
     }
@@ -269,11 +326,143 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Switch checked={form.is_featured} onCheckedChange={(checked) => setForm({ ...form, is_featured: checked })} />
-            <Label>Featured / Advertised</Label>
-          </div>
+          <Separator />
 
+          {/* Featured Subscription Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-yellow-500" />
+              <h3 className="font-semibold text-foreground">Featured Subscription</h3>
+            </div>
+            <div className="rounded-lg border border-border p-4 space-y-4 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Featured / Advertised</p>
+                  <p className="text-xs text-muted-foreground">
+                    Boosts this realtor in the directory for a one-month term.
+                  </p>
+                </div>
+                <Switch checked={form.is_featured} onCheckedChange={handleFeaturedToggle} />
+              </div>
+
+              {form.is_featured && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Featured Start *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.featured_start_date && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {form.featured_start_date ? format(new Date(form.featured_start_date), "PPP") : "Pick start date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={form.featured_start_date ? new Date(form.featured_start_date) : undefined}
+                            onSelect={(date) => {
+                              if (!date) { setForm({ ...form, featured_start_date: null }); return; }
+                              const s = format(date, "yyyy-MM-dd");
+                              setForm({ ...form, featured_start_date: s, featured_expiration_date: addMonths(s, 1) });
+                            }}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Featured Expiration *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.featured_expiration_date && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {form.featured_expiration_date ? format(new Date(form.featured_expiration_date), "PPP") : "Pick expiration date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={form.featured_expiration_date ? new Date(form.featured_expiration_date) : undefined}
+                            onSelect={(date) => setForm({ ...form, featured_expiration_date: date ? format(date, "yyyy-MM-dd") : null })}
+                            disabled={form.featured_start_date ? { from: new Date(-8640000000000000), to: new Date(form.featured_start_date) } : undefined}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Featured Payment Status</p>
+                    </div>
+                    <Badge
+                      variant={
+                        form.featured_payment_status === "paid" ? "default" :
+                        form.featured_payment_status === "bypassed" || form.featured_payment_status === "promotion" ? "secondary" :
+                        form.featured_payment_status === "expired" ? "destructive" :
+                        "secondary"
+                      }
+                      className="capitalize"
+                    >
+                      {form.featured_payment_status || "none"}
+                    </Badge>
+                  </div>
+
+                  {featuredPromoFree && (
+                    <div className="flex items-center gap-3 p-3 rounded-md border border-accent/40 bg-accent/10">
+                      <ShieldCheck className="h-5 w-5 text-accent shrink-0" />
+                      <div className="flex-1 text-sm">
+                        <p className="font-medium text-foreground">🎉 {featuredPromoLabel || "Free featured promotion active"}</p>
+                        <p className="text-xs text-muted-foreground">No payment required for featured placement right now.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 p-3 rounded-md border border-dashed border-border bg-background">
+                    <ShieldCheck className="h-5 w-5 text-accent shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Bypass Featured Payment</p>
+                      <p className="text-xs text-muted-foreground">Skip featured payment for this realtor</p>
+                    </div>
+                    <Checkbox
+                      checked={bypassFeatured || featuredPromoFree}
+                      disabled={featuredPromoFree}
+                      onCheckedChange={(checked) => handleBypassFeaturedToggle(!!checked)}
+                    />
+                  </div>
+
+                  {bypassFeatured && !featuredPromoFree && (
+                    <div className="space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5">
+                      <Label className="text-sm">Reason for bypass <span className="text-destructive">*</span></Label>
+                      <Textarea
+                        value={form.featured_bypass_reason ?? ""}
+                        onChange={(e) => setForm({ ...form, featured_bypass_reason: e.target.value })}
+                        placeholder="Explain why featured payment is being bypassed…"
+                        rows={2}
+                      />
+                    </div>
+                  )}
+
+                  {!bypassFeatured && !featuredPromoFree && form.featured_payment_status !== "paid" && (
+                    <SimulatedPaymentForm
+                      paid={false}
+                      onPaymentComplete={() => setForm(prev => ({ ...prev, featured_payment_status: "paid" }))}
+                      amount={featuredFee}
+                      label="Featured Realtor placement"
+                    />
+                  )}
+
+                  {form.featured_start_date && form.featured_expiration_date && new Date(form.featured_start_date) >= new Date(form.featured_expiration_date) && (
+                    <p className="text-xs text-destructive">Featured start date must be earlier than featured expiration date.</p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
           <Separator />
 
           {/* Date Selection */}

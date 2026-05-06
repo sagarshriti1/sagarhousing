@@ -21,6 +21,7 @@ interface Realtor {
   specialties: string[] | null;
   years_experience: number | null;
   is_featured: boolean;
+  featured_expiration_date?: string | null;
 }
 
 const FindRealtors = () => {
@@ -41,7 +42,12 @@ const FindRealtors = () => {
       }
 
       const { data } = await query;
-      setRealtors(data ?? []);
+      const today = new Date(new Date().toDateString());
+      const normalized = (data ?? []).map((r: any) => ({
+        ...r,
+        is_featured: r.is_featured && (!r.featured_expiration_date || new Date(r.featured_expiration_date) >= today),
+      }));
+      setRealtors(normalized);
       setLoading(false);
     };
 
