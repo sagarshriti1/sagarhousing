@@ -138,7 +138,7 @@ const ListPropertyPage = () => {
         sqft: data.sqft != null ? String(data.sqft) : '0',
         property_type: (data.property_type ?? 'house') as 'apartment' | 'commercial' | 'house' | 'land',
         listing_type: data.listing_type ?? 'sale',
-        year_built: data.year_built != null ? String(data.year_built) : '0',
+        year_built: data.year_built != null ? String(data.year_built) : '',
         lot_size: data.lot_size != null ? String(data.lot_size) : '0',
 
         maintenance_fee: String((data as any).maintenance_fee ?? 0),
