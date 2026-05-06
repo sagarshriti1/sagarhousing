@@ -20,6 +20,7 @@ import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 import { logPayment } from "@/lib/paymentHistory";
 import { Badge } from "@/components/ui/badge";
 import { CardDescription } from "@/components/ui/card";
+import { isFeaturedActive, addOneMonthISO, todayISO, markFeaturedExpiredIfNeeded } from "@/lib/featuredStatus";
 
 const parseLocation = (loc: string | null | undefined): { city: string; district: string } => {
   if (!loc) return { city: "", district: "" };
