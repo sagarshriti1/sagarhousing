@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard } from "lucide-react";
-import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
+
 import PaymentHistoryList from "@/components/PaymentHistoryList";
 
 interface RealtorProfile {
