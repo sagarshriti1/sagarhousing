@@ -94,6 +94,7 @@ interface Property {
   id: string;
   title: string;
   city: string;
+  district?: string;
   state: string;
   price: number;
   status: string;
