@@ -90,10 +90,14 @@ const ListPropertyPage = () => {
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
   const FREE_USER_LISTING_LIMIT = 2;
-  const isStandardUser = !!user && role !== 'realtor' && role !== 'admin';
+  const isRealtor = role === 'realtor';
+  const isStandardUser = !!user && !isRealtor && role !== 'admin';
   const [existingListingCount, setExistingListingCount] = useState<number | null>(null);
   const atListingLimit = isStandardUser && !isEdit && existingListingCount !== null && existingListingCount >= FREE_USER_LISTING_LIMIT;
   const limitMessage = `You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit for standard accounts. Delete an existing listing or upgrade to a Realtor account to post more.`;
+
+  const [realtorInactive, setRealtorInactive] = useState(false);
+  const realtorInactiveMessage = "Your Realtor profile is inactive or expired. Please renew your Realtor subscription before posting new listings.";
 
   useEffect(() => {
     if (!user || isEdit || !isStandardUser) return;
@@ -107,6 +111,24 @@ const ListPropertyPage = () => {
     })();
     return () => { cancelled = true; };
   }, [user, isEdit, isStandardUser]);
+
+  useEffect(() => {
+    if (!user || !isRealtor || isEdit) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('realtors')
+        .select('payment_status, expiration_date')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const active = !!data
+        && (data.payment_status === 'paid' || data.payment_status === 'promotion' || data.payment_status === 'bypassed')
+        && (!data.expiration_date || new Date(data.expiration_date) > new Date());
+      setRealtorInactive(!active);
+    })();
+    return () => { cancelled = true; };
+  }, [user, isRealtor, isEdit]);
 
   // Mark dirty on any user change
   useEffect(() => { if (!fetching) setIsDirty(true); }, [form, selectedFeatures, imageFiles, existingImages, paymentDate, expirationDate]);
@@ -243,6 +265,22 @@ const ListPropertyPage = () => {
       if ((count ?? 0) >= FREE_USER_LISTING_LIMIT) {
         toast.error(limitMessage);
         setExistingListingCount(count ?? 0);
+        return;
+      }
+    }
+
+    if (!isEdit && isRealtor) {
+      const { data } = await supabase
+        .from('realtors')
+        .select('payment_status, expiration_date')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const active = !!data
+        && (data.payment_status === 'paid' || data.payment_status === 'promotion' || data.payment_status === 'bypassed')
+        && (!data.expiration_date || new Date(data.expiration_date) > new Date());
+      if (!active) {
+        setRealtorInactive(true);
+        toast.error(realtorInactiveMessage);
         return;
       }
     }
@@ -385,6 +423,22 @@ const ListPropertyPage = () => {
           <Alert variant='destructive' className='mb-6'>
             <AlertTitle>Listing limit reached</AlertTitle>
             <AlertDescription>{limitMessage}</AlertDescription>
+          </Alert>
+        )}
+
+        {realtorInactive && !isEdit && (
+          <Alert variant='destructive' className='mb-6'>
+            <AlertTitle>Realtor profile inactive</AlertTitle>
+            <AlertDescription>
+              {realtorInactiveMessage}{' '}
+              <button
+                type='button'
+                className='underline font-medium'
+                onClick={() => navigate('/realtor-dashboard')}
+              >
+                Go to Realtor Dashboard
+              </button>
+            </AlertDescription>
           </Alert>
         )}
 
@@ -724,7 +778,7 @@ const ListPropertyPage = () => {
             <Button type='button' variant='outline' onClick={handleBack} className='py-6 text-lg gap-2' disabled={loading}>
               <ArrowLeft className='h-5 w-5' /> Back
             </Button>
-            <Button type='submit' className='flex-1 bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg' disabled={loading || atListingLimit}>
+            <Button type='submit' className='flex-1 bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg' disabled={loading || atListingLimit || (realtorInactive && !isEdit)}>
               {loading ? (<><Loader2 className='h-5 w-5 mr-2 animate-spin' /> {isEdit ? 'Updating...' : 'Saving...'}</>) : (isEdit ? 'Update Listing' : 'Save Listing')}
             </Button>
           </div>

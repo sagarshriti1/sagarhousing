@@ -19,7 +19,9 @@ import { logPayment } from "@/lib/paymentHistory";
 const MyListingsPage = () => {
   const { user, role } = useAuth();
   const FREE_USER_LISTING_LIMIT = 2;
-  const isStandardUser = !!user && role !== 'realtor' && role !== 'admin';
+  const isRealtor = role === 'realtor';
+  const isStandardUser = !!user && !isRealtor && role !== 'admin';
+  const [realtorInactive, setRealtorInactive] = useState(false);
   const navigate = useNavigate();
   const saleFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_SALE);
   const rentFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_RENT);
@@ -46,6 +48,24 @@ const MyListingsPage = () => {
     };
     fetchListings();
   }, [user]);
+
+  useEffect(() => {
+    if (!user || !isRealtor) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('realtors')
+        .select('payment_status, expiration_date')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const active = !!data
+        && (data.payment_status === 'paid' || data.payment_status === 'promotion' || data.payment_status === 'bypassed')
+        && (!data.expiration_date || new Date(data.expiration_date) > new Date());
+      setRealtorInactive(!active);
+    })();
+    return () => { cancelled = true; };
+  }, [user, isRealtor]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this listing?")) return;
@@ -125,31 +145,44 @@ const MyListingsPage = () => {
       <main className="flex-1 container py-8">
         {(() => {
           const atLimit = isStandardUser && listings.length >= FREE_USER_LISTING_LIMIT;
+          const blockRealtor = isRealtor && realtorInactive;
+          const disableAdd = atLimit || blockRealtor;
+          const disableTitle = blockRealtor
+            ? "Your Realtor profile is inactive or expired. Renew your subscription from the Realtor Dashboard before posting new listings."
+            : `You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit. Delete an existing listing or upgrade to a Realtor account.`;
           return (
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="font-display text-3xl font-bold text-foreground">My Listings</h1>
-                <p className="text-muted-foreground mt-1">
-                  {listings.length} properties
-                  {isStandardUser && ` · Standard accounts can post up to ${FREE_USER_LISTING_LIMIT} listings (${listings.length}/${FREE_USER_LISTING_LIMIT} used)`}
-                </p>
-              </div>
-              {atLimit ? (
-                <Button
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2"
-                  disabled
-                  title={`You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit. Delete an existing listing or upgrade to a Realtor account.`}
-                >
-                  <Plus className="h-4 w-4" /> Add Property
-                </Button>
-              ) : (
-                <Link to="/list-property">
-                  <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h1 className="font-display text-3xl font-bold text-foreground">My Listings</h1>
+                  <p className="text-muted-foreground mt-1">
+                    {listings.length} properties
+                    {isStandardUser && ` · Standard accounts can post up to ${FREE_USER_LISTING_LIMIT} listings (${listings.length}/${FREE_USER_LISTING_LIMIT} used)`}
+                  </p>
+                </div>
+                {disableAdd ? (
+                  <Button
+                    className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2"
+                    disabled
+                    title={disableTitle}
+                  >
                     <Plus className="h-4 w-4" /> Add Property
                   </Button>
-                </Link>
+                ) : (
+                  <Link to="/list-property">
+                    <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+                      <Plus className="h-4 w-4" /> Add Property
+                    </Button>
+                  </Link>
+                )}
+              </div>
+              {blockRealtor && (
+                <div className="mb-6 rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-4 py-3 text-sm">
+                  Your Realtor profile is inactive or expired. Please renew your Realtor subscription from the{' '}
+                  <Link to="/realtor-dashboard" className="underline font-medium">Realtor Dashboard</Link> before posting new listings.
+                </div>
               )}
-            </div>
+            </>
           );
         })()}
 
