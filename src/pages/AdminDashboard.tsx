@@ -829,14 +829,13 @@ const AdminDashboard = () => {
                     const profileActive = linkedProfile ? linkedProfile.is_active : true;
                     const notExpired = !realtor.expiration_date || new Date(realtor.expiration_date) >= new Date(new Date().toDateString());
                     const isActive = profileActive && notExpired;
-                    const isExpanded = expandedRealtorId === realtor.id;
-                    const realtorRelatedId = realtor.isProfileOnly ? undefined : realtor.id;
+                    const targetUrl = realtor.isProfileOnly
+                      ? `/admin/user/${realtor.user_id}`
+                      : `/admin/realtor/${realtor.id}`;
                     return (
-                    <React.Fragment key={realtor.id}>
-                    <TableRow key={realtor.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setExpandedRealtorId(isExpanded ? null : realtor.id)}>
+                    <TableRow key={realtor.id} className="cursor-pointer hover:bg-muted/40" onClick={() => navigate(targetUrl)}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                           <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
                             {realtor.photo_url ? (
                               <img src={realtor.photo_url} alt="" className="h-full w-full object-cover" />
@@ -882,41 +881,6 @@ const AdminDashboard = () => {
                         )}
                       </TableCell>
                     </TableRow>
-                    {isExpanded && (
-                      <TableRow key={`${realtor.id}-expanded`} className="bg-muted/20 hover:bg-muted/20">
-                        <TableCell colSpan={10} className="p-4">
-                          <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex flex-wrap gap-2">
-                              {realtor.isProfileOnly ? (
-                                <Button size="sm" variant="outline" className="gap-2" onClick={() => setEditingProfile(realtor.profile!)}>
-                                  <Pencil className="h-4 w-4" /> Edit Profile
-                                </Button>
-                              ) : (
-                                <Button size="sm" variant="outline" className="gap-2" onClick={() => handleOpenEdit(realtor as Realtor)}>
-                                  <Pencil className="h-4 w-4" /> Edit
-                                </Button>
-                              )}
-                              {realtor.profile && (
-                                <Button size="sm" variant="outline" className="gap-2" onClick={() => resetPassword(realtor.profile!)}>
-                                  <KeyRound className="h-4 w-4" /> Reset Password
-                                </Button>
-                              )}
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-semibold text-foreground mb-2">Payment History</h4>
-                              <PaymentHistoryList
-                                userId={realtorRelatedId ? undefined : (realtor.user_id ?? undefined)}
-                                relatedType={realtorRelatedId ? "realtor" : undefined}
-                                relatedId={realtorRelatedId}
-                                canEditNotes
-                                compact
-                              />
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    </React.Fragment>
                     );
                   })}
                   {filteredRealtors.length === 0 && (
