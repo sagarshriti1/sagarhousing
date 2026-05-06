@@ -967,6 +967,10 @@ const AdminDashboard = () => {
                   <Input value={editingProfile.job_title ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, job_title: e.target.value })} placeholder="e.g. Senior Agent" />
                 </div>
               )}
+              <div>
+                <Label>Street Address</Label>
+                <Input value={editingProfile.street_address ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
+              </div>
               {(() => {
                 const editingRole = roles.find((r) => r.user_id === editingProfile.user_id)?.role ?? "user";
                 if (editingRole === "realtor") return null;
@@ -1100,6 +1104,10 @@ const AdminDashboard = () => {
                 <Input value={newUser.jobTitle} onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })} placeholder="e.g. Senior Agent" />
               </div>
             )}
+            <div>
+              <Label>Street Address</Label>
+              <Input value={newUser.streetAddress} onChange={(e) => setNewUser({ ...newUser, streetAddress: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
+            </div>
             {(() => {
               const loc = parseLocation(newUser.location);
               return (
