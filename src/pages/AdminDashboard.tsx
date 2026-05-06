@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User, ArrowUpDown, ArrowUp, ArrowDown, Sliders } from "lucide-react";
+import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User, ArrowUpDown, ArrowUp, ArrowDown, Sliders, ChevronDown, ChevronRight } from "lucide-react";
 import FeaturesTab from "@/components/admin/FeaturesTab";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
 import { toast } from "sonner";
@@ -143,6 +143,11 @@ const AdminDashboard = () => {
   // Multi-select
   const [selectedRealtorIds, setSelectedRealtorIds] = useState<Set<string>>(new Set());
   const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(new Set());
+
+  // Expanded rows (for inline detail panel with payment history)
+  const [expandedAccountId, setExpandedAccountId] = useState<string | null>(null);
+  const [expandedRealtorId, setExpandedRealtorId] = useState<string | null>(null);
+  const [expandedPropertyId, setExpandedPropertyId] = useState<string | null>(null);
 
   // Per-tab sorting
   const [sortConfig, setSortConfig] = useState<Record<string, { key: string; dir: 'asc' | 'desc' } | null>>({});
@@ -711,10 +716,18 @@ const AdminDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {list.map((profile) => (
-                <TableRow key={profile.id}>
+              {list.map((profile) => {
+                const isExpanded = expandedAccountId === profile.id;
+                return (
+                <React.Fragment key={profile.id}>
+                <TableRow
+                  key={profile.id}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => setExpandedAccountId(isExpanded ? null : profile.id)}
+                >
                   <TableCell>
                     <div className="flex items-center gap-3">
+                      {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
                         {profile.avatar_url ? (
                           <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -735,21 +748,35 @@ const AdminDashboard = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{updatedByLabel(profile.updated_by)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" title="Edit" onClick={() => setEditingProfile(profile)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Reset password" onClick={() => resetPassword(profile)}>
-                        <KeyRound className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" title="Delete" onClick={() => deleteUser(profile)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="text-destructive" title="Delete" onClick={() => deleteUser(profile)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+                {isExpanded && (
+                  <TableRow key={`${profile.id}-expanded`} className="bg-muted/20 hover:bg-muted/20">
+                    <TableCell colSpan={target === "admin" ? 8 : 7} className="p-4">
+                      <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" className="gap-2" onClick={() => setEditingProfile(profile)}>
+                            <Pencil className="h-4 w-4" /> Edit
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-2" onClick={() => resetPassword(profile)}>
+                            <KeyRound className="h-4 w-4" /> Reset Password
+                          </Button>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground mb-2">Payment History</h4>
+                          <PaymentHistoryList userId={profile.user_id} canEditNotes compact />
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                </React.Fragment>
+                );
+              })}
               {list.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={target === "admin" ? 8 : 7} className="text-center py-8 text-muted-foreground">
@@ -828,10 +855,14 @@ const AdminDashboard = () => {
                     const profileActive = linkedProfile ? linkedProfile.is_active : true;
                     const notExpired = !realtor.expiration_date || new Date(realtor.expiration_date) >= new Date(new Date().toDateString());
                     const isActive = profileActive && notExpired;
+                    const isExpanded = expandedRealtorId === realtor.id;
+                    const realtorRelatedId = realtor.isProfileOnly ? undefined : realtor.id;
                     return (
-                    <TableRow key={realtor.id}>
+                    <React.Fragment key={realtor.id}>
+                    <TableRow key={realtor.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setExpandedRealtorId(isExpanded ? null : realtor.id)}>
                       <TableCell>
                         <div className="flex items-center gap-3">
+                          {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                           <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
                             {realtor.photo_url ? (
                               <img src={realtor.photo_url} alt="" className="h-full w-full object-cover" />
@@ -858,7 +889,7 @@ const AdminDashboard = () => {
                           {isActive ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         {realtor.isProfileOnly ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : (
@@ -869,25 +900,49 @@ const AdminDashboard = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{updatedByLabel(realtor.updated_by)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {realtor.isProfileOnly ? (
-                            <Button variant="ghost" size="icon" title="Edit profile" onClick={() => setEditingProfile(realtor.profile!)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <>
-                              <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(realtor as Realtor)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        {!realtor.isProfileOnly && (
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRealtor(realtor.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
+                    {isExpanded && (
+                      <TableRow key={`${realtor.id}-expanded`} className="bg-muted/20 hover:bg-muted/20">
+                        <TableCell colSpan={10} className="p-4">
+                          <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex flex-wrap gap-2">
+                              {realtor.isProfileOnly ? (
+                                <Button size="sm" variant="outline" className="gap-2" onClick={() => setEditingProfile(realtor.profile!)}>
+                                  <Pencil className="h-4 w-4" /> Edit Profile
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="outline" className="gap-2" onClick={() => handleOpenEdit(realtor as Realtor)}>
+                                  <Pencil className="h-4 w-4" /> Edit
+                                </Button>
+                              )}
+                              {realtor.profile && (
+                                <Button size="sm" variant="outline" className="gap-2" onClick={() => resetPassword(realtor.profile!)}>
+                                  <KeyRound className="h-4 w-4" /> Reset Password
+                                </Button>
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold text-foreground mb-2">Payment History</h4>
+                              <PaymentHistoryList
+                                userId={realtorRelatedId ? undefined : (realtor.user_id ?? undefined)}
+                                relatedType={realtorRelatedId ? "realtor" : undefined}
+                                relatedId={realtorRelatedId}
+                                canEditNotes
+                                compact
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </React.Fragment>
                     );
                   })}
                   {filteredRealtors.length === 0 && (
@@ -986,15 +1041,26 @@ const AdminDashboard = () => {
                   {filteredProperties.map((prop) => {
                     const expired = prop.expiration_date && new Date(prop.expiration_date) < new Date(new Date().toDateString());
                     const isActive = prop.status === "active" && !expired;
+                    const isExpanded = expandedPropertyId === prop.id;
                     return (
-                    <TableRow key={prop.id} className={selectedPropertyIds.has(prop.id) ? "bg-muted/50" : ""}>
-                      <TableCell>
+                    <React.Fragment key={prop.id}>
+                    <TableRow
+                      key={prop.id}
+                      className={`cursor-pointer hover:bg-muted/40 ${selectedPropertyIds.has(prop.id) ? "bg-muted/50" : ""}`}
+                      onClick={() => setExpandedPropertyId(isExpanded ? null : prop.id)}
+                    >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selectedPropertyIds.has(prop.id)}
                           onCheckedChange={() => togglePropertySelection(prop.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">#{(prop as any).property_code ?? '—'}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                          #{(prop as any).property_code ?? '—'}
+                        </span>
+                      </TableCell>
                       <TableCell className="font-medium text-foreground">{prop.title}</TableCell>
                       <TableCell>{[prop.city, prop.district].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
@@ -1004,17 +1070,33 @@ const AdminDashboard = () => {
                       <TableCell className="capitalize">{prop.listing_type}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{creatorEmail(prop.user_id)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{updatedByLabel(prop.updated_by)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => navigate(`/edit-property/${prop.id}`)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteProperty(prop.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteProperty(prop.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
+                    {isExpanded && (
+                      <TableRow key={`${prop.id}-expanded`} className="bg-muted/20 hover:bg-muted/20">
+                        <TableCell colSpan={10} className="p-4">
+                          <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex flex-wrap gap-2">
+                              <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate(`/edit-property/${prop.id}`)}>
+                                <Pencil className="h-4 w-4" /> Edit
+                              </Button>
+                              <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate(`/property/db-${prop.id}`)}>
+                                <Home className="h-4 w-4" /> View Listing
+                              </Button>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold text-foreground mb-2">Payment History</h4>
+                              <PaymentHistoryList relatedType="property" relatedId={prop.id} canEditNotes compact />
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </React.Fragment>
                     );
                   })}
                   {filteredProperties.length === 0 && (

@@ -19,6 +19,7 @@ import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from '@/data/nepalL
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 import { logPayment } from "@/lib/paymentHistory";
+import PaymentHistoryList from "@/components/PaymentHistoryList";
 
 interface RealtorProfile {
   id: string;
@@ -329,6 +330,22 @@ const RealtorDashboard = () => {
                       {new Date(profile.expiration_date) > new Date() ? 'Active' : 'Expired'}
                     </Badge>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Payment History */}
+            {profile && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Payment History
+                  </CardTitle>
+                  <CardDescription>All payments and renewals tied to your realtor profile.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PaymentHistoryList relatedType="realtor" relatedId={profile.id} compact />
                 </CardContent>
               </Card>
             )}

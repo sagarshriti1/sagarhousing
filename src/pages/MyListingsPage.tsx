@@ -8,7 +8,8 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Bed, Bath, Maximize, Trash2, Pencil, CreditCard } from "lucide-react";
+import { Plus, Bed, Bath, Maximize, Trash2, Pencil, CreditCard, ChevronDown, ChevronRight } from "lucide-react";
+import PaymentHistoryList from "@/components/PaymentHistoryList";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
@@ -26,6 +27,7 @@ const MyListingsPage = () => {
   const [listings, setListings] = useState<Tables<"user_properties">[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -143,8 +145,14 @@ const MyListingsPage = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {listings.map((listing) => (
-              <div key={listing.id} className="flex gap-4 bg-card rounded-lg border border-border overflow-hidden shadow-card">
+            {listings.map((listing) => {
+              const isExpanded = expandedId === listing.id;
+              return (
+              <div key={listing.id} className="bg-card rounded-lg border border-border overflow-hidden shadow-card">
+                <div
+                  className="flex gap-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => setExpandedId(isExpanded ? null : listing.id)}
+                >
                 <div className="w-48 h-36 shrink-0">
                   {listing.images && listing.images.length > 0 ? (
                     <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" loading="lazy" />
@@ -159,7 +167,10 @@ const MyListingsPage = () => {
                         <Badge className={`border-0 capitalize ${statusColor(listing.status)}`}>{listing.status}</Badge>
                         <Badge variant="outline" className="capitalize">{listing.listing_type === "sale" ? "For Sale" : "For Rent"}</Badge>
                       </div>
-                      <h3 className="font-display text-lg font-bold text-foreground">{listing.title}</h3>
+                      <h3 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
+                        {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                        {listing.title}
+                      </h3>
                       <p className="text-sm text-muted-foreground">{listing.address}, {listing.city}{listing.district ? `, ${listing.district}` : ''}</p>
                     </div>
                     <p className="font-display text-xl font-bold text-price">
@@ -170,7 +181,7 @@ const MyListingsPage = () => {
                     <span className="flex items-center gap-1"><Bed className="h-4 w-4" /> {listing.bedrooms} bd</span>
                     <span className="flex items-center gap-1"><Bath className="h-4 w-4" /> {listing.bathrooms} ba</span>
                     {listing.sqft && <span className="flex items-center gap-1"><Maximize className="h-4 w-4" /> {listing.sqft.toLocaleString()} sqft</span>}
-                    <div className="ml-auto flex items-center gap-3">
+                    <div className="ml-auto flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                       {/* Expiration / date info */}
                       {(() => {
                         const exp = (listing as any).expiration_date;
@@ -229,15 +240,23 @@ const MyListingsPage = () => {
 
                         return null;
                       })()}
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/edit-property/${listing.id}`)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(listing.id)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/edit-property/${listing.id}`); }}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(listing.id); }}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 </div>
+                </div>
+                {isExpanded && (
+                  <div className="border-t border-border bg-muted/20 p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <h4 className="text-sm font-semibold text-foreground">Payment History</h4>
+                    <PaymentHistoryList relatedType="property" relatedId={listing.id} compact />
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
