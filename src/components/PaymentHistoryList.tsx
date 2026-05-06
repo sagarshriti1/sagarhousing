@@ -132,6 +132,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
     if (error) { toast.error("Failed to save note"); return; }
     toast.success("Note saved");
     setRecords((prev) => prev.map((r) => (r.id === id ? { ...r, notes: noteDraft } : r)));
+    setOriginalNote(noteDraft);
     setEditingNote(null);
   };
 
