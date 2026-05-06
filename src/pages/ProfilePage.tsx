@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, CreditCard, Loader2, Receipt, User as UserIcon } from "lucide-react";
+import { Camera, CreditCard, Loader2, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
