@@ -94,6 +94,7 @@ interface Property {
   id: string;
   title: string;
   city: string;
+  district?: string;
   state: string;
   price: number;
   status: string;
@@ -151,7 +152,7 @@ const AdminDashboard = () => {
       supabase.from("realtors").select("*"),
       supabase.from("profiles").select("*"),
       supabase.from("user_roles").select("*"),
-      supabase.from("user_properties").select("id, title, city, state, price, status, listing_type, user_id, updated_by, expiration_date"),
+      supabase.from("user_properties").select("id, title, city, district, state, price, status, listing_type, user_id, updated_by, expiration_date"),
     ]);
     setRealtors(r.data ?? []);
     setProfiles((p.data ?? []) as UserProfile[]);
@@ -575,7 +576,7 @@ const AdminDashboard = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 {target === "admin" && <TableHead>Job Title</TableHead>}
-                <TableHead>Location</TableHead>
+                <TableHead>City / District</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Updated By</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -599,7 +600,7 @@ const AdminDashboard = () => {
                   <TableCell className="text-muted-foreground">{profile.email || "—"}</TableCell>
                   <TableCell>{profile.phone || "—"}</TableCell>
                   {target === "admin" && <TableCell>{profile.job_title || "—"}</TableCell>}
-                  <TableCell>{profile.location || "—"}</TableCell>
+                  <TableCell>{(() => { const l = parseLocation(profile.location); return [l.city, l.district].filter(Boolean).join(", ") || "—"; })()}</TableCell>
                   <TableCell>
                     <Badge variant={profile.is_active ? "default" : "secondary"}>
                       {profile.is_active ? "Active" : "Inactive"}
@@ -702,7 +703,7 @@ const AdminDashboard = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead>City / District</TableHead>
                     
                     <TableHead>Payment</TableHead>
                     <TableHead>Dates</TableHead>
@@ -841,7 +842,7 @@ const AdminDashboard = () => {
                       />
                     </TableHead>
                     <TableHead>Title</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead>City / District</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Type</TableHead>
@@ -862,7 +863,7 @@ const AdminDashboard = () => {
                         />
                       </TableCell>
                       <TableCell className="font-medium text-foreground">{prop.title}</TableCell>
-                      <TableCell>{prop.city}</TableCell>
+                      <TableCell>{[prop.city, prop.district].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge variant={isActive ? "default" : "secondary"}>{expired ? "expired" : prop.status}</Badge>
@@ -983,48 +984,41 @@ const AdminDashboard = () => {
               )}
               {(() => {
                 const editingRole = roles.find((r) => r.user_id === editingProfile.user_id)?.role ?? "user";
-                if (editingRole !== "admin" && editingRole !== "realtor") {
-                  const loc = parseLocation(editingProfile.location);
-                  return (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>City</Label>
-                        <Select
-                          value={loc.city}
-                          onValueChange={(city) => {
-                            const district = getDistrictForCity(city) || loc.district;
-                            setEditingProfile({ ...editingProfile, location: joinLocation(city, district) });
-                          }}
-                        >
-                          <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
-                          <SelectContent>
-                            {NEPAL_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>District</Label>
-                        <Select
-                          value={loc.district}
-                          onValueChange={(district) => {
-                            const cityDist = getDistrictForCity(loc.city);
-                            const nextCity = cityDist && cityDist !== district ? "" : loc.city;
-                            setEditingProfile({ ...editingProfile, location: joinLocation(nextCity, district) });
-                          }}
-                        >
-                          <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
-                          <SelectContent>
-                            {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  );
-                }
+                if (editingRole === "realtor") return null;
+                const loc = parseLocation(editingProfile.location);
                 return (
-                  <div>
-                    <Label>Location</Label>
-                    <Input value={editingProfile.location ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, location: e.target.value })} placeholder="e.g. Kathmandu" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>City</Label>
+                      <Select
+                        value={loc.city}
+                        onValueChange={(city) => {
+                          const district = getDistrictForCity(city) || loc.district;
+                          setEditingProfile({ ...editingProfile, location: joinLocation(city, district) });
+                        }}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                        <SelectContent>
+                          {NEPAL_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>District</Label>
+                      <Select
+                        value={loc.district}
+                        onValueChange={(district) => {
+                          const cityDist = getDistrictForCity(loc.city);
+                          const nextCity = cityDist && cityDist !== district ? "" : loc.city;
+                          setEditingProfile({ ...editingProfile, location: joinLocation(nextCity, district) });
+                        }}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                        <SelectContent>
+                          {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 );
               })()}
@@ -1121,51 +1115,44 @@ const AdminDashboard = () => {
                 <Input value={newUser.jobTitle} onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })} placeholder="e.g. Senior Agent" />
               </div>
             )}
-            {createUserRole === "user" ? (
-              (() => {
-                const loc = parseLocation(newUser.location);
-                return (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>City</Label>
-                      <Select
-                        value={loc.city}
-                        onValueChange={(city) => {
-                          const district = getDistrictForCity(city) || loc.district;
-                          setNewUser({ ...newUser, location: joinLocation(city, district) });
-                        }}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
-                        <SelectContent>
-                          {NEPAL_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>District</Label>
-                      <Select
-                        value={loc.district}
-                        onValueChange={(district) => {
-                          const cityDist = getDistrictForCity(loc.city);
-                          const nextCity = cityDist && cityDist !== district ? "" : loc.city;
-                          setNewUser({ ...newUser, location: joinLocation(nextCity, district) });
-                        }}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
-                        <SelectContent>
-                          {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
+            {(() => {
+              const loc = parseLocation(newUser.location);
+              return (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>City</Label>
+                    <Select
+                      value={loc.city}
+                      onValueChange={(city) => {
+                        const district = getDistrictForCity(city) || loc.district;
+                        setNewUser({ ...newUser, location: joinLocation(city, district) });
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                      <SelectContent>
+                        {NEPAL_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
-                );
-              })()
-            ) : (
-              <div>
-                <Label>Location</Label>
-                <Input value={newUser.location} onChange={(e) => setNewUser({ ...newUser, location: e.target.value })} placeholder="e.g. Kathmandu" />
-              </div>
-            )}
+                  <div>
+                    <Label>District</Label>
+                    <Select
+                      value={loc.district}
+                      onValueChange={(district) => {
+                        const cityDist = getDistrictForCity(loc.city);
+                        const nextCity = cityDist && cityDist !== district ? "" : loc.city;
+                        setNewUser({ ...newUser, location: joinLocation(nextCity, district) });
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                      <SelectContent>
+                        {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              );
+            })()}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCreateUserOpen(false)} disabled={creatingUser}>Cancel</Button>
               <Button onClick={handleCreateUser} disabled={creatingUser} className="gap-2">

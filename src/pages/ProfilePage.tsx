@@ -8,8 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
+
+const parseLocation = (loc: string | null | undefined): { city: string; district: string } => {
+  if (!loc) return { city: "", district: "" };
+  const [city, district] = loc.split(",").map((s) => s.trim());
+  return { city: city || "", district: district || "" };
+};
+const joinLocation = (city: string, district: string) => [city, district].filter(Boolean).join(", ");
 
 interface ProfileData {
   id?: string;
@@ -183,14 +192,44 @@ const ProfilePage = () => {
                       maxLength={100}
                     />
                   </div>
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label>Location</Label>
-                    <Input
-                      value={profile.location ?? ""}
-                      onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                      maxLength={150}
-                    />
-                  </div>
+                  {(() => {
+                    const loc = parseLocation(profile.location);
+                    return (
+                      <>
+                        <div className="space-y-2">
+                          <Label>City</Label>
+                          <Select
+                            value={loc.city}
+                            onValueChange={(city) => {
+                              const district = getDistrictForCity(city) || loc.district;
+                              setProfile({ ...profile, location: joinLocation(city, district) });
+                            }}
+                          >
+                            <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                            <SelectContent>
+                              {NEPAL_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>District</Label>
+                          <Select
+                            value={loc.district}
+                            onValueChange={(district) => {
+                              const cityDist = getDistrictForCity(loc.city);
+                              const nextCity = cityDist && cityDist !== district ? "" : loc.city;
+                              setProfile({ ...profile, location: joinLocation(nextCity, district) });
+                            }}
+                          >
+                            <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                            <SelectContent>
+                              {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <Button onClick={handleSave} disabled={saving}>
