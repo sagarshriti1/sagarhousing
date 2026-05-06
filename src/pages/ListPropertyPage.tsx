@@ -200,7 +200,7 @@ const ListPropertyPage = () => {
     e.preventDefault();
     if (!user) return;
 
-    if (!form.title || !form.address || !form.city || !form.price) {
+    if (!form.title || !form.address || !form.district || !form.price) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -350,7 +350,7 @@ const ListPropertyPage = () => {
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
-                <Label>City *</Label>
+                <Label>City</Label>
                 <SearchableCombobox
                   value={form.city}
                   onValueChange={v => {
@@ -365,7 +365,7 @@ const ListPropertyPage = () => {
                 />
               </div>
               <div className='space-y-2'>
-                <Label>District</Label>
+                <Label>District *</Label>
                 <SearchableCombobox
                   value={form.district}
                   onValueChange={v => updateForm('district', v)}
