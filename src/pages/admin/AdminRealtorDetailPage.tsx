@@ -207,6 +207,39 @@ const AdminRealtorDetailPage = () => {
         </Card>
 
         <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Home className="h-5 w-5" /> Listed Properties ({properties.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!realtor.user_id ? (
+              <p className="text-sm text-muted-foreground">No linked user account — cannot list properties.</p>
+            ) : properties.length === 0 ? (
+              <p className="text-sm text-muted-foreground">This realtor has no listed properties yet.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {properties.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      onClick={() => navigate(`/admin/property/${p.id}`)}
+                      className="w-full flex items-center justify-between gap-3 py-3 text-left hover:bg-muted/50 px-2 rounded-md transition"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground truncate">{p.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {p.city}{p.district ? `, ${p.district}` : ""} • {p.listing_type === "rent" ? "For Rent" : "For Sale"} • Rs. {Number(p.price).toLocaleString()}
+                        </p>
+                      </div>
+                      <Badge variant={p.status === "active" ? "default" : "secondary"} className="capitalize shrink-0">{p.status}</Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader><CardTitle>Payment History</CardTitle></CardHeader>
           <CardContent>
             <PaymentHistoryList relatedType="realtor" relatedId={realtor.id} canEditNotes compact />
