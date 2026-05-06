@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
+import { logPayment } from "@/lib/paymentHistory";
 
 const MyListingsPage = () => {
   const { user } = useAuth();
@@ -68,6 +69,20 @@ const MyListingsPage = () => {
     if (error) {
       toast.error("Failed to activate listing");
     } else {
+      const flag = flagFor(paymentListing.listing_type);
+      const isFree = flag.isFree;
+      await logPayment({
+        user_id: paymentListing.user_id,
+        service_key: paymentListing.listing_type === "rent" ? FEATURE_KEYS.PROPERTY_RENT : FEATURE_KEYS.PROPERTY_SALE,
+        service_label: paymentListing.listing_type === "rent" ? "Property Listing — For Rent" : "Property Listing — For Sale",
+        related_type: "property",
+        related_id: paymentListing.id,
+        related_label: paymentListing.title,
+        amount: isFree ? 0 : flag.fee,
+        status: isFree ? "promotion" : "paid",
+        promo_label: isFree ? flag.promoLabel : null,
+        expiration_date: expiration.toISOString(),
+      });
       setListings((prev) =>
         prev.map((l) => l.id === paymentListing.id ? { ...l, status: "active" as const, payment_date: now.toISOString(), expiration_date: expiration.toISOString() } as any : l)
       );

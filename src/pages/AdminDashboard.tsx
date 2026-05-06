@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User, ArrowUpDown, ArrowUp, ArrowDown, Sliders } from "lucide-react";
 import FeaturesTab from "@/components/admin/FeaturesTab";
+import PaymentHistoryList from "@/components/PaymentHistoryList";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RealtorFormDialog, { type RealtorFormData } from "@/components/admin/RealtorFormDialog";
@@ -415,6 +416,19 @@ const AdminDashboard = () => {
       license_number: data.license_number,
     };
 
+    const { logPayment } = await import("@/lib/paymentHistory");
+    const { FEATURE_KEYS } = await import("@/hooks/useFeatureFlag");
+    const isCreate = realtorDialogMode === "create";
+    const flagKey = isCreate ? FEATURE_KEYS.REALTOR_SIGNUP : FEATURE_KEYS.REALTOR_RENEWAL;
+    const { data: flagRow } = await supabase.from("feature_flags").select("*").eq("key", flagKey).maybeSingle();
+    const flagFee = Number(flagRow?.fee ?? 0);
+    const promoActive = !!flagRow?.bypass_payment && (!flagRow?.promo_ends_at || new Date(flagRow.promo_ends_at).getTime() > Date.now());
+    const status: "paid" | "bypassed" | "promotion" =
+      data.payment_status === "paid" ? "paid" :
+      promoActive ? "promotion" :
+      "bypassed";
+    const amount = status === "paid" ? flagFee : 0;
+
     if (realtorDialogMode === "edit" && data.id) {
       confirm({
         title: "Update Realtor",
@@ -422,6 +436,21 @@ const AdminDashboard = () => {
         onConfirm: async () => {
           const { error } = await supabase.from("realtors").update(payload).eq("id", data.id!);
           if (error) { toast.error("Failed to save realtor"); return; }
+          if (data.user_id) {
+            await logPayment({
+              user_id: data.user_id,
+              service_key: flagKey,
+              service_label: isCreate ? "Realtor Signup" : "Realtor Renewal",
+              related_type: "realtor",
+              related_id: data.id,
+              related_label: data.name,
+              amount,
+              status,
+              promo_label: promoActive ? flagRow?.promo_label : null,
+              expiration_date: data.expiration_date ? new Date(data.expiration_date).toISOString() : null,
+              notes: status === "bypassed" ? "Admin updated subscription without charging." : null,
+            });
+          }
           toast.success("Realtor updated");
           setRealtors((prev) => prev.map((r) => (r.id === data.id ? { ...r, ...payload, id: data.id! } : r)));
           setRealtorDialogOpen(false);
@@ -430,6 +459,21 @@ const AdminDashboard = () => {
     } else {
       const { data: newData, error } = await supabase.from("realtors").insert(payload).select().single();
       if (error) { toast.error("Failed to create realtor"); return; }
+      if (newData?.user_id) {
+        await logPayment({
+          user_id: newData.user_id,
+          service_key: flagKey,
+          service_label: "Realtor Signup",
+          related_type: "realtor",
+          related_id: newData.id,
+          related_label: newData.name,
+          amount,
+          status,
+          promo_label: promoActive ? flagRow?.promo_label : null,
+          expiration_date: newData.expiration_date ? new Date(newData.expiration_date).toISOString() : null,
+          notes: status === "bypassed" ? "Admin created realtor profile without charging." : null,
+        });
+      }
       toast.success("Realtor created!");
       setRealtors((prev) => [...prev, newData as Realtor]);
       setRealtorDialogOpen(false);
@@ -1124,6 +1168,10 @@ const AdminDashboard = () => {
                   checked={editingProfile.is_active}
                   onCheckedChange={(checked) => setEditingProfile({ ...editingProfile, is_active: checked })}
                 />
+              </div>
+              <div className="border-t border-border pt-4 space-y-3">
+                <h3 className="font-semibold text-foreground">Payment History</h3>
+                <PaymentHistoryList userId={editingProfile.user_id} canEditNotes compact />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingProfile(null)}>Cancel</Button>

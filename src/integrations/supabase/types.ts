@@ -77,6 +77,63 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_history: {
+        Row: {
+          amount: number
+          created_at: string
+          expiration_date: string | null
+          id: string
+          notes: string | null
+          processed_by: string | null
+          processed_by_name: string | null
+          processed_by_role: string | null
+          promo_label: string | null
+          related_id: string | null
+          related_label: string | null
+          related_type: string | null
+          service_key: string
+          service_label: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          notes?: string | null
+          processed_by?: string | null
+          processed_by_name?: string | null
+          processed_by_role?: string | null
+          promo_label?: string | null
+          related_id?: string | null
+          related_label?: string | null
+          related_type?: string | null
+          service_key: string
+          service_label: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          notes?: string | null
+          processed_by?: string | null
+          processed_by_name?: string | null
+          processed_by_role?: string | null
+          promo_label?: string | null
+          related_id?: string | null
+          related_label?: string | null
+          related_type?: string | null
+          service_key?: string
+          service_label?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

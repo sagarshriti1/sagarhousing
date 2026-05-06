@@ -35,6 +35,7 @@ import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalL
 import { CreditCard, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
+import PaymentHistoryList from "@/components/PaymentHistoryList";
 
 export interface RealtorFormData {
   id?: string;
@@ -365,6 +366,19 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
               <p className="text-xs text-destructive">Start date must be earlier than expiration date.</p>
             )}
           </div>
+
+          {!isCreate && form.id && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-foreground">Payment History</h3>
+                </div>
+                <PaymentHistoryList relatedType="realtor" relatedId={form.id} canEditNotes compact />
+              </div>
+            </>
+          )}
 
           <Separator />
 

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from '@/data/nepalLocations';
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
+import { logPayment } from "@/lib/paymentHistory";
 
 interface RealtorProfile {
   id: string;
@@ -135,6 +136,20 @@ const RealtorDashboard = () => {
         expiration_date: expiration.toISOString().split("T")[0],
       });
     }
+
+    // Log payment event (renewal if profile already existed, signup otherwise)
+    await logPayment({
+      user_id: user!.id,
+      service_key: profile ? FEATURE_KEYS.REALTOR_RENEWAL : FEATURE_KEYS.REALTOR_SIGNUP,
+      service_label: profile ? "Realtor Renewal" : "Realtor Signup",
+      related_type: "realtor",
+      related_id: profile?.id ?? null,
+      related_label: profile?.name ?? formData.name,
+      amount: signupFree ? 0 : SIGNUP_FEE,
+      status: signupFree ? "promotion" : "paid",
+      promo_label: signupFree ? signupPromoLabel : null,
+      expiration_date: expiration.toISOString(),
+    });
   };
 
   const saveProfile = async () => {

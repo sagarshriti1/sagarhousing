@@ -28,6 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } from '@/data/nepalLocations';
 import SearchableCombobox from '@/components/SearchableCombobox';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
+import PaymentHistoryList from '@/components/PaymentHistoryList';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
@@ -271,8 +272,25 @@ const ListPropertyPage = () => {
         if (error) throw error;
         toast.success('Listing updated successfully!');
       } else {
-        const { error } = await supabase.from('user_properties').insert(payload);
+        const { data: inserted, error } = await supabase.from('user_properties').insert(payload).select().single();
         if (error) throw error;
+        if (isAdmin && inserted) {
+          const { logPayment } = await import('@/lib/paymentHistory');
+          const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+          await logPayment({
+            user_id: user.id,
+            service_key: form.listing_type === 'rent' ? FEATURE_KEYS.PROPERTY_RENT : FEATURE_KEYS.PROPERTY_SALE,
+            service_label: form.listing_type === 'rent' ? 'Property Listing — For Rent' : 'Property Listing — For Sale',
+            related_type: 'property',
+            related_id: (inserted as any).id,
+            related_label: form.title,
+            amount: 0,
+            status: flag.isFree ? 'promotion' : 'bypassed',
+            promo_label: flag.isFree ? flag.promoLabel : null,
+            expiration_date: expirationDate ? new Date(expirationDate).toISOString() : null,
+            notes: flag.isFree ? null : 'Admin activated this listing without payment.',
+          });
+        }
         toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
       }
       setIsDirty(false);
@@ -557,6 +575,13 @@ const ListPropertyPage = () => {
                 <li>For Sale: <strong>{saleFlag.isFree ? "Free 🎉" : `Rs. ${saleFlag.fee.toLocaleString()}`}</strong>{saleFlag.isFree && saleFlag.promoLabel ? ` — ${saleFlag.promoLabel}` : ""}</li>
               </ul>
             </div>
+          )}
+
+          {isEdit && isAdmin && editId && (
+            <section className="space-y-3">
+              <h2 className="font-display text-xl font-semibold text-foreground border-b border-border pb-2">Payment History</h2>
+              <PaymentHistoryList relatedType="property" relatedId={editId} canEditNotes compact />
+            </section>
           )}
 
           <div className='flex gap-3'>

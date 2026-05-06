@@ -63,7 +63,7 @@ const AuthPage = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -72,6 +72,21 @@ const AuthPage = () => {
           },
         });
         if (error) throw error;
+        // Log the realtor signup payment for transparency
+        if (selectedRole === 'realtor' && data.user) {
+          const { logPayment } = await import('@/lib/paymentHistory');
+          const { FEATURE_KEYS } = await import('@/hooks/useFeatureFlag');
+          await logPayment({
+            user_id: data.user.id,
+            service_key: FEATURE_KEYS.REALTOR_SIGNUP,
+            service_label: 'Realtor Signup',
+            related_type: 'realtor',
+            related_label: displayName,
+            amount: realtorFree ? 0 : REALTOR_SIGNUP_FEE,
+            status: realtorFree ? 'promotion' : 'paid',
+            promo_label: realtorFree ? realtorPromoLabel : null,
+          });
+        }
         toast.success('Account created! Check your email to verify.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
