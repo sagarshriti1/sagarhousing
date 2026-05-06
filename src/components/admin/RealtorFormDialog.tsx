@@ -124,7 +124,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   };
 
   const datesValid = !!form.start_date && !!form.expiration_date && new Date(form.start_date) < new Date(form.expiration_date);
-  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && datesValid;
+  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && (form.district || form.state) && datesValid;
 
   const handleSubmit = () => {
     if (!isValid) {
@@ -174,7 +174,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
               </Select>
             </div>
             <div>
-              <Label>District</Label>
+              <Label>District *</Label>
               <Select value={form.state || form.district} onValueChange={handleDistrictChange}>
                 <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                 <SelectContent>

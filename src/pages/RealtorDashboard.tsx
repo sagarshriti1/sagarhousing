@@ -134,8 +134,8 @@ const RealtorDashboard = () => {
   };
 
   const saveProfile = async () => {
-    if (!formData.name || !formData.city) {
-      toast.error("Name and city are required");
+    if (!formData.name || !formData.district) {
+      toast.error("Name and district are required");
       return;
     }
 
@@ -330,7 +330,7 @@ const RealtorDashboard = () => {
                     <Input type="number" value={formData.years_experience} onChange={(e) => setFormData({ ...formData, years_experience: e.target.value })} placeholder="e.g. 10" />
                   </div>
                    <div>
-                     <Label>City *</Label>
+                     <Label>City</Label>
                      <Select value={formData.city} onValueChange={(v) => {
                        const district = getDistrictForCity(v);
                        setFormData({ ...formData, city: v, ...(district ? { district } : {}) });
@@ -342,7 +342,7 @@ const RealtorDashboard = () => {
                      </Select>
                    </div>
                    <div>
-                     <Label>District</Label>
+                     <Label>District *</Label>
                      <Select value={formData.district} onValueChange={(v) => {
                        const cityDistrict = getDistrictForCity(formData.city);
                        setFormData({ ...formData, district: v, ...(cityDistrict !== v ? { city: '' } : {}) });
