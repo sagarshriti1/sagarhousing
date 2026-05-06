@@ -381,6 +381,13 @@ const ListPropertyPage = () => {
           {isEdit ? 'Update the details of your property listing' : 'Fill in the details below to list your property'}
         </p>
 
+        {atListingLimit && (
+          <Alert variant='destructive' className='mb-6'>
+            <AlertTitle>Listing limit reached</AlertTitle>
+            <AlertDescription>{limitMessage}</AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className='space-y-8'>
           {/* Basic Info */}
           <section className='space-y-4'>
