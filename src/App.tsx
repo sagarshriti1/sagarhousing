@@ -64,6 +64,9 @@ const App = () => (
             <Route path="/realtors" element={<RealtorsPage />} />
             <Route path="/realtor-dashboard" element={<RealtorProtectedRoute><RealtorDashboard /></RealtorProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/user/:userId" element={<ProtectedRoute><AdminUserDetailPage /></ProtectedRoute>} />
+            <Route path="/admin/realtor/:id" element={<ProtectedRoute><AdminRealtorDetailPage /></ProtectedRoute>} />
+            <Route path="/admin/property/:id" element={<ProtectedRoute><AdminPropertyDetailPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
