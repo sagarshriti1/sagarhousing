@@ -167,7 +167,10 @@ const MyListingsPage = () => {
                         <Badge className={`border-0 capitalize ${statusColor(listing.status)}`}>{listing.status}</Badge>
                         <Badge variant="outline" className="capitalize">{listing.listing_type === "sale" ? "For Sale" : "For Rent"}</Badge>
                       </div>
-                      <h3 className="font-display text-lg font-bold text-foreground">{listing.title}</h3>
+                      <h3 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
+                        {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                        {listing.title}
+                      </h3>
                       <p className="text-sm text-muted-foreground">{listing.address}, {listing.city}{listing.district ? `, ${listing.district}` : ''}</p>
                     </div>
                     <p className="font-display text-xl font-bold text-price">
