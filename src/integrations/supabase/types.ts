@@ -193,6 +193,11 @@ export type Database = {
           district: string
           email: string | null
           expiration_date: string | null
+          featured_bypass_reason: string | null
+          featured_expiration_date: string | null
+          featured_payment_bypassed: boolean
+          featured_payment_status: string
+          featured_start_date: string | null
           id: string
           is_featured: boolean
           license_number: string | null
@@ -217,6 +222,11 @@ export type Database = {
           district?: string
           email?: string | null
           expiration_date?: string | null
+          featured_bypass_reason?: string | null
+          featured_expiration_date?: string | null
+          featured_payment_bypassed?: boolean
+          featured_payment_status?: string
+          featured_start_date?: string | null
           id?: string
           is_featured?: boolean
           license_number?: string | null
@@ -241,6 +251,11 @@ export type Database = {
           district?: string
           email?: string | null
           expiration_date?: string | null
+          featured_bypass_reason?: string | null
+          featured_expiration_date?: string | null
+          featured_payment_bypassed?: boolean
+          featured_payment_status?: string
+          featured_start_date?: string | null
           id?: string
           is_featured?: boolean
           license_number?: string | null
