@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, CreditCard, Loader2, Receipt, User as UserIcon } from "lucide-react";
+import { Camera, CreditCard, Loader2, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import PaymentHistoryList from "@/components/PaymentHistoryList";
+
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 import { logPayment } from "@/lib/paymentHistory";
@@ -235,7 +235,7 @@ const ProfilePage = () => {
             {role === "realtor" && (
               <TabsTrigger value="promote" className="gap-2"><CreditCard className="h-4 w-4" /> Promote Your Profile</TabsTrigger>
             )}
-            <TabsTrigger value="payments" className="gap-2"><Receipt className="h-4 w-4" /> Payment History</TabsTrigger>
+            
           </TabsList>
 
           <TabsContent value="info">
@@ -395,17 +395,6 @@ const ProfilePage = () => {
               </Card>
             </TabsContent>
           )}
-
-          <TabsContent value="payments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PaymentHistoryList userId={user.id} />
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </main>
       <Footer />
