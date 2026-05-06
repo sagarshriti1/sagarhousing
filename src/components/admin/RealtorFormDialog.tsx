@@ -173,9 +173,47 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     }));
   };
 
+  const handleBypassFeaturedToggle = (checked: boolean) => {
+    setBypassFeatured(checked);
+    setForm(prev => {
+      const start = prev.featured_start_date || todayStr();
+      const end = prev.featured_expiration_date || addMonths(start, 1);
+      return {
+        ...prev,
+        featured_payment_bypassed: checked,
+        featured_payment_status: checked ? "bypassed" : (prev.featured_payment_status === "bypassed" ? "none" : prev.featured_payment_status),
+        is_featured: checked ? true : prev.is_featured,
+        featured_start_date: checked ? start : prev.featured_start_date,
+        featured_expiration_date: checked ? end : prev.featured_expiration_date,
+        featured_bypass_reason: checked ? prev.featured_bypass_reason ?? "" : null,
+      };
+    });
+  };
+
+  const handleFeaturedToggle = (checked: boolean) => {
+    setForm(prev => {
+      if (checked) {
+        const start = prev.featured_start_date || todayStr();
+        const end = prev.featured_expiration_date || addMonths(start, 1);
+        return {
+          ...prev,
+          is_featured: true,
+          featured_start_date: start,
+          featured_expiration_date: end,
+          featured_payment_status: prev.featured_payment_status === "none" || !prev.featured_payment_status
+            ? (featuredPromoFree ? "promotion" : "bypassed")
+            : prev.featured_payment_status,
+        };
+      }
+      return { ...prev, is_featured: false };
+    });
+  };
+
   const datesValid = !!form.start_date && !!form.expiration_date && new Date(form.start_date) < new Date(form.expiration_date);
   const bypassReasonValid = !bypassPayment || realtorPromoFree || !!(form.bypass_reason && form.bypass_reason.trim().length >= 3);
-  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && (form.district || form.state) && datesValid && bypassReasonValid;
+  const featuredDatesValid = !form.is_featured || (!!form.featured_start_date && !!form.featured_expiration_date && new Date(form.featured_start_date) < new Date(form.featured_expiration_date));
+  const featuredBypassReasonValid = !bypassFeatured || featuredPromoFree || !!(form.featured_bypass_reason && form.featured_bypass_reason.trim().length >= 3);
+  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && (form.district || form.state) && datesValid && bypassReasonValid && featuredDatesValid && featuredBypassReasonValid;
 
   const handleSubmit = () => {
     if (!isValid) {
@@ -183,6 +221,10 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
         toast.error("Start date must be earlier than expiration date");
       } else if (!bypassReasonValid) {
         toast.error("Please provide a reason for bypassing payment");
+      } else if (!featuredDatesValid) {
+        toast.error("Featured start date must be earlier than featured expiration date");
+      } else if (!featuredBypassReasonValid) {
+        toast.error("Please provide a reason for bypassing featured payment");
       }
       return;
     }
