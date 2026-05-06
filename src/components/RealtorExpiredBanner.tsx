@@ -1,17 +1,16 @@
 import { useState } from "react";
-import { AlertTriangle, CreditCard } from "lucide-react";
+import { AlertTriangle, CreditCard, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 
 interface RealtorExpiredBannerProps {
   realtorId: string;
   onRenewed: () => void;
 }
-
-const RENEWAL_FEE = 5000;
 
 const RealtorExpiredBanner = ({ realtorId, onRenewed }: RealtorExpiredBannerProps) => {
   const [showPayment, setShowPayment] = useState(false);
