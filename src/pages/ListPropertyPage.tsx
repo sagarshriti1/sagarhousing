@@ -235,6 +235,18 @@ const ListPropertyPage = () => {
     e.preventDefault();
     if (!user) return;
 
+    if (!isEdit && isStandardUser) {
+      const { count } = await supabase
+        .from('user_properties')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      if ((count ?? 0) >= FREE_USER_LISTING_LIMIT) {
+        toast.error(limitMessage);
+        setExistingListingCount(count ?? 0);
+        return;
+      }
+    }
+
     if (!form.title || !form.address || !form.district || !form.price) {
       toast.error('Please fill in all required fields');
       return;
