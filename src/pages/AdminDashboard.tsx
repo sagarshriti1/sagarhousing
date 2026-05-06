@@ -560,7 +560,7 @@ const AdminDashboard = () => {
             <Button
               onClick={() => {
                 setCreateUserRole(target);
-                setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
+                setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", streetAddress: "", location: "", avatarUrl: "" });
                 setCreateUserOpen(true);
               }}
               className="gap-2"
