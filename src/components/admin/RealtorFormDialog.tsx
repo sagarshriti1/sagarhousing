@@ -88,6 +88,9 @@ interface RealtorFormDialogProps {
 }
 
 const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: RealtorFormDialogProps) => {
+  const isCreate = mode === "create";
+  const { fee: realtorFee, isFree: realtorPromoFree, promoLabel: realtorPromoLabel } =
+    useFeatureFlag(isCreate ? FEATURE_KEYS.REALTOR_SIGNUP : FEATURE_KEYS.REALTOR_RENEWAL);
   const [form, setForm] = useState<RealtorFormData>(realtor ?? emptyRealtor);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
