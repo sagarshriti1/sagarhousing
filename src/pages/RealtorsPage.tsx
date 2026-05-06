@@ -22,6 +22,7 @@ interface Realtor {
   specialties: string[] | null;
   years_experience: number | null;
   is_featured: boolean;
+  featured_expiration_date?: string | null;
 }
 
 const RealtorsPage = () => {
