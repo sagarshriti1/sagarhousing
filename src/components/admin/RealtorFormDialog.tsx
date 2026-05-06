@@ -147,16 +147,20 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
       ...prev,
       payment_bypassed: checked,
       payment_status: checked ? "bypassed" : "pending",
+      bypass_reason: checked ? prev.bypass_reason ?? "" : null,
     }));
   };
 
   const datesValid = !!form.start_date && !!form.expiration_date && new Date(form.start_date) < new Date(form.expiration_date);
-  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && (form.district || form.state) && datesValid;
+  const bypassReasonValid = !bypassPayment || realtorPromoFree || !!(form.bypass_reason && form.bypass_reason.trim().length >= 3);
+  const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && (form.district || form.state) && datesValid && bypassReasonValid;
 
   const handleSubmit = () => {
     if (!isValid) {
       if (form.start_date && form.expiration_date && !datesValid) {
         toast.error("Start date must be earlier than expiration date");
+      } else if (!bypassReasonValid) {
+        toast.error("Please provide a reason for bypassing payment");
       }
       return;
     }
