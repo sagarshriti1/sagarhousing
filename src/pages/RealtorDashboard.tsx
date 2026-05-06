@@ -265,16 +265,28 @@ const RealtorDashboard = () => {
                     Subscription Payment
                   </CardTitle>
                   <CardDescription>
-                    A monthly fee of Rs. {SIGNUP_FEE.toLocaleString()} is required to create your realtor profile and appear in the directory.
+                    {signupFree
+                      ? (signupPromoLabel || "🎉 Free promotion active — no payment required to create your realtor profile.")
+                      : `A monthly fee of Rs. ${SIGNUP_FEE.toLocaleString()} is required to create your realtor profile and appear in the directory.`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <SimulatedPaymentForm
-                    paid={paymentComplete}
-                    onPaymentComplete={handlePaymentComplete}
-                    amount={SIGNUP_FEE}
-                    label="Realtor monthly subscription"
-                  />
+                  {signupFree ? (
+                    <Button
+                      onClick={handlePaymentComplete}
+                      disabled={paymentComplete}
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                    >
+                      {paymentComplete ? "Activated ✓" : "Activate Profile (Free)"}
+                    </Button>
+                  ) : (
+                    <SimulatedPaymentForm
+                      paid={paymentComplete}
+                      onPaymentComplete={handlePaymentComplete}
+                      amount={SIGNUP_FEE}
+                      label="Realtor monthly subscription"
+                    />
+                  )}
                 </CardContent>
               </Card>
             )}
