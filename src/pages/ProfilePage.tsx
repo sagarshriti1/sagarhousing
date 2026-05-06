@@ -196,6 +196,15 @@ const ProfilePage = () => {
                       maxLength={100}
                     />
                   </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label>Street Address</Label>
+                    <Input
+                      value={profile.street_address ?? ""}
+                      onChange={(e) => setProfile({ ...profile, street_address: e.target.value })}
+                      placeholder="e.g. Thamel, Ward No. 26"
+                      maxLength={200}
+                    />
+                  </div>
                   {(() => {
                     const loc = parseLocation(profile.location);
                     return (
