@@ -220,6 +220,7 @@ const ListPropertyPage = () => {
       return;
     }
 
+    const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
     if (isAdmin) {
       if (!paymentDate || !expirationDate) {
         toast.error('Start date and expiration date are required');
@@ -229,10 +230,15 @@ const ListPropertyPage = () => {
         toast.error('Start date must be earlier than expiration date');
         return;
       }
-      const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
-      if (!isEdit && !flag.isFree && bypassReason.trim().length < 3) {
-        toast.error('Please provide a reason for bypassing payment');
-        return;
+      if (!isEdit && !flag.isFree) {
+        if (!bypassPayment && paymentStatus !== 'paid') {
+          toast.error('Please complete payment or bypass it with a reason');
+          return;
+        }
+        if (bypassPayment && bypassReason.trim().length < 3) {
+          toast.error('Please provide a reason for bypassing payment');
+          return;
+        }
       }
     }
     setLoading(true);
