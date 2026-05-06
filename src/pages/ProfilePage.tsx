@@ -325,41 +325,51 @@ const ProfilePage = () => {
                     Promote Your Profile
                   </CardTitle>
                   <CardDescription>
-                    {signupFree
-                      ? (signupPromoLabel || "🎉 Free promotion active — no payment required to activate your realtor profile.")
-                      : `A monthly fee of Rs. ${SIGNUP_FEE.toLocaleString()} keeps your realtor profile active and visible in the directory.`}
+                    {featuredFree
+                      ? (featuredPromoLabel || "🎉 Free promotion active — get featured at no cost and stand out in the directory.")
+                      : `Become a Featured Realtor for Rs. ${FEATURED_FEE.toLocaleString()}/month and get top placement in the directory.`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {realtor?.expiration_date && (
-                    <div className="flex items-center justify-between rounded-md border p-3">
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium">
-                          Active until: {new Date(realtor.expiration_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Rs. {SIGNUP_FEE.toLocaleString()}/month</p>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        {new Date(realtor.expiration_date) > new Date() ? 'Active' : 'Expired'}
-                      </Badge>
-                    </div>
-                  )}
-
-                  {signupFree ? (
-                    <Button
-                      onClick={handlePromotePayment}
-                      disabled={activating}
-                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-                    >
-                      {activating ? "Activating..." : realtor ? "Renew (Free)" : "Activate Profile (Free)"}
-                    </Button>
+                  {!realtor ? (
+                    <p className="text-sm text-muted-foreground">
+                      Activate your realtor profile from the{" "}
+                      <a href="/realtor-dashboard" className="text-primary underline">Realtor Dashboard</a>{" "}
+                      first to become featured.
+                    </p>
                   ) : (
-                    <SimulatedPaymentForm
-                      paid={false}
-                      onPaymentComplete={handlePromotePayment}
-                      amount={SIGNUP_FEE}
-                      label={realtor ? "Realtor monthly renewal" : "Realtor monthly subscription"}
-                    />
+                    <>
+                      <div className="flex items-center justify-between rounded-md border p-3">
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-medium">{realtor.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {realtor.is_featured ? "Boosted in the directory" : "Standard listing"}
+                          </p>
+                        </div>
+                        <Badge variant={realtor.is_featured ? "default" : "secondary"} className="text-xs">
+                          {realtor.is_featured ? "Featured ⭐" : "Not Featured"}
+                        </Badge>
+                      </div>
+
+                      {realtor.is_featured ? (
+                        <Button disabled className="w-full">Already Featured ✓</Button>
+                      ) : featuredFree ? (
+                        <Button
+                          onClick={handleBecomeFeatured}
+                          disabled={activating}
+                          className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                        >
+                          {activating ? "Activating..." : "Become Featured (Free)"}
+                        </Button>
+                      ) : (
+                        <SimulatedPaymentForm
+                          paid={false}
+                          onPaymentComplete={handleBecomeFeatured}
+                          amount={FEATURED_FEE}
+                          label="Featured Realtor placement"
+                        />
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>
