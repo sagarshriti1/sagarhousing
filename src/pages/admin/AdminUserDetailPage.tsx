@@ -17,7 +17,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
-import { ArrowLeft, Pencil, KeyRound, Trash2, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, Pencil, KeyRound, Trash2, UserCheck, UserX, Home, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 
