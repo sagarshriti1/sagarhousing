@@ -150,7 +150,7 @@ const Header = () => {
                 <Link to='/saved-realtors' className='text-sm font-medium py-2 text-foreground'>
                   Saved Realtors
                 </Link>
-                {(role === 'realtor' || role === 'admin') && (
+                {role === 'realtor' && (
                   <Link to='/realtor-dashboard' className='text-sm font-medium py-2 text-foreground'>
                     Realtor Dashboard
                   </Link>
