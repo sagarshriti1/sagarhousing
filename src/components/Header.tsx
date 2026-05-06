@@ -55,11 +55,13 @@ const Header = () => {
         <div className='hidden md:flex items-center gap-3'>
           {user ? (
             <>
-              <Link to='/list-property'>
-                <Button variant='outline' size='sm' className='gap-2'>
-                  <Plus className='h-4 w-4' /> List Property
-                </Button>
-              </Link>
+              {role !== 'admin' && (
+                <Link to='/list-property'>
+                  <Button variant='outline' size='sm' className='gap-2'>
+                    <Plus className='h-4 w-4' /> List Property
+                  </Button>
+                </Link>
+              )}
               <Link to="/favorites">
                 <Button variant='ghost' size='icon'>
                   <Heart className='h-5 w-5' />
@@ -151,12 +153,14 @@ const Header = () => {
                 >
                   Favorites
                 </Link>
-                <Link
-                  to='/list-property'
-                  className='text-sm font-medium py-2 text-foreground'
-                >
-                  List Property
-                </Link>
+                {role !== 'admin' && (
+                  <Link
+                    to='/list-property'
+                    className='text-sm font-medium py-2 text-foreground'
+                  >
+                    List Property
+                  </Link>
+                )}
                 <Link
                   to='/my-listings'
                   className='text-sm font-medium py-2 text-foreground'
