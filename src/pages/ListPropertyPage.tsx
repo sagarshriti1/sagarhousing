@@ -88,6 +88,25 @@ const ListPropertyPage = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
+  const FREE_USER_LISTING_LIMIT = 2;
+  const isStandardUser = !!user && role !== 'realtor' && role !== 'admin';
+  const [existingListingCount, setExistingListingCount] = useState<number | null>(null);
+  const atListingLimit = isStandardUser && !isEdit && existingListingCount !== null && existingListingCount >= FREE_USER_LISTING_LIMIT;
+  const limitMessage = `You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit for standard accounts. Delete an existing listing or upgrade to a Realtor account to post more.`;
+
+  useEffect(() => {
+    if (!user || isEdit || !isStandardUser) return;
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from('user_properties')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      if (!cancelled) setExistingListingCount(count ?? 0);
+    })();
+    return () => { cancelled = true; };
+  }, [user, isEdit, isStandardUser]);
+
   // Mark dirty on any user change
   useEffect(() => { if (!fetching) setIsDirty(true); }, [form, selectedFeatures, imageFiles, existingImages, paymentDate, expirationDate]);
 
