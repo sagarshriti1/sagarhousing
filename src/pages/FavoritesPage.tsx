@@ -69,6 +69,7 @@ const FavoritesPage = () => {
 
   const mappedProperties = properties.map((p) => ({
     id: `db-${p.id}`,
+    propertyCode: p.property_code,
     title: p.title,
     price: p.price,
     address: p.address,
@@ -90,6 +91,20 @@ const FavoritesPage = () => {
     agent: { name: "", phone: "", email: "" },
   }));
 
+  const q = search.trim().toLowerCase().replace(/^#/, "");
+  const filtered = q
+    ? mappedProperties.filter((p) => {
+        const code = String(p.propertyCode ?? "");
+        return (
+          code.includes(q) ||
+          p.title.toLowerCase().includes(q) ||
+          (p.address || "").toLowerCase().includes(q) ||
+          (p.city || "").toLowerCase().includes(q) ||
+          (p.district || "").toLowerCase().includes(q)
+        );
+      })
+    : mappedProperties;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -98,6 +113,18 @@ const FavoritesPage = () => {
           <Heart className="h-7 w-7 text-accent" />
           <h1 className="font-display text-3xl font-bold text-foreground">My Favorites</h1>
         </div>
+
+        {!loading && mappedProperties.length > 0 && (
+          <div className="relative mb-6 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by ID, title, address, city…"
+              className="pl-9"
+            />
+          </div>
+        )}
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -113,9 +140,11 @@ const FavoritesPage = () => {
               Click the heart icon on any property to save it here.
             </p>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground">No matches for "{search}"</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mappedProperties.map((property) => (
+            {filtered.map((property) => (
               <PropertyCard
                 key={property.id}
                 property={property}
