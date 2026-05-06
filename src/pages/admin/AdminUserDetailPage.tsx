@@ -158,9 +158,15 @@ const AdminUserDetailPage = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 container py-8 max-w-4xl space-y-6">
-        <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back to Admin Dashboard
-        </Link>
+        {(() => {
+          const backTab = userRole === "admin" ? "admins" : userRole === "realtor" ? "realtors" : "non-realtors";
+          const backLabel = userRole === "admin" ? "Back to Admin Dashboard" : userRole === "realtor" ? "Back to Realtors" : "Back to Non-Realtors";
+          return (
+            <Link to={`/admin?tab=${backTab}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-4 w-4" /> {backLabel}
+            </Link>
+          );
+        })()}
 
         <Card>
           <CardHeader>
