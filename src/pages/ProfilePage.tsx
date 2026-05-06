@@ -27,6 +27,7 @@ interface ProfileData {
   phone: string | null;
   job_title: string | null;
   location: string | null;
+  street_address: string | null;
   avatar_url: string | null;
 }
 
@@ -42,6 +43,7 @@ const ProfilePage = () => {
     phone: "",
     job_title: "",
     location: "",
+    street_address: "",
     avatar_url: "",
   });
 
@@ -63,6 +65,7 @@ const ProfilePage = () => {
           phone: data.phone ?? "",
           job_title: data.job_title ?? "",
           location: data.location ?? "",
+          street_address: (data as any).street_address ?? "",
           avatar_url: data.avatar_url ?? "",
         });
       } else {
@@ -101,6 +104,7 @@ const ProfilePage = () => {
       phone: profile.phone,
       job_title: profile.job_title,
       location: profile.location,
+      street_address: profile.street_address,
       avatar_url: profile.avatar_url,
       email: profile.email,
     };
