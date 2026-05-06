@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "sonner";
 import { useReactToPrint } from "react-to-print";
 import PaymentReceipt, { PaymentReceiptRecord } from "./PaymentReceipt";
+import ConfirmSaveButton from "@/components/ConfirmSaveButton";
 import { cn } from "@/lib/utils";
 import {
   Pagination,
@@ -60,6 +61,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [originalNote, setOriginalNote] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [printRecords, setPrintRecords] = useState<PaymentRecord[]>([]);
@@ -130,6 +132,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
     if (error) { toast.error("Failed to save note"); return; }
     toast.success("Note saved");
     setRecords((prev) => prev.map((r) => (r.id === id ? { ...r, notes: noteDraft } : r)));
+    setOriginalNote(noteDraft);
     setEditingNote(null);
   };
 
@@ -275,7 +278,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
                       <Textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} placeholder="Add a note visible to the user…" rows={2} />
                       <div className="flex gap-2 justify-end">
                         <Button size="sm" variant="ghost" onClick={() => setEditingNote(null)}>Cancel</Button>
-                        <Button size="sm" onClick={() => saveNote(r.id)}>Save</Button>
+                        <ConfirmSaveButton size="sm" onConfirm={() => saveNote(r.id)} disabled={noteDraft === originalNote}>Save</ConfirmSaveButton>
                       </div>
                     </div>
                   ) : (
@@ -284,7 +287,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
                         {r.notes ? `"${r.notes}"` : <span className="opacity-60">No notes</span>}
                       </p>
                       {canEditNotes && (
-                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setEditingNote(r.id); setNoteDraft(r.notes ?? ""); }}>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setEditingNote(r.id); setNoteDraft(r.notes ?? ""); setOriginalNote(r.notes ?? ""); }}>
                           {r.notes ? "Edit note" : "Add note"}
                         </Button>
                       )}

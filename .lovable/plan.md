@@ -1,23 +1,51 @@
-## Header dropdown cleanup
+## Confirm + disable-after-save for all Save buttons
 
-Edit `src/components/Header.tsx` only.
+Two behaviors added to every form Save button:
 
-### Desktop header
-1. Remove the "List Property" outline button (the `Link to='/list-property'` block with the `Plus` icon).
-2. Remove the standalone Heart icon button (`Link to="/favorites"` wrapping the ghost icon button).
-3. In the user dropdown menu, reorder items and add a "My Favorites" entry with the `Heart` icon. Add a list-style icon (e.g. `List`) next to "My Listings". Final order:
-   - My Profile (User icon)
-   - My Listings (List icon)
-   - My Favorites (Heart icon)
-   - Saved Realtors (Bookmark icon)
-   - Realtor Dashboard (Megaphone icon, realtor/admin only)
-   - Admin Dashboard (Shield, admin only — kept below)
+1. **Confirm before saving** — clicking Save opens an `AlertDialog` ("Are you sure you want to save these changes?") with Cancel / Confirm. The existing save handler runs only on Confirm.
+2. **Disable after save** — once saved successfully, the Save button is greyed out (`disabled`) until the user edits any field again. Editing any tracked field re-enables it.
 
-### Mobile menu
-4. Remove the "List Property" link.
-5. Reorder the auth'd links to match: My Listings, Favorites, Saved Realtors. (Mobile already shows Favorites; just reorder and drop List Property.)
+### Implementation pattern (per form)
 
-### Imports
-6. Drop `Plus` from lucide-react imports (no longer used). Add `List` for the My Listings icon. Keep `Heart`, `Bookmark`, `User`, `Megaphone`, `Shield`, `LogOut`, `Home`, `Menu`, `X`.
+- Add local state `const [dirty, setDirty] = useState(false)`.
+- In every field `onChange` handler, call `setDirty(true)` (or wrap the existing setters).
+- After the save handler succeeds, call `setDirty(false)`.
+- Save trigger button: `<Button disabled={!dirty}>Save Changes</Button>`, wrapped in the confirmation `AlertDialog`.
 
-No routing, business logic, or other files change.
+### Buttons to update
+
+1. `src/pages/ProfilePage.tsx` (line 339) — profile edit "Save Changes".
+2. `src/pages/admin/AdminUserDetailPage.tsx` (line 287) — user edit "Save Changes".
+3. `src/pages/AdminDashboard.tsx` (line 1173) — admin profile "Save Changes".
+4. `src/components/admin/RealtorFormDialog.tsx` (line 425) — realtor "Save Changes" (keep "Create Realtor" always enabled in create mode; dirty-tracking applies only when editing).
+5. `src/components/PaymentHistoryList.tsx` (line 278) — inline payment note "Save" (dirty = note text differs from original).
+
+### Confirmation dialog snippet
+
+```tsx
+<AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button disabled={!dirty}>Save Changes</Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Save changes?</AlertDialogTitle>
+      <AlertDialogDescription>
+        Are you sure you want to save these changes?
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction onClick={async () => { await saveHandler(); setDirty(false); }}>
+        Confirm
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
+Imports from `@/components/ui/alert-dialog`. No backend, validation, or data-shape changes.
+
+### Out of scope
+
+- Toggle-style saves (favorite heart, bookmark realtor) — these are instant toggles, not form saves.

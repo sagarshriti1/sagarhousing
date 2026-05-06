@@ -17,6 +17,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
+import ConfirmSaveButton from "@/components/ConfirmSaveButton";
 import { ArrowLeft, Pencil, KeyRound, Trash2, UserCheck, UserX, Home, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
@@ -48,8 +49,10 @@ const AdminUserDetailPage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<string>("user");
   const [properties, setProperties] = useState<any[]>([]);
-  const [draft, setDraft] = useState<Profile | null>(null);
+  const [draft, setDraftState] = useState<Profile | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [editDirty, setEditDirty] = useState(false);
+  const setDraft = (next: Profile | null) => { setEditDirty(true); setDraftState(next); };
   const [confirm, setConfirm] = useState<{ title: string; description: string; onConfirm: () => Promise<void> | void } | null>(null);
 
   useEffect(() => {
@@ -126,7 +129,7 @@ const AdminUserDetailPage = () => {
     });
   };
 
-  const openEdit = () => { if (profile) { setDraft({ ...profile }); setEditOpen(true); } };
+  const openEdit = () => { if (profile) { setDraftState({ ...profile }); setEditDirty(false); setEditOpen(true); } };
 
   const saveEdit = async () => {
     if (!draft) return;
@@ -138,6 +141,7 @@ const AdminUserDetailPage = () => {
     else {
       toast.success("Profile updated");
       setProfile(draft);
+      setEditDirty(false);
       setEditOpen(false);
     }
   };
@@ -284,7 +288,7 @@ const AdminUserDetailPage = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={saveEdit}>Save Changes</Button>
+            <ConfirmSaveButton onConfirm={saveEdit} disabled={!editDirty}>Save Changes</ConfirmSaveButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

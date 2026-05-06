@@ -13,6 +13,7 @@ import { Camera, CreditCard, Loader2, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ConfirmSaveButton from "@/components/ConfirmSaveButton";
 
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
@@ -53,7 +54,8 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [profile, setProfile] = useState<ProfileData>({
+  const [dirty, setDirty] = useState(false);
+  const [profile, setProfileState] = useState<ProfileData>({
     display_name: "",
     email: "",
     phone: "",
@@ -62,6 +64,10 @@ const ProfilePage = () => {
     street_address: "",
     avatar_url: "",
   });
+  const setProfile = (next: ProfileData | ((p: ProfileData) => ProfileData)) => {
+    setDirty(true);
+    setProfileState(next as any);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -74,7 +80,7 @@ const ProfilePage = () => {
       if (error) {
         toast.error("Failed to load profile");
       } else if (data) {
-        setProfile({
+        setProfileState({
           id: data.id,
           display_name: data.display_name ?? "",
           email: data.email ?? user.email ?? "",
@@ -85,8 +91,9 @@ const ProfilePage = () => {
           avatar_url: data.avatar_url ?? "",
         });
       } else {
-        setProfile((p) => ({ ...p, email: user.email ?? "" }));
+        setProfileState((p) => ({ ...p, email: user.email ?? "" }));
       }
+      setDirty(false);
       setLoading(false);
     })();
   }, [user]);
@@ -209,7 +216,10 @@ const ProfilePage = () => {
       : await supabase.from("profiles").insert(payload);
     setSaving(false);
     if (error) toast.error(error.message);
-    else toast.success("Profile updated");
+    else {
+      setDirty(false);
+      toast.success("Profile updated");
+    }
   };
 
   if (!user) {
@@ -334,10 +344,10 @@ const ProfilePage = () => {
                       })()}
                     </div>
 
-                    <Button onClick={handleSave} disabled={saving}>
+                    <ConfirmSaveButton onConfirm={handleSave} disabled={saving || !dirty}>
                       {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                       Save Changes
-                    </Button>
+                    </ConfirmSaveButton>
                   </>
                 )}
               </CardContent>

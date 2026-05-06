@@ -38,6 +38,7 @@ import {
 import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User, ArrowUpDown, ArrowUp, ArrowDown, Sliders, ChevronDown, ChevronRight } from "lucide-react";
 import FeaturesTab from "@/components/admin/FeaturesTab";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
+import ConfirmSaveButton from "@/components/ConfirmSaveButton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RealtorFormDialog, { type RealtorFormData } from "@/components/admin/RealtorFormDialog";
@@ -125,7 +126,15 @@ const AdminDashboard = () => {
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
-  const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
+  const [editingProfile, setEditingProfileState] = useState<UserProfile | null>(null);
+  const [profileDirty, setProfileDirty] = useState(false);
+  const setEditingProfile = (next: UserProfile | null) => {
+    setEditingProfileState((prev) => {
+      if (next === null || prev === null) setProfileDirty(false);
+      else setProfileDirty(true);
+      return next;
+    });
+  };
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -488,24 +497,19 @@ const AdminDashboard = () => {
     }
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     if (!editingProfile) return;
     if (!editingProfile.display_name?.trim()) { toast.error("Name is required"); return; }
     if (!editingProfile.email?.trim()) { toast.error("Email is required"); return; }
-    confirm({
-      title: "Update User Profile",
-      description: `Are you sure you want to save changes to "${editingProfile.display_name || "this user"}"?`,
-      onConfirm: async () => {
-        const { id, ...rest } = editingProfile;
-        const { error } = await supabase.from("profiles").update(rest).eq("id", id);
-        if (error) toast.error("Failed to save profile");
-        else {
-          toast.success("Profile updated");
-          setProfiles((prev) => prev.map((p) => (p.id === id ? editingProfile : p)));
-          setEditingProfile(null);
-        }
-      },
-    });
+    const { id, ...rest } = editingProfile;
+    const { error } = await supabase.from("profiles").update(rest).eq("id", id);
+    if (error) toast.error("Failed to save profile");
+    else {
+      toast.success("Profile updated");
+      setProfiles((prev) => prev.map((p) => (p.id === id ? editingProfile : p)));
+      setProfileDirty(false);
+      setEditingProfileState(null);
+    }
   };
 
   const deleteProperty = (id: string) => {
@@ -1170,7 +1174,7 @@ const AdminDashboard = () => {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingProfile(null)}>Cancel</Button>
-                <Button onClick={saveProfile}>Save Changes</Button>
+                <ConfirmSaveButton onConfirm={saveProfile} disabled={!profileDirty}>Save Changes</ConfirmSaveButton>
               </div>
             </div>
           )}

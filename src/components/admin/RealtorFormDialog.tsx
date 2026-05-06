@@ -36,6 +36,7 @@ import { CreditCard, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
+import ConfirmSaveButton from "@/components/ConfirmSaveButton";
 
 export interface RealtorFormData {
   id?: string;
@@ -105,7 +106,12 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const isCreate = mode === "create";
   const { fee: realtorFee, isFree: realtorPromoFree, promoLabel: realtorPromoLabel } =
     useFeatureFlag(isCreate ? FEATURE_KEYS.REALTOR_SIGNUP : FEATURE_KEYS.REALTOR_RENEWAL);
-  const [form, setForm] = useState<RealtorFormData>(realtor ?? buildEmptyRealtor());
+  const [form, setFormState] = useState<RealtorFormData>(realtor ?? buildEmptyRealtor());
+  const [dirty, setDirty] = useState(false);
+  const setForm: typeof setFormState = (next) => {
+    setDirty(true);
+    setFormState(next as any);
+  };
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [bypassPayment, setBypassPayment] = useState(realtor?.payment_bypassed ?? false);
@@ -115,8 +121,9 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const [lastId, setLastId] = useState<string | null>(null);
   if (currentId !== lastId) {
     setLastId(currentId);
-    setForm(realtor ?? buildEmptyRealtor());
+    setFormState(realtor ?? buildEmptyRealtor());
     setBypassPayment(realtor?.payment_bypassed ?? false);
+    setDirty(false);
   }
 
   // Auto-mark as promotion when free promo flag is active
@@ -421,9 +428,15 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={!isValid}>
-              {isCreate ? "Create Realtor" : "Save Changes"}
-            </Button>
+            {isCreate ? (
+              <Button onClick={handleSubmit} disabled={!isValid}>
+                Create Realtor
+              </Button>
+            ) : (
+              <ConfirmSaveButton onConfirm={handleSubmit} disabled={!isValid || !dirty}>
+                Save Changes
+              </ConfirmSaveButton>
+            )}
           </div>
         </div>
       </DialogContent>
