@@ -115,9 +115,12 @@ const FeaturesTab = () => {
                     <Input
                       type="number"
                       min={0}
-                      value={draft.fee}
+                      value={draft.fee === 0 ? "0" : String(draft.fee).replace(/^0+/, "")}
                       disabled={draft.bypass_payment}
-                      onChange={(e) => update(flag.id, { fee: Number(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/^0+(?=\d)/, "");
+                        update(flag.id, { fee: v === "" ? 0 : Number(v) });
+                      }}
                     />
                     {draft.bypass_payment && (
                       <p className="mt-1 text-xs text-muted-foreground">
