@@ -59,25 +59,35 @@ export interface RealtorFormData {
   license_number: string | null;
 }
 
-const emptyRealtor: RealtorFormData = {
-  name: "",
-  email: "",
-  phone: "",
-  photo_url: "",
-  city: "",
-  state: "",
-  district: "",
-  street_address: "",
-  bio: "",
-  years_experience: null,
-  is_featured: false,
-  start_date: null,
-  expiration_date: null,
-  payment_status: "pending",
-  payment_bypassed: false,
-  user_id: null,
-  specialties: null,
-  license_number: null,
+const addMonths = (dateStr: string, months: number) => {
+  const d = new Date(dateStr);
+  d.setMonth(d.getMonth() + months);
+  return format(d, "yyyy-MM-dd");
+};
+const todayStr = () => format(new Date(), "yyyy-MM-dd");
+
+const buildEmptyRealtor = (): RealtorFormData => {
+  const start = todayStr();
+  return {
+    name: "",
+    email: "",
+    phone: "",
+    photo_url: "",
+    city: "",
+    state: "",
+    district: "",
+    street_address: "",
+    bio: "",
+    years_experience: null,
+    is_featured: false,
+    start_date: start,
+    expiration_date: addMonths(start, 1),
+    payment_status: "pending",
+    payment_bypassed: false,
+    user_id: null,
+    specialties: null,
+    license_number: null,
+  };
 };
 
 interface RealtorFormDialogProps {
