@@ -944,6 +944,7 @@ const AdminDashboard = () => {
                         <Badge variant={isActive ? "default" : "secondary"}>{expired ? "expired" : prop.status}</Badge>
                       </TableCell>
                       <TableCell className="capitalize">{prop.listing_type}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{creatorEmail(prop.user_id)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{updatedByLabel(prop.updated_by)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
