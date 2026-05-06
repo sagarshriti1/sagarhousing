@@ -35,10 +35,10 @@ const RealtorDashboard = () => {
       setDataLoading(true);
       const { data } = await supabase
         .from("realtors")
-        .select("id, name, payment_status, start_date, expiration_date")
+        .select("id, name, payment_status, start_date, expiration_date, is_featured, featured_start_date, featured_expiration_date, featured_payment_status")
         .eq("user_id", user.id)
         .maybeSingle();
-      setProfile(data);
+      setProfile(data as any);
       setDataLoading(false);
     };
     if (role === "realtor" || role === "admin") fetchProfile();
