@@ -189,12 +189,14 @@ const AdminUserDetailPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle>Payment History</CardTitle></CardHeader>
-          <CardContent>
-            <PaymentHistoryList userId={profile.user_id} canEditNotes compact />
-          </CardContent>
-        </Card>
+        {userRole !== "admin" && (
+          <Card>
+            <CardHeader><CardTitle>Payment History</CardTitle></CardHeader>
+            <CardContent>
+              <PaymentHistoryList userId={profile.user_id} canEditNotes compact />
+            </CardContent>
+          </Card>
+        )}
       </main>
       <Footer />
 
