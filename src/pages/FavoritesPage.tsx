@@ -6,11 +6,13 @@ import { useFavorites } from "@/hooks/useFavorites";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
-import { Heart } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Heart, Search } from "lucide-react";
 import { toast } from "sonner";
 
 interface FavoriteProperty {
   id: string;
+  property_code: number | null;
   title: string;
   price: number;
   city: string;
@@ -31,6 +33,7 @@ const FavoritesPage = () => {
   const { favoriteIds, toggleFavorite, isFavorite } = useFavorites();
   const [properties, setProperties] = useState<FavoriteProperty[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const fetchFavoriteProperties = async () => {
@@ -42,7 +45,7 @@ const FavoritesPage = () => {
       const ids = Array.from(favoriteIds).map(id => id.startsWith("db-") ? id.slice(3) : id);
       const { data } = await supabase
         .from("user_properties")
-        .select("id, title, price, city, state, district, address, bedrooms, bathrooms, sqft, images, listing_type, property_type, status")
+        .select("id, property_code, title, price, city, state, district, address, bedrooms, bathrooms, sqft, images, listing_type, property_type, status")
         .in("id", ids);
       setProperties(data ?? []);
       setLoading(false);
