@@ -43,6 +43,9 @@ interface RealtorRow {
   id: string;
   name: string;
   is_featured: boolean;
+  featured_start_date: string | null;
+  featured_expiration_date: string | null;
+  featured_payment_status: string | null;
 }
 
 const ProfilePage = () => {
