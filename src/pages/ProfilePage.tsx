@@ -80,7 +80,7 @@ const ProfilePage = () => {
       if (error) {
         toast.error("Failed to load profile");
       } else if (data) {
-        setProfile({
+        setProfileState({
           id: data.id,
           display_name: data.display_name ?? "",
           email: data.email ?? user.email ?? "",
@@ -91,8 +91,9 @@ const ProfilePage = () => {
           avatar_url: data.avatar_url ?? "",
         });
       } else {
-        setProfile((p) => ({ ...p, email: user.email ?? "" }));
+        setProfileState((p) => ({ ...p, email: user.email ?? "" }));
       }
+      setDirty(false);
       setLoading(false);
     })();
   }, [user]);
