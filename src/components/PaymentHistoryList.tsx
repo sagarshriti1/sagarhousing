@@ -7,6 +7,15 @@ import { Loader2, Receipt, ShieldCheck, Sparkles, CreditCard } from "lucide-reac
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface PaymentRecord {
   id: string;
@@ -27,15 +36,12 @@ interface PaymentRecord {
 }
 
 interface Props {
-  /** Filter by user (e.g. "show this user's history"). */
   userId?: string;
-  /** Filter by related item (e.g. specific realtor or property). */
   relatedType?: "realtor" | "property";
   relatedId?: string;
-  /** Allow admins to add/edit notes. */
   canEditNotes?: boolean;
-  /** Compact list (for inline panels). */
   compact?: boolean;
+  pageSize?: number;
 }
 
 const statusBadge = (status: string) => {
@@ -53,28 +59,75 @@ const statusBadge = (status: string) => {
   }
 };
 
-const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, compact }: Props) => {
+const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, compact, pageSize = 20 }: Props) => {
   const [records, setRecords] = useState<PaymentRecord[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [allowed, setAllowed] = useState<boolean | null>(null);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
 
+  // Visibility guard: when filtering by related entity (no userId), only admin or owner of the related entity may view.
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (!relatedType || !relatedId || userId) {
+        setAllowed(true);
+        return;
+      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { if (!cancelled) setAllowed(false); return; }
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (roleRow) { if (!cancelled) setAllowed(true); return; }
+      const table = relatedType === "property" ? "user_properties" : "realtors";
+      const { data: ownerRow } = await supabase
+        .from(table)
+        .select("user_id")
+        .eq("id", relatedId)
+        .maybeSingle();
+      if (!cancelled) setAllowed(ownerRow?.user_id === user.id);
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [userId, relatedType, relatedId]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [userId, relatedType, relatedId]);
+
   const fetchRecords = async () => {
+    if (allowed === false) { setRecords([]); setTotal(0); setLoading(false); return; }
+    if (allowed === null) return;
     setLoading(true);
-    let q = supabase.from("payment_history").select("*").order("created_at", { ascending: false });
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    let q = supabase
+      .from("payment_history")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to);
     if (userId) q = q.eq("user_id", userId);
     if (relatedType) q = q.eq("related_type", relatedType);
     if (relatedId) q = q.eq("related_id", relatedId);
-    const { data, error } = await q;
+    const { data, count, error } = await q;
     if (error) toast.error(error.message);
-    else setRecords((data ?? []) as PaymentRecord[]);
+    else {
+      setRecords((data ?? []) as PaymentRecord[]);
+      setTotal(count ?? 0);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchRecords();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, relatedType, relatedId]);
+  }, [userId, relatedType, relatedId, page, allowed]);
 
   const saveNote = async (id: string) => {
     const { error } = await supabase.from("payment_history").update({ notes: noteDraft }).eq("id", id);
@@ -87,7 +140,15 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
     setEditingNote(null);
   };
 
-  if (loading) {
+  if (allowed === false) {
+    return (
+      <div className={`text-center text-sm text-muted-foreground ${compact ? "py-4" : "py-10"}`}>
+        Access restricted.
+      </div>
+    );
+  }
+
+  if (loading || allowed === null) {
     return (
       <div className="flex justify-center py-6 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
@@ -103,6 +164,20 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
       </div>
     );
   }
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const pageNumbers: (number | "ellipsis")[] = (() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const arr: (number | "ellipsis")[] = [1];
+    if (page > 3) arr.push("ellipsis");
+    const start = Math.max(2, page - 1);
+    const end = Math.min(totalPages - 1, page + 1);
+    for (let i = start; i <= end; i++) arr.push(i);
+    if (page < totalPages - 2) arr.push("ellipsis");
+    arr.push(totalPages);
+    return arr;
+  })();
 
   return (
     <div className="space-y-3">
@@ -183,6 +258,44 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
           </CardContent>
         </Card>
       ))}
+
+      {totalPages > 1 && (
+        <Pagination className="pt-2">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => { e.preventDefault(); if (page > 1) setPage(page - 1); }}
+                aria-disabled={page === 1}
+                className={page === 1 ? "pointer-events-none opacity-50" : ""}
+              />
+            </PaginationItem>
+            {pageNumbers.map((p, idx) =>
+              p === "ellipsis" ? (
+                <PaginationItem key={`e-${idx}`}><PaginationEllipsis /></PaginationItem>
+              ) : (
+                <PaginationItem key={p}>
+                  <PaginationLink
+                    href="#"
+                    isActive={p === page}
+                    onClick={(e) => { e.preventDefault(); setPage(p); }}
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            )}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => { e.preventDefault(); if (page < totalPages) setPage(page + 1); }}
+                aria-disabled={page === totalPages}
+                className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 };
