@@ -255,6 +255,20 @@ const MyListingsPage = () => {
           )}
         </DialogContent>
       </Dialog>
+      {/* Payment History Dialog */}
+      <Dialog open={!!paymentsListing} onOpenChange={(open) => !open && setPaymentsListing(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Payment History</DialogTitle>
+            <DialogDescription>
+              Payments for <strong>{paymentsListing?.title}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          {paymentsListing && (
+            <PaymentHistoryList relatedType="property" relatedId={paymentsListing.id} compact />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
