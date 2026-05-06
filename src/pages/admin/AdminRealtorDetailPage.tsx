@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Pencil, KeyRound, Trash2, Star } from "lucide-react";
+import { ArrowLeft, Pencil, KeyRound, Trash2, Star, Home, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { logPayment } from "@/lib/paymentHistory";
@@ -25,6 +25,7 @@ const AdminRealtorDetailPage = () => {
   const { user, role, loading } = useAuth();
   const [realtor, setRealtor] = useState<any>(null);
   const [linkedEmail, setLinkedEmail] = useState<string | null>(null);
+  const [properties, setProperties] = useState<any[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [confirm, setConfirm] = useState<{ title: string; description: string; onConfirm: () => Promise<void> | void } | null>(null);
 
@@ -35,6 +36,14 @@ const AdminRealtorDetailPage = () => {
     if (data?.user_id) {
       const { data: p } = await supabase.from("profiles").select("email").eq("user_id", data.user_id).maybeSingle();
       setLinkedEmail(p?.email ?? null);
+      const { data: props } = await supabase
+        .from("user_properties")
+        .select("id, title, city, district, listing_type, price, status, expiration_date")
+        .eq("user_id", data.user_id)
+        .order("created_at", { ascending: false });
+      setProperties(props ?? []);
+    } else {
+      setProperties([]);
     }
   };
 
@@ -194,6 +203,39 @@ const AdminRealtorDetailPage = () => {
             <div><span className="text-muted-foreground">Years Experience:</span> <span className="text-foreground">{realtor.years_experience ?? "—"}</span></div>
             <div><span className="text-muted-foreground">Subscription:</span> <span className="text-foreground">{realtor.start_date ? format(new Date(realtor.start_date), "MMM d, yyyy") : "—"} → {realtor.expiration_date ? format(new Date(realtor.expiration_date), "MMM d, yyyy") : "—"}</span></div>
             {realtor.bio && <div className="sm:col-span-2"><span className="text-muted-foreground">Bio:</span> <span className="text-foreground">{realtor.bio}</span></div>}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Home className="h-5 w-5" /> Listed Properties ({properties.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!realtor.user_id ? (
+              <p className="text-sm text-muted-foreground">No linked user account — cannot list properties.</p>
+            ) : properties.length === 0 ? (
+              <p className="text-sm text-muted-foreground">This realtor has no listed properties yet.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {properties.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      onClick={() => navigate(`/admin/property/${p.id}`)}
+                      className="w-full flex items-center justify-between gap-3 py-3 text-left hover:bg-muted/50 px-2 rounded-md transition"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground truncate">{p.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {p.city}{p.district ? `, ${p.district}` : ""} • {p.listing_type === "rent" ? "For Rent" : "For Sale"} • Rs. {Number(p.price).toLocaleString()}
+                        </p>
+                      </div>
+                      <Badge variant={p.status === "active" ? "default" : "secondary"} className="capitalize shrink-0">{p.status}</Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
 
