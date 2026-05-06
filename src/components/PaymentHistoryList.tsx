@@ -61,6 +61,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [originalNote, setOriginalNote] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [printRecords, setPrintRecords] = useState<PaymentRecord[]>([]);
