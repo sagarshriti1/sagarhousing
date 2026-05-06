@@ -1,20 +1,23 @@
-# Plan: Realtor Dashboard cleanup + move Subscription to Profile
+# Plan: Switch "Promote Your Profile" tab to Become Featured
 
-## 1. Realtor Dashboard (`src/pages/RealtorDashboard.tsx`)
-- Remove the entire "Create Your Realtor Profile" / "Edit Profile" form Card (the big form with name, email, phone, photo, bio, specialties, district, etc.) and all related state and handlers that exist solely for that form: `formData`, `newSpecialty`, `isCreating`, `uploading`, `fileInputRef`, `addSpecialty`, `removeSpecialty`, `handlePhotoUpload`, `saveProfile`, and the `NEPAL_CITIES`/`district` imports if no longer used.
-- Remove the inline Subscription Payment card (the one shown when `isCreating` with `SimulatedPaymentForm` / free-promo activate button) — it moves to My Profile.
-- Keep: Subscription Status card and Payment History card.
-- If no realtor row exists yet, show a short message pointing the user to "My Profile → Promote Your Profile" to activate.
+The current "Promote Your Profile" tab uses the realtor monthly subscription (`REALTOR_SIGNUP` / `REALTOR_RENEWAL`) flag. Replace its payment with the **`FEATURED_REALTOR`** flag, so paying here marks the realtor as `is_featured = true` (boosted in the directory).
 
-## 2. My Profile (`src/pages/ProfilePage.tsx`)
-- Add a new tab labeled **"Promote Your Profile"** (icon: `CreditCard`), visible only when the signed-in user has `role === 'realtor'` (read from `useAuth`).
-- Tab content = a card titled **"Promote Your Profile"** containing the subscription payment UI moved out of RealtorDashboard:
-  - If free promo flag active: "Activate Profile (Free)" button.
-  - Otherwise: `SimulatedPaymentForm` for the monthly fee.
-  - On success: same `handlePaymentComplete` logic — create or update the `realtors` row (insert minimal record with `user_id`, `name = profile.display_name`, `payment_status='paid'`, `start_date`, `expiration_date` one month out) and call `logPayment`. If a realtor row already exists, just renew (update dates + status).
-- Show current subscription state inline (Active until / Expired badge) so the user knows the status without going to the dashboard.
+## Changes (`src/pages/ProfilePage.tsx`)
 
-## Technical notes
-- Reuse `useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP)`, `SimulatedPaymentForm`, `logPayment`, and the realtor fetch by `user_id` pattern already in `RealtorDashboard`.
-- Keep `PaymentHistoryList` on both Realtor Dashboard (scoped to realtor) and Profile page (scoped to user) as today.
-- No DB schema changes. No new routes.
+1. Swap feature flag:
+   - Use `useFeatureFlag(FEATURE_KEYS.FEATURED_REALTOR)` instead of `REALTOR_SIGNUP` for the tab.
+   - Keep `REALTOR_SIGNUP` only if needed elsewhere (it isn't, after this change — remove it).
+2. Extend `RealtorRow` to include `is_featured`. Fetch it in `fetchRealtor`.
+3. Rewrite `handlePromotePayment` → `handleBecomeFeatured`:
+   - Requires an existing realtor row (since featuring acts on a realtor profile). If none exists, show a message: "Activate your realtor profile from the Realtor Dashboard first." with a link to `/realtor-dashboard`. Do not create one here.
+   - On payment success: `UPDATE realtors SET is_featured = true WHERE id = realtor.id`.
+   - Log payment with `service_key: FEATURED_REALTOR`, `service_label: "Featured Realtor"`, `related_type: "realtor"`, `related_id`, `related_label: realtor.name`, `amount: featuredFee`, `status: free ? "promotion" : "paid"`, `promo_label`.
+4. Update tab UI:
+   - Title stays "Promote Your Profile".
+   - Description: explains featuring boosts visibility for `Rs. {featuredFee}/month` (or shows promo label when free).
+   - Status row: show a "Featured ⭐" / "Not Featured" badge based on `realtor.is_featured`.
+   - Button: `SimulatedPaymentForm` (paid flow) or "Become Featured (Free)" when promo is active. If already featured, show a disabled "Already Featured ✓" state.
+
+## Out of scope
+- Realtor Dashboard, monthly subscription flow, and Payment History tab remain unchanged.
+- No DB schema changes; `is_featured` and the `featured_realtor` flag already exist.
