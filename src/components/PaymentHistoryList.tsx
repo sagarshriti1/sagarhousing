@@ -287,7 +287,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
                         {r.notes ? `"${r.notes}"` : <span className="opacity-60">No notes</span>}
                       </p>
                       {canEditNotes && (
-                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setEditingNote(r.id); setNoteDraft(r.notes ?? ""); }}>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setEditingNote(r.id); setNoteDraft(r.notes ?? ""); setOriginalNote(r.notes ?? ""); }}>
                           {r.notes ? "Edit note" : "Add note"}
                         </Button>
                       )}
