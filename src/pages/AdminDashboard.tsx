@@ -858,7 +858,7 @@ const AdminDashboard = () => {
                     const isExpanded = expandedRealtorId === realtor.id;
                     const realtorRelatedId = realtor.isProfileOnly ? undefined : realtor.id;
                     return (
-                    <>
+                    <React.Fragment key={realtor.id}>
                     <TableRow key={realtor.id} className="cursor-pointer hover:bg-muted/40" onClick={() => setExpandedRealtorId(isExpanded ? null : realtor.id)}>
                       <TableCell>
                         <div className="flex items-center gap-3">
