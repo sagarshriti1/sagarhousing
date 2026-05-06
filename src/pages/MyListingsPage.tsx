@@ -49,6 +49,24 @@ const MyListingsPage = () => {
     fetchListings();
   }, [user]);
 
+  useEffect(() => {
+    if (!user || !isRealtor) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('realtors')
+        .select('payment_status, expiration_date')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const active = !!data
+        && (data.payment_status === 'paid' || data.payment_status === 'promotion' || data.payment_status === 'bypassed')
+        && (!data.expiration_date || new Date(data.expiration_date) > new Date());
+      setRealtorInactive(!active);
+    })();
+    return () => { cancelled = true; };
+  }, [user, isRealtor]);
+
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this listing?")) return;
     const { error } = await supabase.from("user_properties").delete().eq("id", id);
