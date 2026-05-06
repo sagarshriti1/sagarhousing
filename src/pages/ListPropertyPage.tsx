@@ -33,6 +33,7 @@ import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } f
 import SearchableCombobox from '@/components/SearchableCombobox';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
