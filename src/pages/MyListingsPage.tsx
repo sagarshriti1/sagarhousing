@@ -27,6 +27,7 @@ const MyListingsPage = () => {
   const [listings, setListings] = useState<Tables<"user_properties">[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
+  const [paymentsListing, setPaymentsListing] = useState<Tables<"user_properties"> | null>(null);
   
 
   useEffect(() => {
