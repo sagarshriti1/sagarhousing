@@ -70,6 +70,9 @@ const PropertyCard = ({ property, isFavorite = false, onToggleFavorite }: Proper
       </div>
 
       <div className="p-4">
+        {property.propertyCode != null && (
+          <p className="font-mono text-xs text-muted-foreground mb-1">#{property.propertyCode}</p>
+        )}
         <p className="font-display text-2xl font-bold text-price mb-1">
           {formatPrice(property.price, property.listingType)}
         </p>
