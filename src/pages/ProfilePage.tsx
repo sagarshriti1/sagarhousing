@@ -13,7 +13,7 @@ import { Camera, CreditCard, Loader2, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import PaymentHistoryList from "@/components/PaymentHistoryList";
+
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 import { logPayment } from "@/lib/paymentHistory";
