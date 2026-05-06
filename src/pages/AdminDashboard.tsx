@@ -858,10 +858,22 @@ const AdminDashboard = () => {
           {/* PROPERTIES TAB */}
           <TabsContent value="properties" className="space-y-4">
             {(() => {
-              const filteredProperties = properties.filter((p) => {
+              const baseFiltered = properties.filter((p) => {
                 const notExpired = !p.expiration_date || new Date(p.expiration_date) >= new Date(new Date().toDateString());
                 const isActive = p.status === "active" && notExpired;
                 return showInactive ? !isActive : isActive;
+              });
+              const filteredProperties = sortList(baseFiltered, 'properties', {
+                property_code: (p) => p.property_code ?? null,
+                title: (p) => (p.title || '').toLowerCase(),
+                location: (p) => `${p.city || ''} ${p.district || ''}`.toLowerCase(),
+                price: (p) => Number(p.price) || 0,
+                status: (p) => {
+                  const expired = p.expiration_date && new Date(p.expiration_date) < new Date(new Date().toDateString());
+                  return expired ? 'expired' : p.status;
+                },
+                listing_type: (p) => p.listing_type || '',
+                updated_by: (p) => updatedByLabel(p.updated_by).toLowerCase(),
               });
               return (
             <>
