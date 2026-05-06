@@ -395,17 +395,6 @@ const ProfilePage = () => {
               </Card>
             </TabsContent>
           )}
-
-          <TabsContent value="payments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PaymentHistoryList userId={user.id} />
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </main>
       <Footer />
