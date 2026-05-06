@@ -216,7 +216,10 @@ const ProfilePage = () => {
       : await supabase.from("profiles").insert(payload);
     setSaving(false);
     if (error) toast.error(error.message);
-    else toast.success("Profile updated");
+    else {
+      setDirty(false);
+      toast.success("Profile updated");
+    }
   };
 
   if (!user) {
