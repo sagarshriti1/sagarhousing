@@ -125,7 +125,17 @@ const AdminDashboard = () => {
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [search, setSearch] = useState("");
-  const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
+  const [editingProfile, setEditingProfileState] = useState<UserProfile | null>(null);
+  const [profileDirty, setProfileDirty] = useState(false);
+  const setEditingProfile = (next: UserProfile | null) => {
+    if (next === null) setProfileDirty(false);
+    else setProfileDirty(true);
+    setEditingProfileState(next);
+  };
+  const openEditingProfile = (p: UserProfile | null) => {
+    setEditingProfileState(p);
+    setProfileDirty(false);
+  };
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
