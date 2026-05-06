@@ -532,8 +532,12 @@ const ListPropertyPage = () => {
                       <Calendar
                         mode='single'
                         selected={paymentDate ? new Date(paymentDate) : undefined}
-                        onSelect={(d) => setPaymentDate(d ? format(d, 'yyyy-MM-dd') : null)}
-                        disabled={expirationDate ? { from: new Date(expirationDate), to: new Date(8640000000000000) } : undefined}
+                        onSelect={(d) => {
+                          if (!d) { setPaymentDate(null); return; }
+                          const s = format(d, 'yyyy-MM-dd');
+                          setPaymentDate(s);
+                          setExpirationDate(addMonthsStr(s, 1));
+                        }}
                         initialFocus
                         className={cn('p-3 pointer-events-auto')}
                       />
