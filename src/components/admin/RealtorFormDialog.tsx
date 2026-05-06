@@ -102,7 +102,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const isCreate = mode === "create";
   const { fee: realtorFee, isFree: realtorPromoFree, promoLabel: realtorPromoLabel } =
     useFeatureFlag(isCreate ? FEATURE_KEYS.REALTOR_SIGNUP : FEATURE_KEYS.REALTOR_RENEWAL);
-  const [form, setForm] = useState<RealtorFormData>(realtor ?? emptyRealtor);
+  const [form, setForm] = useState<RealtorFormData>(realtor ?? buildEmptyRealtor());
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [bypassPayment, setBypassPayment] = useState(realtor?.payment_bypassed ?? false);
@@ -112,7 +112,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const [lastId, setLastId] = useState<string | null>(null);
   if (currentId !== lastId) {
     setLastId(currentId);
-    setForm(realtor ?? emptyRealtor);
+    setForm(realtor ?? buildEmptyRealtor());
     setBypassPayment(realtor?.payment_bypassed ?? false);
   }
 
