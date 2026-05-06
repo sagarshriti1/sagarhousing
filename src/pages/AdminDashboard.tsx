@@ -906,13 +906,13 @@ const AdminDashboard = () => {
                         }}
                       />
                     </TableHead>
-                    <TableHead>Property ID</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>City / District</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Updated By</TableHead>
+                    <SortHeader tab="properties" sortKey="property_code">Property ID</SortHeader>
+                    <SortHeader tab="properties" sortKey="title">Title</SortHeader>
+                    <SortHeader tab="properties" sortKey="location">City / District</SortHeader>
+                    <SortHeader tab="properties" sortKey="price">Price</SortHeader>
+                    <SortHeader tab="properties" sortKey="status">Status</SortHeader>
+                    <SortHeader tab="properties" sortKey="listing_type">Type</SortHeader>
+                    <SortHeader tab="properties" sortKey="updated_by">Updated By</SortHeader>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
