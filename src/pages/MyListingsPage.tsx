@@ -8,7 +8,8 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Bed, Bath, Maximize, Trash2, CreditCard } from "lucide-react";
+import { Plus, Bed, Bath, Maximize, Trash2, CreditCard, Pencil, Receipt } from "lucide-react";
+import PaymentHistoryList from "@/components/PaymentHistoryList";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
@@ -26,6 +27,7 @@ const MyListingsPage = () => {
   const [listings, setListings] = useState<Tables<"user_properties">[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
+  const [paymentsListing, setPaymentsListing] = useState<Tables<"user_properties"> | null>(null);
   
 
   useEffect(() => {
@@ -215,7 +217,13 @@ const MyListingsPage = () => {
                         }
                         return null;
                       })()}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(listing.id); }}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit listing" onClick={(e) => { e.stopPropagation(); navigate(`/edit-property/${listing.id}`); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="View payments" onClick={(e) => { e.stopPropagation(); setPaymentsListing(listing); }}>
+                        <Receipt className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Delete" onClick={(e) => { e.stopPropagation(); handleDelete(listing.id); }}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -244,6 +252,20 @@ const MyListingsPage = () => {
               amount={getListingFee(paymentListing.listing_type)}
               label={`Listing fee (${paymentListing.listing_type === "rent" ? "Rental" : "Sale"})`}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* Payment History Dialog */}
+      <Dialog open={!!paymentsListing} onOpenChange={(open) => !open && setPaymentsListing(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Payment History</DialogTitle>
+            <DialogDescription>
+              Payments for <strong>{paymentsListing?.title}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          {paymentsListing && (
+            <PaymentHistoryList relatedType="property" relatedId={paymentsListing.id} compact />
           )}
         </DialogContent>
       </Dialog>
