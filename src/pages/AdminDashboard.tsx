@@ -142,6 +142,47 @@ const AdminDashboard = () => {
   const [selectedRealtorIds, setSelectedRealtorIds] = useState<Set<string>>(new Set());
   const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(new Set());
 
+  // Per-tab sorting
+  const [sortConfig, setSortConfig] = useState<Record<string, { key: string; dir: 'asc' | 'desc' } | null>>({});
+  const getSort = (tab: string) => sortConfig[tab] ?? null;
+  const toggleSort = (tab: string, key: string) => {
+    setSortConfig((prev) => {
+      const cur = prev[tab];
+      let next: { key: string; dir: 'asc' | 'desc' } | null;
+      if (!cur || cur.key !== key) next = { key, dir: 'asc' };
+      else if (cur.dir === 'asc') next = { key, dir: 'desc' };
+      else next = null;
+      return { ...prev, [tab]: next };
+    });
+  };
+  const SortHeader = ({ tab, sortKey, children, className }: { tab: string; sortKey: string; children: React.ReactNode; className?: string }) => {
+    const cur = getSort(tab);
+    const active = cur?.key === sortKey;
+    const Icon = !active ? ArrowUpDown : cur!.dir === 'asc' ? ArrowUp : ArrowDown;
+    return (
+      <TableHead className={className}>
+        <button type="button" onClick={() => toggleSort(tab, sortKey)} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+          {children}
+          <Icon className={`h-3.5 w-3.5 ${active ? 'text-foreground' : 'text-muted-foreground/60'}`} />
+        </button>
+      </TableHead>
+    );
+  };
+  const sortList = <T,>(list: T[], tab: string, accessors: Record<string, (item: T) => any>): T[] => {
+    const cur = getSort(tab);
+    if (!cur || !accessors[cur.key]) return list;
+    const acc = accessors[cur.key];
+    const dir = cur.dir === 'asc' ? 1 : -1;
+    return [...list].sort((a, b) => {
+      const av = acc(a); const bv = acc(b);
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' }) * dir;
+    });
+  };
+
   // Create User dialog
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserRole, setCreateUserRole] = useState<"admin" | "realtor" | "user">("user");
