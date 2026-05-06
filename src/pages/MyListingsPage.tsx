@@ -7,8 +7,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Bed, Bath, Maximize, Trash2, CreditCard, Pencil, Receipt } from "lucide-react";
+import { Plus, Bed, Bath, Maximize, Trash2, CreditCard, Pencil, Receipt, Search } from "lucide-react";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
@@ -32,6 +33,7 @@ const MyListingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
   const [paymentsListing, setPaymentsListing] = useState<Tables<"user_properties"> | null>(null);
+  const [search, setSearch] = useState("");
   
 
   useEffect(() => {
