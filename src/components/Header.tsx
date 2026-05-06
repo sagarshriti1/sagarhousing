@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Menu, X, Heart, User, Plus, LogOut, Shield, Megaphone, Bookmark } from 'lucide-react';
+import { Home, Menu, X, Heart, User, LogOut, Shield, Megaphone, Bookmark, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -55,18 +55,6 @@ const Header = () => {
         <div className='hidden md:flex items-center gap-3'>
           {user ? (
             <>
-              {role !== 'admin' && (
-                <Link to='/list-property'>
-                  <Button variant='outline' size='sm' className='gap-2'>
-                    <Plus className='h-4 w-4' /> List Property
-                  </Button>
-                </Link>
-              )}
-              <Link to="/favorites">
-                <Button variant='ghost' size='icon'>
-                  <Heart className='h-5 w-5' />
-                </Button>
-              </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='icon'>
@@ -82,7 +70,10 @@ const Header = () => {
                     <Link to='/profile'><User className='h-4 w-4 mr-2' /> My Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to='/my-listings'>My Listings</Link>
+                    <Link to='/my-listings'><List className='h-4 w-4 mr-2' /> My Listings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to='/favorites'><Heart className='h-4 w-4 mr-2' /> My Favorites</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to='/saved-realtors'><Bookmark className='h-4 w-4 mr-2' /> Saved Realtors</Link>
@@ -147,32 +138,23 @@ const Header = () => {
             </Link>
             {user ? (
               <>
-                <Link
-                  to='/favorites'
-                  className='text-sm font-medium py-2 text-foreground'
-                >
-                  Favorites
+                <Link to='/profile' className='text-sm font-medium py-2 text-foreground'>
+                  My Profile
                 </Link>
-                {role !== 'admin' && (
-                  <Link
-                    to='/list-property'
-                    className='text-sm font-medium py-2 text-foreground'
-                  >
-                    List Property
-                  </Link>
-                )}
-                <Link
-                  to='/my-listings'
-                  className='text-sm font-medium py-2 text-foreground'
-                >
+                <Link to='/my-listings' className='text-sm font-medium py-2 text-foreground'>
                   My Listings
                 </Link>
-                <Link
-                  to='/saved-realtors'
-                  className='text-sm font-medium py-2 text-foreground'
-                >
+                <Link to='/favorites' className='text-sm font-medium py-2 text-foreground'>
+                  My Favorites
+                </Link>
+                <Link to='/saved-realtors' className='text-sm font-medium py-2 text-foreground'>
                   Saved Realtors
                 </Link>
+                {(role === 'realtor' || role === 'admin') && (
+                  <Link to='/realtor-dashboard' className='text-sm font-medium py-2 text-foreground'>
+                    Realtor Dashboard
+                  </Link>
+                )}
                 <Button
                   size='sm'
                   variant='outline'
