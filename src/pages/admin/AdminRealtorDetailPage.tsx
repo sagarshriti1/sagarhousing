@@ -36,6 +36,14 @@ const AdminRealtorDetailPage = () => {
     if (data?.user_id) {
       const { data: p } = await supabase.from("profiles").select("email").eq("user_id", data.user_id).maybeSingle();
       setLinkedEmail(p?.email ?? null);
+      const { data: props } = await supabase
+        .from("user_properties")
+        .select("id, title, city, district, listing_type, price, status, expiration_date")
+        .eq("user_id", data.user_id)
+        .order("created_at", { ascending: false });
+      setProperties(props ?? []);
+    } else {
+      setProperties([]);
     }
   };
 
