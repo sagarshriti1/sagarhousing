@@ -538,6 +538,7 @@ const AdminDashboard = () => {
             ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}`
             : null,
         });
+        await logFeatured(newData.id, newData.name, newData?.user_id ?? actor!.id);
       }
       toast.success("Realtor created!");
       setRealtors((prev) => [...prev, newData as Realtor]);
