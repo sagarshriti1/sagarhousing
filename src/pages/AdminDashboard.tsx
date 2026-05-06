@@ -144,6 +144,11 @@ const AdminDashboard = () => {
   const [selectedRealtorIds, setSelectedRealtorIds] = useState<Set<string>>(new Set());
   const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(new Set());
 
+  // Expanded rows (for inline detail panel with payment history)
+  const [expandedAccountId, setExpandedAccountId] = useState<string | null>(null);
+  const [expandedRealtorId, setExpandedRealtorId] = useState<string | null>(null);
+  const [expandedPropertyId, setExpandedPropertyId] = useState<string | null>(null);
+
   // Per-tab sorting
   const [sortConfig, setSortConfig] = useState<Record<string, { key: string; dir: 'asc' | 'desc' } | null>>({});
   const getSort = (tab: string) => sortConfig[tab] ?? null;
