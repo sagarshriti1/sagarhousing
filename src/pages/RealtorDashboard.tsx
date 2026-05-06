@@ -21,7 +21,7 @@ interface RealtorProfile {
 
 const RealtorDashboard = () => {
   const { user, role, loading } = useAuth();
-  const { fee: SIGNUP_FEE } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
+  
   const [profile, setProfile] = useState<RealtorProfile | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
 
