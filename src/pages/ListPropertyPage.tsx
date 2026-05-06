@@ -296,7 +296,9 @@ const ListPropertyPage = () => {
             status: flag.isFree ? 'promotion' : 'bypassed',
             promo_label: flag.isFree ? flag.promoLabel : null,
             expiration_date: expirationDate ? new Date(expirationDate).toISOString() : null,
-            notes: flag.isFree ? null : 'Admin activated this listing without payment.',
+            notes: flag.isFree
+              ? null
+              : `Payment bypassed by admin. Reason: ${bypassReason.trim() || '(no reason provided)'}`,
           });
         }
         toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
