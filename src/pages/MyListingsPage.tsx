@@ -12,8 +12,7 @@ import { Plus, Bed, Bath, Maximize, Trash2, Pencil, CreditCard } from "lucide-re
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
-
-const getListingFee = (listingType: string) => listingType === "rent" ? 1000 : 5000;
+import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 
 const MyListingsPage = () => {
   const { user } = useAuth();
