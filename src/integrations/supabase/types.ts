@@ -35,6 +35,48 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          bypass_payment: boolean
+          created_at: string
+          description: string | null
+          fee: number
+          id: string
+          key: string
+          label: string
+          promo_ends_at: string | null
+          promo_label: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bypass_payment?: boolean
+          created_at?: string
+          description?: string | null
+          fee?: number
+          id?: string
+          key: string
+          label: string
+          promo_ends_at?: string | null
+          promo_label?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bypass_payment?: boolean
+          created_at?: string
+          description?: string | null
+          fee?: number
+          id?: string
+          key?: string
+          label?: string
+          promo_ends_at?: string | null
+          promo_label?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
