@@ -113,20 +113,20 @@ const ListPropertyPage = () => {
       }
 
       setForm({
-        title: data.title,
+        title: data.title ?? '',
         description: data.description ?? '',
-        address: data.address,
-        city: data.city,
-        district: (data as any).district ?? getDistrictForCity(data.city) ?? '',
-        price: String(data.price),
-        bedrooms: String(data.bedrooms),
-        bathrooms: String(data.bathrooms),
-        sqft: data.sqft ? String(data.sqft) : '',
-        property_type: data.property_type as 'apartment' | 'commercial' | 'house' | 'land',
-        listing_type: data.listing_type,
-        year_built: data.year_built ? String(data.year_built) : '',
-        lot_size: data.lot_size ? String(data.lot_size) : '',
-        
+        address: data.address ?? '',
+        city: data.city ?? '',
+        district: (data as any).district ?? getDistrictForCity(data.city ?? '') ?? '',
+        price: data.price != null ? String(data.price) : '0',
+        bedrooms: data.bedrooms != null ? String(data.bedrooms) : '0',
+        bathrooms: data.bathrooms != null ? String(data.bathrooms) : '0',
+        sqft: data.sqft != null ? String(data.sqft) : '0',
+        property_type: (data.property_type ?? 'house') as 'apartment' | 'commercial' | 'house' | 'land',
+        listing_type: data.listing_type ?? 'sale',
+        year_built: data.year_built != null ? String(data.year_built) : '0',
+        lot_size: data.lot_size != null ? String(data.lot_size) : '0',
+
         maintenance_fee: String((data as any).maintenance_fee ?? 0),
         bike_parking: String((data as any).bike_parking ?? 0),
         car_parking: String((data as any).car_parking ?? 0),
