@@ -271,8 +271,25 @@ const ListPropertyPage = () => {
         if (error) throw error;
         toast.success('Listing updated successfully!');
       } else {
-        const { error } = await supabase.from('user_properties').insert(payload);
+        const { data: inserted, error } = await supabase.from('user_properties').insert(payload).select().single();
         if (error) throw error;
+        if (isAdmin && inserted) {
+          const { logPayment } = await import('@/lib/paymentHistory');
+          const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+          await logPayment({
+            user_id: user.id,
+            service_key: form.listing_type === 'rent' ? FEATURE_KEYS.PROPERTY_RENT : FEATURE_KEYS.PROPERTY_SALE,
+            service_label: form.listing_type === 'rent' ? 'Property Listing — For Rent' : 'Property Listing — For Sale',
+            related_type: 'property',
+            related_id: (inserted as any).id,
+            related_label: form.title,
+            amount: 0,
+            status: flag.isFree ? 'promotion' : 'bypassed',
+            promo_label: flag.isFree ? flag.promoLabel : null,
+            expiration_date: expirationDate ? new Date(expirationDate).toISOString() : null,
+            notes: flag.isFree ? null : 'Admin activated this listing without payment.',
+          });
+        }
         toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
       }
       setIsDirty(false);
