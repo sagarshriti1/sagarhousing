@@ -27,6 +27,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } from '@/data/nepalLocations';
 import SearchableCombobox from '@/components/SearchableCombobox';
+import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
@@ -37,6 +38,8 @@ const COMMON_FEATURES = [
 const ListPropertyPage = () => {
   const { user, role } = useAuth();
   const isAdmin = role === 'admin';
+  const saleFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_SALE);
+  const rentFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_RENT);
   const navigate = useNavigate();
   const { id: editId } = useParams<{ id?: string }>();
   const isEdit = !!editId;
@@ -550,8 +553,8 @@ const ListPropertyPage = () => {
               <p className="font-medium text-foreground mb-1">Listing Fee</p>
               <p>Your property will be saved as <strong>inactive</strong>. To activate and publish it, pay the listing fee from your My Listings page:</p>
               <ul className="list-disc list-inside mt-1">
-                <li>For Rent: <strong>Rs. 1,000</strong></li>
-                <li>For Sale: <strong>Rs. 5,000</strong></li>
+                <li>For Rent: <strong>{rentFlag.isFree ? "Free 🎉" : `Rs. ${rentFlag.fee.toLocaleString()}`}</strong>{rentFlag.isFree && rentFlag.promoLabel ? ` — ${rentFlag.promoLabel}` : ""}</li>
+                <li>For Sale: <strong>{saleFlag.isFree ? "Free 🎉" : `Rs. ${saleFlag.fee.toLocaleString()}`}</strong>{saleFlag.isFree && saleFlag.promoLabel ? ` — ${saleFlag.promoLabel}` : ""}</li>
               </ul>
             </div>
           )}

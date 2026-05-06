@@ -35,7 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User, ArrowUpDown, ArrowUp, ArrowDown, Sliders } from "lucide-react";
+import FeaturesTab from "@/components/admin/FeaturesTab";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RealtorFormDialog, { type RealtorFormData } from "@/components/admin/RealtorFormDialog";
@@ -728,6 +729,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="realtors" className="gap-2"><MapPin className="h-4 w-4" /> Realtors</TabsTrigger>
             <TabsTrigger value="non-realtors" className="gap-2"><User className="h-4 w-4" /> Non-Realtors</TabsTrigger>
             <TabsTrigger value="properties" className="gap-2"><Home className="h-4 w-4" /> Properties</TabsTrigger>
+            <TabsTrigger value="features" className="gap-2"><Sliders className="h-4 w-4" /> Features</TabsTrigger>
           </TabsList>
 
           {/* ADMINS TAB */}
@@ -976,6 +978,11 @@ const AdminDashboard = () => {
             </>
               );
             })()}
+          </TabsContent>
+
+          {/* FEATURES TAB */}
+          <TabsContent value="features">
+            <FeaturesTab />
           </TabsContent>
         </Tabs>
       </main>

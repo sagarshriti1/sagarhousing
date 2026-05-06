@@ -17,6 +17,7 @@ import { Save, Plus, Camera, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from '@/data/nepalLocations';
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
+import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 
 interface RealtorProfile {
   id: string;
@@ -38,10 +39,9 @@ interface RealtorProfile {
   expiration_date: string | null;
 }
 
-const SIGNUP_FEE = 5000;
-
 const RealtorDashboard = () => {
   const { user, role, loading } = useAuth();
+  const { fee: SIGNUP_FEE, isFree: signupFree, promoLabel: signupPromoLabel } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
   const [profile, setProfile] = useState<RealtorProfile | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -112,7 +112,9 @@ const RealtorDashboard = () => {
     expiration.setMonth(expiration.getMonth() + 1);
 
     toast.success("Payment successful! 🎉", {
-      description: "Your payment of Rs. 5,000 has been received. Your profile is active for 1 month.",
+      description: signupFree
+        ? "Free promotion applied. Your profile is active for 1 month."
+        : `Your payment of Rs. ${SIGNUP_FEE.toLocaleString()} has been received. Your profile is active for 1 month.`,
       duration: 5000,
     });
 
@@ -263,16 +265,28 @@ const RealtorDashboard = () => {
                     Subscription Payment
                   </CardTitle>
                   <CardDescription>
-                    A monthly fee of Rs. {SIGNUP_FEE.toLocaleString()} is required to create your realtor profile and appear in the directory.
+                    {signupFree
+                      ? (signupPromoLabel || "🎉 Free promotion active — no payment required to create your realtor profile.")
+                      : `A monthly fee of Rs. ${SIGNUP_FEE.toLocaleString()} is required to create your realtor profile and appear in the directory.`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <SimulatedPaymentForm
-                    paid={paymentComplete}
-                    onPaymentComplete={handlePaymentComplete}
-                    amount={SIGNUP_FEE}
-                    label="Realtor monthly subscription"
-                  />
+                  {signupFree ? (
+                    <Button
+                      onClick={handlePaymentComplete}
+                      disabled={paymentComplete}
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                    >
+                      {paymentComplete ? "Activated ✓" : "Activate Profile (Free)"}
+                    </Button>
+                  ) : (
+                    <SimulatedPaymentForm
+                      paid={paymentComplete}
+                      onPaymentComplete={handlePaymentComplete}
+                      amount={SIGNUP_FEE}
+                      label="Realtor monthly subscription"
+                    />
+                  )}
                 </CardContent>
               </Card>
             )}
