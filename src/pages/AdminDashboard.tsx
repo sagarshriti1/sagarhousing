@@ -979,13 +979,11 @@ const AdminDashboard = () => {
                   {filteredProperties.map((prop) => {
                     const expired = prop.expiration_date && new Date(prop.expiration_date) < new Date(new Date().toDateString());
                     const isActive = prop.status === "active" && !expired;
-                    const isExpanded = expandedPropertyId === prop.id;
                     return (
-                    <React.Fragment key={prop.id}>
                     <TableRow
                       key={prop.id}
                       className={`cursor-pointer hover:bg-muted/40 ${selectedPropertyIds.has(prop.id) ? "bg-muted/50" : ""}`}
-                      onClick={() => setExpandedPropertyId(isExpanded ? null : prop.id)}
+                      onClick={() => navigate(`/admin/property/${prop.id}`)}
                     >
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
@@ -993,12 +991,7 @@ const AdminDashboard = () => {
                           onCheckedChange={() => togglePropertySelection(prop.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                          #{(prop as any).property_code ?? '—'}
-                        </span>
-                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">#{(prop as any).property_code ?? '—'}</TableCell>
                       <TableCell className="font-medium text-foreground">{prop.title}</TableCell>
                       <TableCell>{[prop.city, prop.district].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
@@ -1014,27 +1007,6 @@ const AdminDashboard = () => {
                         </Button>
                       </TableCell>
                     </TableRow>
-                    {isExpanded && (
-                      <TableRow key={`${prop.id}-expanded`} className="bg-muted/20 hover:bg-muted/20">
-                        <TableCell colSpan={10} className="p-4">
-                          <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex flex-wrap gap-2">
-                              <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate(`/edit-property/${prop.id}`)}>
-                                <Pencil className="h-4 w-4" /> Edit
-                              </Button>
-                              <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate(`/property/db-${prop.id}`)}>
-                                <Home className="h-4 w-4" /> View Listing
-                              </Button>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-semibold text-foreground mb-2">Payment History</h4>
-                              <PaymentHistoryList relatedType="property" relatedId={prop.id} canEditNotes compact />
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    </React.Fragment>
                     );
                   })}
                   {filteredProperties.length === 0 && (
