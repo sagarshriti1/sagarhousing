@@ -97,6 +97,11 @@ const buildEmptyRealtor = (): RealtorFormData => {
     specialties: null,
     license_number: null,
     bypass_reason: null,
+    featured_start_date: null,
+    featured_expiration_date: null,
+    featured_payment_status: "none",
+    featured_payment_bypassed: false,
+    featured_bypass_reason: null,
   };
 };
 
