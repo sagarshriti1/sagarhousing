@@ -724,7 +724,7 @@ const ListPropertyPage = () => {
             <Button type='button' variant='outline' onClick={handleBack} className='py-6 text-lg gap-2' disabled={loading}>
               <ArrowLeft className='h-5 w-5' /> Back
             </Button>
-            <Button type='submit' className='flex-1 bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg' disabled={loading}>
+            <Button type='submit' className='flex-1 bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg' disabled={loading || atListingLimit}>
               {loading ? (<><Loader2 className='h-5 w-5 mr-2 animate-spin' /> {isEdit ? 'Updating...' : 'Saving...'}</>) : (isEdit ? 'Update Listing' : 'Save Listing')}
             </Button>
           </div>
