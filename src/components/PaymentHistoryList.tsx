@@ -278,7 +278,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
                       <Textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} placeholder="Add a note visible to the user…" rows={2} />
                       <div className="flex gap-2 justify-end">
                         <Button size="sm" variant="ghost" onClick={() => setEditingNote(null)}>Cancel</Button>
-                        <Button size="sm" onClick={() => saveNote(r.id)}>Save</Button>
+                        <ConfirmSaveButton size="sm" onConfirm={() => saveNote(r.id)} disabled={noteDraft === originalNote}>Save</ConfirmSaveButton>
                       </div>
                     </div>
                   ) : (
