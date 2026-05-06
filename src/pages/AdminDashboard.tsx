@@ -220,6 +220,12 @@ const AdminDashboard = () => {
     return p?.display_name || p?.email || uid.slice(0, 8);
   };
 
+  const creatorEmail = (uid?: string | null) => {
+    if (!uid) return "—";
+    const p = profiles.find((pr) => pr.user_id === uid);
+    return p?.email || "—";
+  };
+
   const handleCreateUser = async () => {
     if (!newUser.displayName.trim()) { toast.error("Name is required"); return; }
     if (!newUser.email || !newUser.password) { toast.error("Email and password are required"); return; }
