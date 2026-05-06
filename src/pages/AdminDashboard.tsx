@@ -1174,7 +1174,7 @@ const AdminDashboard = () => {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingProfile(null)}>Cancel</Button>
-                <Button onClick={saveProfile}>Save Changes</Button>
+                <ConfirmSaveButton onConfirm={saveProfile} disabled={!profileDirty}>Save Changes</ConfirmSaveButton>
               </div>
             </div>
           )}
