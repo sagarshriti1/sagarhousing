@@ -90,10 +90,14 @@ const ListPropertyPage = () => {
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
   const FREE_USER_LISTING_LIMIT = 2;
-  const isStandardUser = !!user && role !== 'realtor' && role !== 'admin';
+  const isRealtor = role === 'realtor';
+  const isStandardUser = !!user && !isRealtor && role !== 'admin';
   const [existingListingCount, setExistingListingCount] = useState<number | null>(null);
   const atListingLimit = isStandardUser && !isEdit && existingListingCount !== null && existingListingCount >= FREE_USER_LISTING_LIMIT;
   const limitMessage = `You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit for standard accounts. Delete an existing listing or upgrade to a Realtor account to post more.`;
+
+  const [realtorInactive, setRealtorInactive] = useState(false);
+  const realtorInactiveMessage = "Your Realtor profile is inactive or expired. Please renew your Realtor subscription before posting new listings.";
 
   useEffect(() => {
     if (!user || isEdit || !isStandardUser) return;
@@ -107,6 +111,24 @@ const ListPropertyPage = () => {
     })();
     return () => { cancelled = true; };
   }, [user, isEdit, isStandardUser]);
+
+  useEffect(() => {
+    if (!user || !isRealtor || isEdit) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('realtors')
+        .select('payment_status, expiration_date')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const active = !!data
+        && (data.payment_status === 'paid' || data.payment_status === 'promotion' || data.payment_status === 'bypassed')
+        && (!data.expiration_date || new Date(data.expiration_date) > new Date());
+      setRealtorInactive(!active);
+    })();
+    return () => { cancelled = true; };
+  }, [user, isRealtor, isEdit]);
 
   // Mark dirty on any user change
   useEffect(() => { if (!fetching) setIsDirty(true); }, [form, selectedFeatures, imageFiles, existingImages, paymentDate, expirationDate]);
