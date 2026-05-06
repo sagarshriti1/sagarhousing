@@ -83,6 +83,8 @@ const ListPropertyPage = () => {
   const [expirationDate, setExpirationDate] = useState<string | null>(isAdmin && !isEdit ? addMonthsStr(todayDateStr, 1) : null);
   const [propertyCode, setPropertyCode] = useState<number | null>(null);
   const [bypassReason, setBypassReason] = useState<string>('');
+  const [bypassPayment, setBypassPayment] = useState<boolean>(false);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'bypassed' | 'promotion'>('pending');
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
