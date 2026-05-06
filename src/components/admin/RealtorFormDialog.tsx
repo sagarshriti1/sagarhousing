@@ -187,6 +187,10 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
           </div>
 
           <div>
+            <Label>Street Address</Label>
+            <Input value={form.street_address} onChange={(e) => setForm({ ...form, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
+          </div>
+          <div>
             <Label>Bio</Label>
             <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
           </div>
