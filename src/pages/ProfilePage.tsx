@@ -54,7 +54,8 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [profile, setProfile] = useState<ProfileData>({
+  const [dirty, setDirty] = useState(false);
+  const [profile, setProfileState] = useState<ProfileData>({
     display_name: "",
     email: "",
     phone: "",
@@ -63,6 +64,10 @@ const ProfilePage = () => {
     street_address: "",
     avatar_url: "",
   });
+  const setProfile = (next: ProfileData | ((p: ProfileData) => ProfileData)) => {
+    setDirty(true);
+    setProfileState(next as any);
+  };
 
   useEffect(() => {
     if (!user) return;
