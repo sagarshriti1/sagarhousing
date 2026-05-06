@@ -51,8 +51,8 @@ const AuthPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // For realtor signup, require payment first
-    if (isSignUp && selectedRole === 'realtor') {
+    // For realtor signup, require payment first (unless free promo)
+    if (isSignUp && selectedRole === 'realtor' && !realtorFree) {
       if (!realtorPaymentComplete) {
         setShowRealtorPayment(true);
         return;
