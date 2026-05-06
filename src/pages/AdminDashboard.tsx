@@ -760,16 +760,15 @@ const AdminDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>City / District</TableHead>
-                    
-                    <TableHead>Payment</TableHead>
-                    <TableHead>Dates</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Featured</TableHead>
-                    <TableHead>Updated By</TableHead>
+                    <SortHeader tab="realtors" sortKey="name">Name</SortHeader>
+                    <SortHeader tab="realtors" sortKey="email">Email</SortHeader>
+                    <SortHeader tab="realtors" sortKey="phone">Phone</SortHeader>
+                    <SortHeader tab="realtors" sortKey="location">City / District</SortHeader>
+                    <SortHeader tab="realtors" sortKey="payment">Payment</SortHeader>
+                    <SortHeader tab="realtors" sortKey="expiration_date">Dates</SortHeader>
+                    <SortHeader tab="realtors" sortKey="status">Status</SortHeader>
+                    <SortHeader tab="realtors" sortKey="featured">Featured</SortHeader>
+                    <SortHeader tab="realtors" sortKey="updated_by">Updated By</SortHeader>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
