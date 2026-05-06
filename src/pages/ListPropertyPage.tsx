@@ -33,6 +33,7 @@ import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } f
 import SearchableCombobox from '@/components/SearchableCombobox';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
@@ -87,6 +88,25 @@ const ListPropertyPage = () => {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'bypassed' | 'promotion'>('pending');
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
+
+  const FREE_USER_LISTING_LIMIT = 2;
+  const isStandardUser = !!user && role !== 'realtor' && role !== 'admin';
+  const [existingListingCount, setExistingListingCount] = useState<number | null>(null);
+  const atListingLimit = isStandardUser && !isEdit && existingListingCount !== null && existingListingCount >= FREE_USER_LISTING_LIMIT;
+  const limitMessage = `You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit for standard accounts. Delete an existing listing or upgrade to a Realtor account to post more.`;
+
+  useEffect(() => {
+    if (!user || isEdit || !isStandardUser) return;
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from('user_properties')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      if (!cancelled) setExistingListingCount(count ?? 0);
+    })();
+    return () => { cancelled = true; };
+  }, [user, isEdit, isStandardUser]);
 
   // Mark dirty on any user change
   useEffect(() => { if (!fetching) setIsDirty(true); }, [form, selectedFeatures, imageFiles, existingImages, paymentDate, expirationDate]);
@@ -214,6 +234,18 @@ const ListPropertyPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    if (!isEdit && isStandardUser) {
+      const { count } = await supabase
+        .from('user_properties')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      if ((count ?? 0) >= FREE_USER_LISTING_LIMIT) {
+        toast.error(limitMessage);
+        setExistingListingCount(count ?? 0);
+        return;
+      }
+    }
 
     if (!form.title || !form.address || !form.district || !form.price) {
       toast.error('Please fill in all required fields');
@@ -348,6 +380,13 @@ const ListPropertyPage = () => {
         <p className='text-muted-foreground mb-8'>
           {isEdit ? 'Update the details of your property listing' : 'Fill in the details below to list your property'}
         </p>
+
+        {atListingLimit && (
+          <Alert variant='destructive' className='mb-6'>
+            <AlertTitle>Listing limit reached</AlertTitle>
+            <AlertDescription>{limitMessage}</AlertDescription>
+          </Alert>
+        )}
 
         <form onSubmit={handleSubmit} className='space-y-8'>
           {/* Basic Info */}
@@ -685,7 +724,7 @@ const ListPropertyPage = () => {
             <Button type='button' variant='outline' onClick={handleBack} className='py-6 text-lg gap-2' disabled={loading}>
               <ArrowLeft className='h-5 w-5' /> Back
             </Button>
-            <Button type='submit' className='flex-1 bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg' disabled={loading}>
+            <Button type='submit' className='flex-1 bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg' disabled={loading || atListingLimit}>
               {loading ? (<><Loader2 className='h-5 w-5 mr-2 animate-spin' /> {isEdit ? 'Updating...' : 'Saving...'}</>) : (isEdit ? 'Update Listing' : 'Save Listing')}
             </Button>
           </div>
