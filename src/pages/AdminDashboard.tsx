@@ -80,6 +80,7 @@ interface UserProfile {
   avatar_url: string | null;
   job_title: string | null;
   location: string | null;
+  street_address: string | null;
   is_active: boolean;
   updated_by?: string | null;
 }
@@ -142,7 +143,7 @@ const AdminDashboard = () => {
   // Create User dialog
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserRole, setCreateUserRole] = useState<"admin" | "realtor" | "user">("user");
-  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
+  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", streetAddress: "", location: "", avatarUrl: "" });
   const [uploadingNewUserAvatar, setUploadingNewUserAvatar] = useState(false);
   const newUserAvatarInputRef = useRef<HTMLInputElement>(null);
   const [creatingUser, setCreatingUser] = useState(false);
@@ -188,6 +189,7 @@ const AdminDashboard = () => {
       displayName: newUser.displayName,
       phone: newUser.phone,
       jobTitle: newUser.jobTitle,
+      streetAddress: newUser.streetAddress,
       location: newUser.location,
       avatarUrl: newUser.avatarUrl,
       role: createUserRole,
@@ -196,7 +198,7 @@ const AdminDashboard = () => {
     if (ok) {
       toast.success(`${createUserRole} account created`);
       setCreateUserOpen(false);
-      setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
+      setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", streetAddress: "", location: "", avatarUrl: "" });
       fetchAll();
     }
   };
