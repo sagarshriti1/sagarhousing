@@ -19,6 +19,7 @@ import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from '@/data/nepalL
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
 import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 import { logPayment } from "@/lib/paymentHistory";
+import PaymentHistoryList from "@/components/PaymentHistoryList";
 
 interface RealtorProfile {
   id: string;
