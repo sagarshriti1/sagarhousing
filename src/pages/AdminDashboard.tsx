@@ -753,14 +753,6 @@ const AdminDashboard = () => {
               </Button>
             </div>
 
-            <div className="flex items-center gap-4 flex-wrap">
-              <h2 className="font-display text-xl font-semibold text-foreground flex items-center gap-2">
-                <Users className="h-5 w-5" /> Realtor Listings
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {realtors.filter((r) => r.is_featured).length} featured
-              </p>
-            </div>
 
             <div className="rounded-lg border border-border overflow-auto">
               <Table>
