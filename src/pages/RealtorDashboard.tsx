@@ -39,10 +39,9 @@ interface RealtorProfile {
   expiration_date: string | null;
 }
 
-const SIGNUP_FEE = 5000;
-
 const RealtorDashboard = () => {
   const { user, role, loading } = useAuth();
+  const { fee: SIGNUP_FEE, isFree: signupFree, promoLabel: signupPromoLabel } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
   const [profile, setProfile] = useState<RealtorProfile | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [saving, setSaving] = useState(false);
