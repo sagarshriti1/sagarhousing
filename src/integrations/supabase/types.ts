@@ -47,6 +47,7 @@ export type Database = {
           job_title: string | null
           location: string | null
           phone: string | null
+          street_address: string | null
           updated_at: string
           updated_by: string | null
           user_id: string
@@ -62,6 +63,7 @@ export type Database = {
           job_title?: string | null
           location?: string | null
           phone?: string | null
+          street_address?: string | null
           updated_at?: string
           updated_by?: string | null
           user_id: string
@@ -77,6 +79,7 @@ export type Database = {
           job_title?: string | null
           location?: string | null
           phone?: string | null
+          street_address?: string | null
           updated_at?: string
           updated_by?: string | null
           user_id?: string
@@ -102,6 +105,7 @@ export type Database = {
           specialties: string[] | null
           start_date: string | null
           state: string
+          street_address: string | null
           updated_at: string
           updated_by: string | null
           user_id: string | null
@@ -125,6 +129,7 @@ export type Database = {
           specialties?: string[] | null
           start_date?: string | null
           state: string
+          street_address?: string | null
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null
@@ -148,6 +153,7 @@ export type Database = {
           specialties?: string[] | null
           start_date?: string | null
           state?: string
+          street_address?: string | null
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null

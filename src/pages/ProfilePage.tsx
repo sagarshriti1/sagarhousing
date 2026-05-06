@@ -27,6 +27,7 @@ interface ProfileData {
   phone: string | null;
   job_title: string | null;
   location: string | null;
+  street_address: string | null;
   avatar_url: string | null;
 }
 
@@ -42,6 +43,7 @@ const ProfilePage = () => {
     phone: "",
     job_title: "",
     location: "",
+    street_address: "",
     avatar_url: "",
   });
 
@@ -63,6 +65,7 @@ const ProfilePage = () => {
           phone: data.phone ?? "",
           job_title: data.job_title ?? "",
           location: data.location ?? "",
+          street_address: (data as any).street_address ?? "",
           avatar_url: data.avatar_url ?? "",
         });
       } else {
@@ -101,6 +104,7 @@ const ProfilePage = () => {
       phone: profile.phone,
       job_title: profile.job_title,
       location: profile.location,
+      street_address: profile.street_address,
       avatar_url: profile.avatar_url,
       email: profile.email,
     };
@@ -190,6 +194,15 @@ const ProfilePage = () => {
                       value={profile.job_title ?? ""}
                       onChange={(e) => setProfile({ ...profile, job_title: e.target.value })}
                       maxLength={100}
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label>Street Address</Label>
+                    <Input
+                      value={profile.street_address ?? ""}
+                      onChange={(e) => setProfile({ ...profile, street_address: e.target.value })}
+                      placeholder="e.g. Thamel, Ward No. 26"
+                      maxLength={200}
                     />
                   </div>
                   {(() => {

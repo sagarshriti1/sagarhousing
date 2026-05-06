@@ -44,6 +44,7 @@ export interface RealtorFormData {
   city: string;
   state: string;
   district: string;
+  street_address: string;
   bio: string;
   years_experience: number | null;
   is_featured: boolean;
@@ -64,6 +65,7 @@ const emptyRealtor: RealtorFormData = {
   city: "",
   state: "",
   district: "",
+  street_address: "",
   bio: "",
   years_experience: null,
   is_featured: false,
@@ -184,6 +186,10 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
             </div>
           </div>
 
+          <div>
+            <Label>Street Address</Label>
+            <Input value={form.street_address} onChange={(e) => setForm({ ...form, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
+          </div>
           <div>
             <Label>Bio</Label>
             <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />

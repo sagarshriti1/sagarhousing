@@ -55,6 +55,7 @@ const RealtorDashboard = () => {
     name: "",
     email: "",
     phone: "",
+    street_address: "",
     city: "",
     district: "",
     state: "Nepal",
@@ -81,6 +82,7 @@ const RealtorDashboard = () => {
         name: data.name,
         email: data.email ?? "",
         phone: data.phone ?? "",
+        street_address: (data as any).street_address ?? "",
         city: data.city,
         district: (data as any).district ?? getDistrictForCity(data.city) ?? "",
         state: "Nepal",
@@ -149,6 +151,7 @@ const RealtorDashboard = () => {
       name: formData.name,
       email: formData.email || null,
       phone: formData.phone || null,
+      street_address: formData.street_address || null,
       city: formData.city,
       district: formData.district,
       state: "Nepal",
@@ -328,6 +331,10 @@ const RealtorDashboard = () => {
                   <div>
                     <Label>Years of Experience</Label>
                     <Input type="number" value={formData.years_experience} onChange={(e) => setFormData({ ...formData, years_experience: e.target.value })} placeholder="e.g. 10" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Street Address</Label>
+                    <Input value={formData.street_address} onChange={(e) => setFormData({ ...formData, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
                   </div>
                    <div>
                      <Label>City</Label>

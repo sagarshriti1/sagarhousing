@@ -58,6 +58,7 @@ interface Realtor {
   city: string;
   state: string;
   district: string;
+  street_address: string | null;
   bio: string | null;
   specialties: string[] | null;
   years_experience: number | null;
@@ -80,6 +81,7 @@ interface UserProfile {
   avatar_url: string | null;
   job_title: string | null;
   location: string | null;
+  street_address: string | null;
   is_active: boolean;
   updated_by?: string | null;
 }
@@ -142,7 +144,7 @@ const AdminDashboard = () => {
   // Create User dialog
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserRole, setCreateUserRole] = useState<"admin" | "realtor" | "user">("user");
-  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
+  const [newUser, setNewUser] = useState({ email: "", password: "", displayName: "", phone: "", jobTitle: "", streetAddress: "", location: "", avatarUrl: "" });
   const [uploadingNewUserAvatar, setUploadingNewUserAvatar] = useState(false);
   const newUserAvatarInputRef = useRef<HTMLInputElement>(null);
   const [creatingUser, setCreatingUser] = useState(false);
@@ -188,6 +190,7 @@ const AdminDashboard = () => {
       displayName: newUser.displayName,
       phone: newUser.phone,
       jobTitle: newUser.jobTitle,
+      streetAddress: newUser.streetAddress,
       location: newUser.location,
       avatarUrl: newUser.avatarUrl,
       role: createUserRole,
@@ -196,7 +199,7 @@ const AdminDashboard = () => {
     if (ok) {
       toast.success(`${createUserRole} account created`);
       setCreateUserOpen(false);
-      setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
+      setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", streetAddress: "", location: "", avatarUrl: "" });
       fetchAll();
     }
   };
@@ -325,6 +328,7 @@ const AdminDashboard = () => {
       city: realtor.city,
       state: realtor.state,
       district: realtor.district ?? realtor.state,
+      street_address: realtor.street_address ?? "",
       bio: realtor.bio ?? "",
       years_experience: realtor.years_experience,
       is_featured: realtor.is_featured,
@@ -349,6 +353,7 @@ const AdminDashboard = () => {
       city: data.city,
       state: data.state || data.district,
       district: data.district || data.state,
+      street_address: data.street_address || null,
       bio: data.bio || null,
       years_experience: data.years_experience,
       is_featured: data.is_featured,
@@ -558,7 +563,7 @@ const AdminDashboard = () => {
             <Button
               onClick={() => {
                 setCreateUserRole(target);
-                setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", location: "", avatarUrl: "" });
+                setNewUser({ email: "", password: "", displayName: "", phone: "", jobTitle: "", streetAddress: "", location: "", avatarUrl: "" });
                 setCreateUserOpen(true);
               }}
               className="gap-2"
@@ -965,6 +970,10 @@ const AdminDashboard = () => {
                   <Input value={editingProfile.job_title ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, job_title: e.target.value })} placeholder="e.g. Senior Agent" />
                 </div>
               )}
+              <div>
+                <Label>Street Address</Label>
+                <Input value={editingProfile.street_address ?? ""} onChange={(e) => setEditingProfile({ ...editingProfile, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
+              </div>
               {(() => {
                 const editingRole = roles.find((r) => r.user_id === editingProfile.user_id)?.role ?? "user";
                 if (editingRole === "realtor") return null;
@@ -1098,6 +1107,10 @@ const AdminDashboard = () => {
                 <Input value={newUser.jobTitle} onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })} placeholder="e.g. Senior Agent" />
               </div>
             )}
+            <div>
+              <Label>Street Address</Label>
+              <Input value={newUser.streetAddress} onChange={(e) => setNewUser({ ...newUser, streetAddress: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
+            </div>
             {(() => {
               const loc = parseLocation(newUser.location);
               return (
