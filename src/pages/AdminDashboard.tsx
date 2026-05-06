@@ -58,6 +58,7 @@ interface Realtor {
   city: string;
   state: string;
   district: string;
+  street_address: string | null;
   bio: string | null;
   specialties: string[] | null;
   years_experience: number | null;
