@@ -112,7 +112,9 @@ const RealtorDashboard = () => {
     expiration.setMonth(expiration.getMonth() + 1);
 
     toast.success("Payment successful! 🎉", {
-      description: "Your payment of Rs. 5,000 has been received. Your profile is active for 1 month.",
+      description: signupFree
+        ? "Free promotion applied. Your profile is active for 1 month."
+        : `Your payment of Rs. ${SIGNUP_FEE.toLocaleString()} has been received. Your profile is active for 1 month.`,
       duration: 5000,
     });
 
