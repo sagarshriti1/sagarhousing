@@ -1,38 +1,56 @@
-## Goal
+## Problem
 
-On the Admin → Realtor detail page, show the realtor's listed properties with a link into each property's detail page (where its payment history already lives). Keep the realtor-wide payment history section. Add pagination to the payment history list everywhere it's used. Restrict per-property/per-realtor payment history visibility to admins and the owner of the listing only.
+Admins can create a realtor profile without a linked user account (`realtors.user_id` is null). If that person later signs up and posts listings, those properties live under their new `auth.users` id and never connect back to the admin-created realtor row — so the realtor detail page shows "No linked user account."
 
-## Changes
+## Recommended approach: auto-link by email + manual admin link
 
-### 1. Add a "Listed Properties" section on `AdminRealtorDetailPage`
-- Query `user_properties` where `user_id = realtor.user_id` (only if realtor has a linked user_id).
-- Render a compact table/list: title, city/district, listing type, price, status, expiration date.
-- Each row links to `/admin/property/:id` (existing `AdminPropertyDetailPage`, which already shows that property's payment history).
-- Empty state: "This realtor has no listed properties yet."
-- Show below the realtor info card, above the realtor-wide "Payment History" section.
+Combine two mechanisms so the realtor → properties relationship "just works" in both directions:
 
-### 2. Pagination in `PaymentHistoryList` (component-level, applies everywhere)
-- Default page size: **20**, with a `pageSize?: number` prop override.
-- Use Supabase `.range(from, to)` and `count: 'exact'` for total.
-- Render shadcn `Pagination` (Prev / page numbers with ellipsis / Next) below the list, hidden when total ≤ page size.
-- Reset to page 1 when filter props (`userId`, `relatedType`, `relatedId`) change.
-- Loading state preserved during page changes.
+### A. Auto-link on signup (the main fix)
+When a new user signs up, if their email matches an existing `realtors.email` that has no `user_id`, attach that user's id to the realtor row. This way an admin-created realtor profile becomes "claimed" automatically the moment the realtor signs up — no manual step, no broken state.
 
-### 3. Visibility rules for payment history (admin or owner only)
-Already enforced for `userId`-scoped lists by RLS. For `relatedType` + `relatedId` queries, currently the consumers (`AdminPropertyDetailPage`, `AdminRealtorDetailPage`, `RealtorDashboard`, `ListPropertyPage`, `RealtorFormDialog`) are gated, but to be defensive add an internal guard inside `PaymentHistoryList`:
-- If `relatedType`/`relatedId` is provided without `userId`, the component fetches the current user's role; if not admin and not the owner of the related realtor/property, render nothing (or an "Access restricted" line).
-- Owner check: for `related_type="property"` look up `user_properties.user_id`; for `related_type="realtor"` look up `realtors.user_id`. Compare to `auth.uid()`.
+Implementation: extend the existing `handle_new_user` trigger (or add a sibling `handle_new_user_realtor_link` trigger) on `auth.users` insert:
 
-This guarantees no other logged-in users see the payment history even if a future page exposes the component.
+```sql
+UPDATE public.realtors
+   SET user_id = NEW.id, updated_at = now()
+ WHERE user_id IS NULL
+   AND lower(email) = lower(NEW.email);
+```
 
-### 4. No DB migration required
-RLS on `payment_history` already restricts SELECT to the row's `user_id` or admins, so even bypassing the UI guard returns no rows for non-owners/non-admins.
+Case-insensitive match, only fills empty `user_id`, never overwrites an existing link.
+
+### B. Email-based fallback in the UI (covers the gap before they sign up / for legacy data)
+On the admin realtor detail page, when `realtor.user_id` is null but `realtor.email` is set:
+1. Look up `profiles` by that email.
+2. If a profile is found, use its `user_id` to fetch `user_properties` (and show a small "Auto-matched by email" hint).
+3. If none found, show a friendly empty state: "This realtor hasn't signed up yet. Once they create an account with **{email}**, their listings will appear here automatically."
+
+### C. Manual "Link to user account" admin action (escape hatch)
+Add a button on the realtor detail page that opens a small dialog where the admin can:
+- Search `profiles` by email or name
+- Pick a user → set `realtors.user_id`
+Useful when emails don't match (typo, different signup email).
+
+This action also becomes the documented way to *change* the link if needed.
+
+## Why this combo
+
+- **No data model change required.** `realtors.user_id` already exists.
+- **Self-healing.** Admin can pre-create realtor profiles, and they become fully linked without admin intervention once the realtor signs up.
+- **Resilient.** Email fallback in UI bridges the gap for accounts created before the trigger existed.
+- **Manual override** handles the edge cases (mismatched emails) without code changes later.
 
 ## Files affected
-- `src/components/PaymentHistoryList.tsx` — pagination + visibility guard.
-- `src/pages/admin/AdminRealtorDetailPage.tsx` — new "Listed Properties" section linking to `/admin/property/:id`.
+
+- **Migration**: add the auto-link trigger on `auth.users` (or extend `handle_new_user`).
+- `src/pages/admin/AdminRealtorDetailPage.tsx`:
+  - Resolve effective `userIdForProperties` = `realtor.user_id ?? (profile lookup by realtor.email)?.user_id`.
+  - Replace the "No linked user account" message with the friendlier email-pending message.
+  - Add **Link User** button → dialog with profile search → updates `realtors.user_id`.
+- (Optional) Same email-fallback resolution on `AdminUserDetailPage` / `RealtorDashboard` if relevant — out of scope unless you want it.
 
 ## Out of scope
-- Changing the existing realtor-wide payment history section.
-- Changing the Properties tab or My Listings flows (they already navigate to detail pages where payment history is shown).
-- Schema/RLS changes.
+
+- Backfilling existing realtor rows whose linked user already exists under a matching email — happy to add a one-shot SQL backfill if you want.
+- Changing `payment_history` linkage.
