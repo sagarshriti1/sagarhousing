@@ -17,7 +17,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
-import { ArrowLeft, Pencil, KeyRound, Trash2, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, Pencil, KeyRound, Trash2, UserCheck, UserX, Home, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 
@@ -47,6 +47,7 @@ const AdminUserDetailPage = () => {
   const { user, role, loading } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<string>("user");
+  const [properties, setProperties] = useState<any[]>([]);
   const [draft, setDraft] = useState<Profile | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [confirm, setConfirm] = useState<{ title: string; description: string; onConfirm: () => Promise<void> | void } | null>(null);
@@ -54,12 +55,18 @@ const AdminUserDetailPage = () => {
   useEffect(() => {
     const load = async () => {
       if (!userId) return;
-      const [{ data: p }, { data: r }] = await Promise.all([
+      const [{ data: p }, { data: r }, { data: props }] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("user_properties")
+          .select("id, title, city, district, listing_type, price, status, expiration_date")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false }),
       ]);
       setProfile(p as Profile);
       setUserRole(r?.role ?? "user");
+      setProperties(props ?? []);
     };
     if (role === "admin") load();
   }, [userId, role]);
@@ -188,6 +195,39 @@ const AdminUserDetailPage = () => {
             <div className="sm:col-span-2"><span className="text-muted-foreground">Street Address:</span> <span className="text-foreground">{profile.street_address || "—"}</span></div>
           </CardContent>
         </Card>
+
+        {userRole !== "admin" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Home className="h-5 w-5" /> Listed Properties ({properties.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {properties.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No listings yet.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {properties.map((p) => (
+                    <li key={p.id}>
+                      <button
+                        onClick={() => navigate(`/admin/property/${p.id}`)}
+                        className="w-full flex items-center justify-between gap-3 py-3 text-left hover:bg-muted/50 px-2 rounded-md transition"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-foreground truncate">{p.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {p.city}{p.district ? `, ${p.district}` : ""} • {p.listing_type === "rent" ? "For Rent" : "For Sale"} • Rs. {Number(p.price).toLocaleString()}
+                          </p>
+                        </div>
+                        <Badge variant={p.status === "active" ? "default" : "secondary"} className="capitalize shrink-0">{p.status}</Badge>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {userRole !== "admin" && (
           <Card>
