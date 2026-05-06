@@ -106,10 +106,20 @@ const ProfilePage = () => {
     if (!user) return;
     const { data } = await supabase
       .from("realtors")
-      .select("id, name, is_featured")
+      .select("id, name, is_featured, featured_start_date, featured_expiration_date, featured_payment_status")
       .eq("user_id", user.id)
       .maybeSingle();
-    setRealtor(data);
+    if (data) {
+      // Lazy expire if needed
+      const expired = await markFeaturedExpiredIfNeeded(data.id, data);
+      if (expired) {
+        setRealtor({ ...data, is_featured: false, featured_payment_status: "expired" });
+      } else {
+        setRealtor(data);
+      }
+    } else {
+      setRealtor(null);
+    }
   };
 
   useEffect(() => {
@@ -120,6 +130,10 @@ const ProfilePage = () => {
   const handleBecomeFeatured = async () => {
     if (!user) return;
     setActivating(true);
+
+    const start = todayISO();
+    const expiration = addOneMonthISO(start);
+    const status = featuredFree ? "promotion" : "paid";
 
     let current = realtor;
 
@@ -138,8 +152,11 @@ const ProfilePage = () => {
           state: "Nepal",
           payment_status: "paid",
           is_featured: true,
+          featured_start_date: start,
+          featured_expiration_date: expiration,
+          featured_payment_status: status,
         })
-        .select("id, name, is_featured")
+        .select("id, name, is_featured, featured_start_date, featured_expiration_date, featured_payment_status")
         .single();
       if (error || !data) {
         toast.error("Failed to create realtor profile");
@@ -151,14 +168,25 @@ const ProfilePage = () => {
     } else {
       const { error } = await supabase
         .from("realtors")
-        .update({ is_featured: true })
+        .update({
+          is_featured: true,
+          featured_start_date: start,
+          featured_expiration_date: expiration,
+          featured_payment_status: status,
+        })
         .eq("id", current.id);
       if (error) {
         toast.error("Failed to mark as featured");
         setActivating(false);
         return;
       }
-      setRealtor({ ...current, is_featured: true });
+      setRealtor({
+        ...current,
+        is_featured: true,
+        featured_start_date: start,
+        featured_expiration_date: expiration,
+        featured_payment_status: status,
+      });
     }
 
     await logPayment({
