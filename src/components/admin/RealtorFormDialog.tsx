@@ -137,6 +137,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     setLastId(currentId);
     setFormState(realtor ?? buildEmptyRealtor());
     setBypassPayment(realtor?.payment_bypassed ?? false);
+    setBypassFeatured(realtor?.featured_payment_bypassed ?? false);
     setDirty(false);
   }
 
