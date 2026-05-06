@@ -69,7 +69,7 @@ const ListPropertyPage = () => {
     sqft: '0',
     property_type: 'house' as 'apartment' | 'commercial' | 'house' | 'land',
     listing_type: 'sale' as 'sale' | 'rent',
-    year_built: '0',
+    year_built: '',
     lot_size: '0',
     
     maintenance_fee: '0',
