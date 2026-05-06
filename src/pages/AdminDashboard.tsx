@@ -1043,7 +1043,7 @@ const AdminDashboard = () => {
                     const isActive = prop.status === "active" && !expired;
                     const isExpanded = expandedPropertyId === prop.id;
                     return (
-                    <>
+                    <React.Fragment key={prop.id}>
                     <TableRow
                       key={prop.id}
                       className={`cursor-pointer hover:bg-muted/40 ${selectedPropertyIds.has(prop.id) ? "bg-muted/50" : ""}`}
