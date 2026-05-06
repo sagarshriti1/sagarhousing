@@ -577,6 +577,20 @@ const ListPropertyPage = () => {
               {paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate) && (
                 <p className='text-xs text-destructive'>Start date must be earlier than expiration date.</p>
               )}
+              {!isEdit && !(form.listing_type === 'rent' ? rentFlag.isFree : saleFlag.isFree) && (
+                <div className='space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5'>
+                  <Label>Reason for bypassing payment <span className='text-destructive'>*</span></Label>
+                  <Textarea
+                    value={bypassReason}
+                    onChange={(e) => setBypassReason(e.target.value)}
+                    placeholder='Explain why this listing is being activated without payment (e.g. complimentary listing, partner agreement, manual offline payment)…'
+                    rows={2}
+                  />
+                  <p className='text-xs text-muted-foreground'>
+                    Mandatory. This reason will appear in the payment history for both the admin and the listing owner.
+                  </p>
+                </div>
+              )}
             </section>
           )}
 
