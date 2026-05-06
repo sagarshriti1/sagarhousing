@@ -436,9 +436,10 @@ const AdminDashboard = () => {
         onConfirm: async () => {
           const { error } = await supabase.from("realtors").update(payload).eq("id", data.id!);
           if (error) { toast.error("Failed to save realtor"); return; }
-          if (data.user_id) {
+          {
+            const { data: { user: actor } } = await supabase.auth.getUser();
             await logPayment({
-              user_id: data.user_id,
+              user_id: data.user_id ?? actor!.id,
               service_key: flagKey,
               service_label: isCreate ? "Realtor Signup" : "Realtor Renewal",
               related_type: "realtor",
@@ -448,7 +449,9 @@ const AdminDashboard = () => {
               status,
               promo_label: promoActive ? flagRow?.promo_label : null,
               expiration_date: data.expiration_date ? new Date(data.expiration_date).toISOString() : null,
-              notes: status === "bypassed" ? "Admin updated subscription without charging." : null,
+              notes: !data.user_id
+                ? "Realtor not linked to a user account — recorded for admin tracking."
+                : status === "bypassed" ? "Admin updated subscription without charging." : null,
             });
           }
           toast.success("Realtor updated");
@@ -459,9 +462,10 @@ const AdminDashboard = () => {
     } else {
       const { data: newData, error } = await supabase.from("realtors").insert(payload).select().single();
       if (error) { toast.error("Failed to create realtor"); return; }
-      if (newData?.user_id) {
+      {
+        const { data: { user: actor } } = await supabase.auth.getUser();
         await logPayment({
-          user_id: newData.user_id,
+          user_id: newData?.user_id ?? actor!.id,
           service_key: flagKey,
           service_label: "Realtor Signup",
           related_type: "realtor",
@@ -471,7 +475,9 @@ const AdminDashboard = () => {
           status,
           promo_label: promoActive ? flagRow?.promo_label : null,
           expiration_date: newData.expiration_date ? new Date(newData.expiration_date).toISOString() : null,
-          notes: status === "bypassed" ? "Admin created realtor profile without charging." : null,
+          notes: !newData?.user_id
+            ? "Realtor not linked to a user account — recorded for admin tracking."
+            : status === "bypassed" ? "Admin created realtor profile without charging." : null,
         });
       }
       toast.success("Realtor created!");
