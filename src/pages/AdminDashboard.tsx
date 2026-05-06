@@ -434,6 +434,10 @@ const AdminDashboard = () => {
       user_id: data.user_id,
       specialties: data.specialties,
       license_number: data.license_number,
+      featured_start_date: data.featured_start_date,
+      featured_expiration_date: data.featured_expiration_date,
+      featured_payment_status: data.featured_payment_status,
+      featured_payment_bypassed: data.featured_payment_bypassed,
     };
 
     const { logPayment } = await import("@/lib/paymentHistory");
