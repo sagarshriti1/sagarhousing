@@ -218,8 +218,19 @@ const AuthPage = () => {
                   minLength={6}
                 />
               </div>
-              {/* Realtor payment during signup */}
-              {isSignUp && selectedRole === 'realtor' && showRealtorPayment && (
+              {/* Realtor payment / promo during signup */}
+              {isSignUp && selectedRole === 'realtor' && realtorFree && (
+                <div className='rounded-md border border-dashed p-3 bg-muted/30 flex items-start gap-2'>
+                  <Sparkles className='h-4 w-4 text-accent mt-0.5' />
+                  <div className='text-xs'>
+                    <p className='font-semibold text-foreground'>
+                      {realtorPromoLabel || 'Free Promotion Active 🎉'}
+                    </p>
+                    <p className='text-muted-foreground'>Realtor signup is free — no payment required.</p>
+                  </div>
+                </div>
+              )}
+              {isSignUp && selectedRole === 'realtor' && !realtorFree && showRealtorPayment && (
                 <div className='space-y-2'>
                   <Label>Realtor Subscription Payment</Label>
                   <p className='text-xs text-muted-foreground'>
@@ -239,9 +250,9 @@ const AuthPage = () => {
               <Button
                 type='submit'
                 className='w-full bg-accent text-accent-foreground hover:bg-accent/90'
-                disabled={loading || (isSignUp && selectedRole === 'realtor' && showRealtorPayment && !realtorPaymentComplete)}
+                disabled={loading || (isSignUp && selectedRole === 'realtor' && !realtorFree && showRealtorPayment && !realtorPaymentComplete)}
               >
-                {loading ? 'Loading...' : isSignUp ? (selectedRole === 'realtor' && !showRealtorPayment ? 'Proceed to Payment' : 'Sign Up') : 'Sign In'}
+                {loading ? 'Loading...' : isSignUp ? (selectedRole === 'realtor' && !realtorFree && !showRealtorPayment ? `Proceed to Payment — Rs. ${REALTOR_SIGNUP_FEE.toLocaleString()}` : 'Sign Up') : 'Sign In'}
               </Button>
             </form>
 
