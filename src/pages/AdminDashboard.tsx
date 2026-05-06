@@ -328,6 +328,7 @@ const AdminDashboard = () => {
       city: realtor.city,
       state: realtor.state,
       district: realtor.district ?? realtor.state,
+      street_address: realtor.street_address ?? "",
       bio: realtor.bio ?? "",
       years_experience: realtor.years_experience,
       is_featured: realtor.is_featured,
