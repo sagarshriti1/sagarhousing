@@ -139,6 +139,7 @@ const ListPropertyPage = () => {
       const ed = (data as any).expiration_date;
       setPaymentDate(pd ? format(new Date(pd), 'yyyy-MM-dd') : null);
       setExpirationDate(ed ? format(new Date(ed), 'yyyy-MM-dd') : null);
+      setPropertyCode((data as any).property_code ?? null);
       setFetching(false);
     };
     fetchProperty();
