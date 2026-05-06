@@ -16,7 +16,11 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
-import { Upload, X, Plus, Loader2, CalendarIcon, ArrowLeft } from 'lucide-react';
+import { Upload, X, Plus, Loader2, CalendarIcon, ArrowLeft, CreditCard, ShieldCheck } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import SimulatedPaymentForm from '@/components/SimulatedPaymentForm';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -79,6 +83,8 @@ const ListPropertyPage = () => {
   const [expirationDate, setExpirationDate] = useState<string | null>(isAdmin && !isEdit ? addMonthsStr(todayDateStr, 1) : null);
   const [propertyCode, setPropertyCode] = useState<number | null>(null);
   const [bypassReason, setBypassReason] = useState<string>('');
+  const [bypassPayment, setBypassPayment] = useState<boolean>(false);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'bypassed' | 'promotion'>('pending');
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
@@ -214,6 +220,7 @@ const ListPropertyPage = () => {
       return;
     }
 
+    const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
     if (isAdmin) {
       if (!paymentDate || !expirationDate) {
         toast.error('Start date and expiration date are required');
@@ -223,10 +230,15 @@ const ListPropertyPage = () => {
         toast.error('Start date must be earlier than expiration date');
         return;
       }
-      const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
-      if (!isEdit && !flag.isFree && bypassReason.trim().length < 3) {
-        toast.error('Please provide a reason for bypassing payment');
-        return;
+      if (!isEdit && !flag.isFree) {
+        if (!bypassPayment && paymentStatus !== 'paid') {
+          toast.error('Please complete payment or bypass it with a reason');
+          return;
+        }
+        if (bypassPayment && bypassReason.trim().length < 3) {
+          toast.error('Please provide a reason for bypassing payment');
+          return;
+        }
       }
     }
     setLoading(true);
@@ -284,7 +296,8 @@ const ListPropertyPage = () => {
         if (error) throw error;
         if (isAdmin && inserted) {
           const { logPayment } = await import('@/lib/paymentHistory');
-          const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+          const finalStatus: 'paid' | 'bypassed' | 'promotion' =
+            flag.isFree ? 'promotion' : (paymentStatus === 'paid' ? 'paid' : 'bypassed');
           await logPayment({
             user_id: user.id,
             service_key: form.listing_type === 'rent' ? FEATURE_KEYS.PROPERTY_RENT : FEATURE_KEYS.PROPERTY_SALE,
@@ -292,16 +305,16 @@ const ListPropertyPage = () => {
             related_type: 'property',
             related_id: (inserted as any).id,
             related_label: form.title,
-            amount: 0,
-            status: flag.isFree ? 'promotion' : 'bypassed',
+            amount: finalStatus === 'paid' ? flag.fee : 0,
+            status: finalStatus,
             promo_label: flag.isFree ? flag.promoLabel : null,
             expiration_date: expirationDate ? new Date(expirationDate).toISOString() : null,
-            notes: flag.isFree
-              ? null
-              : `Payment bypassed by admin. Reason: ${bypassReason.trim() || '(no reason provided)'}`,
+            notes: finalStatus === 'bypassed'
+              ? `Payment bypassed by admin. Reason: ${bypassReason.trim() || '(no reason provided)'}`
+              : null,
           });
         }
-        toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
+        toast.success(isAdmin ? 'Property created and activated!' : 'Property saved! Pay the listing fee from My Listings to activate it.');
       }
       setIsDirty(false);
       navigate(-1);
@@ -523,76 +536,132 @@ const ListPropertyPage = () => {
             <p className='text-xs text-muted-foreground'>Upload up to 10 photos. First photo will be the cover image.</p>
           </section>
 
-          {isAdmin && (
+          {isAdmin && (() => {
+            const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+            const showPaymentUI = !isEdit && !flag.isFree;
+            return (
             <section className='space-y-4'>
-              <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Listing Period</h2>
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label>Start Date *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button type='button' variant='outline' className={cn('w-full justify-start text-left font-normal', !paymentDate && 'text-muted-foreground')}>
-                        <CalendarIcon className='mr-2 h-4 w-4' />
-                        {paymentDate ? format(new Date(paymentDate), 'PPP') : 'Pick start date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className='w-auto p-0' align='start'>
-                      <Calendar
-                        mode='single'
-                        selected={paymentDate ? new Date(paymentDate) : undefined}
-                        onSelect={(d) => {
-                          if (!d) { setPaymentDate(null); return; }
-                          const s = format(d, 'yyyy-MM-dd');
-                          setPaymentDate(s);
-                          setExpirationDate(addMonthsStr(s, 1));
-                        }}
-                        initialFocus
-                        className={cn('p-3 pointer-events-auto')}
+              <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Subscription & Payment</h2>
+
+              {showPaymentUI && (
+                <div className='rounded-lg border border-border p-4 space-y-4 bg-muted/30'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-sm font-medium text-foreground'>Payment Status</p>
+                      <p className='text-xs text-muted-foreground'>Payment is required to activate this listing</p>
+                    </div>
+                    <Badge
+                      variant={
+                        paymentStatus === 'paid' ? 'default' :
+                        paymentStatus === 'bypassed' ? 'secondary' :
+                        'destructive'
+                      }
+                    >
+                      {paymentStatus === 'paid' ? 'Paid' : paymentStatus === 'bypassed' ? 'Bypassed' : 'Pending'}
+                    </Badge>
+                  </div>
+
+                  <div className='flex items-center gap-3 p-3 rounded-md border border-dashed border-border bg-background'>
+                    <ShieldCheck className='h-5 w-5 text-accent shrink-0' />
+                    <div className='flex-1'>
+                      <p className='text-sm font-medium text-foreground'>Bypass Payment</p>
+                      <p className='text-xs text-muted-foreground'>Skip payment verification for this listing</p>
+                    </div>
+                    <Checkbox
+                      checked={bypassPayment}
+                      onCheckedChange={(checked) => {
+                        const c = !!checked;
+                        setBypassPayment(c);
+                        setPaymentStatus(c ? 'bypassed' : (paymentStatus === 'paid' ? 'paid' : 'pending'));
+                        if (!c) setBypassReason('');
+                      }}
+                    />
+                  </div>
+
+                  {bypassPayment && (
+                    <div className='space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5'>
+                      <Label>Reason for bypass <span className='text-destructive'>*</span></Label>
+                      <Textarea
+                        value={bypassReason}
+                        onChange={(e) => setBypassReason(e.target.value)}
+                        placeholder='Explain why payment is being bypassed (e.g. complimentary listing, partner agreement, manual offline payment)…'
+                        rows={2}
                       />
-                    </PopoverContent>
-                  </Popover>
+                      <p className='text-xs text-muted-foreground'>
+                        Mandatory. This reason will appear in the payment history for both the admin and the listing owner.
+                      </p>
+                    </div>
+                  )}
+
+                  {!bypassPayment && (
+                    <SimulatedPaymentForm
+                      paid={paymentStatus === 'paid'}
+                      onPaymentComplete={() => setPaymentStatus('paid')}
+                      amount={flag.fee}
+                      label={form.listing_type === 'rent' ? 'Rent listing fee' : 'Sale listing fee'}
+                    />
+                  )}
                 </div>
-                <div className='space-y-2'>
-                  <Label>Expiration Date *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button type='button' variant='outline' className={cn('w-full justify-start text-left font-normal', !expirationDate && 'text-muted-foreground')}>
-                        <CalendarIcon className='mr-2 h-4 w-4' />
-                        {expirationDate ? format(new Date(expirationDate), 'PPP') : 'Pick expiration date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className='w-auto p-0' align='start'>
-                      <Calendar
-                        mode='single'
-                        selected={expirationDate ? new Date(expirationDate) : undefined}
-                        onSelect={(d) => setExpirationDate(d ? format(d, 'yyyy-MM-dd') : null)}
-                        disabled={paymentDate ? { from: new Date(-8640000000000000), to: new Date(paymentDate) } : undefined}
-                        initialFocus
-                        className={cn('p-3 pointer-events-auto')}
-                      />
-                    </PopoverContent>
-                  </Popover>
+              )}
+
+              {showPaymentUI && <Separator />}
+
+              <div>
+                <h3 className='font-medium text-foreground mb-3 flex items-center gap-2'><CalendarIcon className='h-4 w-4 text-muted-foreground' /> Listing Period</h3>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='space-y-2'>
+                    <Label>Start Date *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button type='button' variant='outline' className={cn('w-full justify-start text-left font-normal', !paymentDate && 'text-muted-foreground')}>
+                          <CalendarIcon className='mr-2 h-4 w-4' />
+                          {paymentDate ? format(new Date(paymentDate), 'PPP') : 'Pick start date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className='w-auto p-0' align='start'>
+                        <Calendar
+                          mode='single'
+                          selected={paymentDate ? new Date(paymentDate) : undefined}
+                          onSelect={(d) => {
+                            if (!d) { setPaymentDate(null); return; }
+                            const s = format(d, 'yyyy-MM-dd');
+                            setPaymentDate(s);
+                            setExpirationDate(addMonthsStr(s, 1));
+                          }}
+                          initialFocus
+                          className={cn('p-3 pointer-events-auto')}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label>Expiration Date *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button type='button' variant='outline' className={cn('w-full justify-start text-left font-normal', !expirationDate && 'text-muted-foreground')}>
+                          <CalendarIcon className='mr-2 h-4 w-4' />
+                          {expirationDate ? format(new Date(expirationDate), 'PPP') : 'Pick expiration date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className='w-auto p-0' align='start'>
+                        <Calendar
+                          mode='single'
+                          selected={expirationDate ? new Date(expirationDate) : undefined}
+                          onSelect={(d) => setExpirationDate(d ? format(d, 'yyyy-MM-dd') : null)}
+                          initialFocus
+                          className={cn('p-3 pointer-events-auto')}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
+                {paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate) && (
+                  <p className='text-xs text-destructive mt-2'>Start date must be earlier than expiration date.</p>
+                )}
               </div>
-              {paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate) && (
-                <p className='text-xs text-destructive'>Start date must be earlier than expiration date.</p>
-              )}
-              {!isEdit && !(form.listing_type === 'rent' ? rentFlag.isFree : saleFlag.isFree) && (
-                <div className='space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5'>
-                  <Label>Reason for bypassing payment <span className='text-destructive'>*</span></Label>
-                  <Textarea
-                    value={bypassReason}
-                    onChange={(e) => setBypassReason(e.target.value)}
-                    placeholder='Explain why this listing is being activated without payment (e.g. complimentary listing, partner agreement, manual offline payment)…'
-                    rows={2}
-                  />
-                  <p className='text-xs text-muted-foreground'>
-                    Mandatory. This reason will appear in the payment history for both the admin and the listing owner.
-                  </p>
-                </div>
-              )}
             </section>
-          )}
+            );
+          })()}
 
           {!isEdit && !isAdmin && (
             <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground">
