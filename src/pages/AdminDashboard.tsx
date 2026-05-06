@@ -774,7 +774,7 @@ const AdminDashboard = () => {
                     </TableCell>
                   </TableRow>
                 )}
-                </>
+                </React.Fragment>
                 );
               })}
               {list.length === 0 && (
