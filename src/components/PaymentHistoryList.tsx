@@ -170,7 +170,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
     return arr;
   })();
 
-  const DateButton = ({ value, placeholder, onChange }: { value?: Date; placeholder: string; onChange: (d: Date | undefined) => void }) => (
+  const DateButton = ({ value, placeholder, onChange, disabled }: { value?: Date; placeholder: string; onChange: (d: Date | undefined) => void; disabled?: (d: Date) => boolean }) => (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className={cn("gap-2 justify-start font-normal", !value && "text-muted-foreground")}>
@@ -179,7 +179,7 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={value} onSelect={onChange} initialFocus className="p-3 pointer-events-auto" />
+        <Calendar mode="single" selected={value} onSelect={onChange} disabled={disabled} initialFocus className="p-3 pointer-events-auto" />
       </PopoverContent>
     </Popover>
   );
@@ -188,8 +188,18 @@ const PaymentHistoryList = ({ userId, relatedType, relatedId, canEditNotes, comp
     <div className="space-y-3">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 print:hidden" data-print-hide>
-        <DateButton value={dateFrom} placeholder="From date" onChange={setDateFrom} />
-        <DateButton value={dateTo} placeholder="To date" onChange={setDateTo} />
+        <DateButton
+          value={dateFrom}
+          placeholder="From date"
+          onChange={(d) => { setDateFrom(d); if (d && dateTo && d > dateTo) setDateTo(undefined); }}
+          disabled={dateTo ? (d) => d > dateTo : undefined}
+        />
+        <DateButton
+          value={dateTo}
+          placeholder="To date"
+          onChange={setDateTo}
+          disabled={dateFrom ? (d) => d < dateFrom : undefined}
+        />
         {(dateFrom || dateTo) && (
           <Button size="sm" variant="ghost" onClick={clearRange} className="gap-1"><X className="h-3.5 w-3.5" /> Clear</Button>
         )}
