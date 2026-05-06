@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User, ArrowUpDown, ArrowUp, ArrowDown, Sliders } from "lucide-react";
 import FeaturesTab from "@/components/admin/FeaturesTab";
+import PaymentHistoryList from "@/components/PaymentHistoryList";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RealtorFormDialog, { type RealtorFormData } from "@/components/admin/RealtorFormDialog";
@@ -1167,6 +1168,10 @@ const AdminDashboard = () => {
                   checked={editingProfile.is_active}
                   onCheckedChange={(checked) => setEditingProfile({ ...editingProfile, is_active: checked })}
                 />
+              </div>
+              <div className="border-t border-border pt-4 space-y-3">
+                <h3 className="font-semibold text-foreground">Payment History</h3>
+                <PaymentHistoryList userId={editingProfile.user_id} canEditNotes compact />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingProfile(null)}>Cancel</Button>
