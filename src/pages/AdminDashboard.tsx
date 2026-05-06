@@ -353,6 +353,7 @@ const AdminDashboard = () => {
       city: data.city,
       state: data.state || data.district,
       district: data.district || data.state,
+      street_address: data.street_address || null,
       bio: data.bio || null,
       years_experience: data.years_experience,
       is_featured: data.is_featured,
