@@ -73,8 +73,10 @@ const ListPropertyPage = () => {
     car_parking: '0',
     stories: '0',
   });
-  const [paymentDate, setPaymentDate] = useState<string | null>(null);
-  const [expirationDate, setExpirationDate] = useState<string | null>(null);
+  const addMonthsStr = (s: string, m: number) => { const d = new Date(s); d.setMonth(d.getMonth() + m); return format(d, 'yyyy-MM-dd'); };
+  const todayDateStr = format(new Date(), 'yyyy-MM-dd');
+  const [paymentDate, setPaymentDate] = useState<string | null>(isAdmin && !isEdit ? todayDateStr : null);
+  const [expirationDate, setExpirationDate] = useState<string | null>(isAdmin && !isEdit ? addMonthsStr(todayDateStr, 1) : null);
   const [propertyCode, setPropertyCode] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
