@@ -276,6 +276,60 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
 
           <Separator />
 
+          {/* Date Selection */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.start_date && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.start_date ? format(new Date(form.start_date), "PPP") : "Pick start date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={form.start_date ? new Date(form.start_date) : undefined}
+                      onSelect={(date) => {
+                        if (!date) { setForm({ ...form, start_date: null }); return; }
+                        const s = format(date, "yyyy-MM-dd");
+                        setForm({ ...form, start_date: s, expiration_date: addMonths(s, 1) });
+                      }}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label>Expiration Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.expiration_date && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.expiration_date ? format(new Date(form.expiration_date), "PPP") : "Pick expiration date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={form.expiration_date ? new Date(form.expiration_date) : undefined}
+                      onSelect={(date) => setForm({ ...form, expiration_date: date ? format(date, "yyyy-MM-dd") : null })}
+                      disabled={form.start_date ? { from: new Date(-8640000000000000), to: new Date(form.start_date) } : undefined}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            {form.start_date && form.expiration_date && new Date(form.start_date) >= new Date(form.expiration_date) && (
+              <p className="text-xs text-destructive">Start date must be earlier than expiration date.</p>
+            )}
+          </div>
+
           {/* Subscription & Payment Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -357,58 +411,6 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                 />
               )}
             </div>
-
-            {/* Date Selection */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Start Date *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.start_date && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.start_date ? format(new Date(form.start_date), "PPP") : "Pick start date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={form.start_date ? new Date(form.start_date) : undefined}
-                      onSelect={(date) => {
-                        if (!date) { setForm({ ...form, start_date: null }); return; }
-                        const s = format(date, "yyyy-MM-dd");
-                        setForm({ ...form, start_date: s, expiration_date: addMonths(s, 1) });
-                      }}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label>Expiration Date *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.expiration_date && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.expiration_date ? format(new Date(form.expiration_date), "PPP") : "Pick expiration date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={form.expiration_date ? new Date(form.expiration_date) : undefined}
-                      onSelect={(date) => setForm({ ...form, expiration_date: date ? format(date, "yyyy-MM-dd") : null })}
-                      disabled={form.start_date ? { from: new Date(-8640000000000000), to: new Date(form.start_date) } : undefined}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-            {form.start_date && form.expiration_date && new Date(form.start_date) >= new Date(form.expiration_date) && (
-              <p className="text-xs text-destructive">Start date must be earlier than expiration date.</p>
-            )}
           </div>
 
           {!isCreate && form.id && (
