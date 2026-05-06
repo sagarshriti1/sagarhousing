@@ -864,10 +864,15 @@ const AdminDashboard = () => {
           {/* PROPERTIES TAB */}
           <TabsContent value="properties" className="space-y-4">
             {(() => {
+              const q = search.trim().toLowerCase().replace(/^#/, '');
               const baseFiltered = properties.filter((p) => {
                 const notExpired = !p.expiration_date || new Date(p.expiration_date) >= new Date(new Date().toDateString());
                 const isActive = p.status === "active" && notExpired;
-                return showInactive ? !isActive : isActive;
+                if (showInactive ? isActive : !isActive) return false;
+                if (!q) return true;
+                const code = String((p as any).property_code ?? '');
+                const email = creatorEmail(p.user_id).toLowerCase();
+                return code.includes(q) || email.includes(q);
               });
               const filteredProperties = sortList(baseFiltered, 'properties', {
                 property_code: (p) => p.property_code ?? null,
@@ -885,6 +890,15 @@ const AdminDashboard = () => {
               return (
             <>
             <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Property ID or creator email..."
+                  className="pl-10"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
               {selectedPropertyIds.size > 0 && (
                 <Button variant="destructive" size="sm" onClick={bulkDeleteProperties} className="gap-2">
                   <Trash2 className="h-4 w-4" /> Delete {selectedPropertyIds.size} selected
