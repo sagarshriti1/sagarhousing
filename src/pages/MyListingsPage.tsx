@@ -123,17 +123,35 @@ const MyListingsPage = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 container py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="font-display text-3xl font-bold text-foreground">My Listings</h1>
-            <p className="text-muted-foreground mt-1">{listings.length} properties</p>
-          </div>
-          <Link to="/list-property">
-            <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
-              <Plus className="h-4 w-4" /> Add Property
-            </Button>
-          </Link>
-        </div>
+        {(() => {
+          const atLimit = isStandardUser && listings.length >= FREE_USER_LISTING_LIMIT;
+          return (
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="font-display text-3xl font-bold text-foreground">My Listings</h1>
+                <p className="text-muted-foreground mt-1">
+                  {listings.length} properties
+                  {isStandardUser && ` · Standard accounts can post up to ${FREE_USER_LISTING_LIMIT} listings (${listings.length}/${FREE_USER_LISTING_LIMIT} used)`}
+                </p>
+              </div>
+              {atLimit ? (
+                <Button
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2"
+                  disabled
+                  title={`You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit. Delete an existing listing or upgrade to a Realtor account.`}
+                >
+                  <Plus className="h-4 w-4" /> Add Property
+                </Button>
+              ) : (
+                <Link to="/list-property">
+                  <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+                    <Plus className="h-4 w-4" /> Add Property
+                  </Button>
+                </Link>
+              )}
+            </div>
+          );
+        })()}
 
         {loading ? (
           <div className="text-center py-16 text-muted-foreground">Loading...</div>
