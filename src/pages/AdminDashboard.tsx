@@ -931,7 +931,7 @@ const AdminDashboard = () => {
                             <div>
                               <h4 className="text-sm font-semibold text-foreground mb-2">Payment History</h4>
                               <PaymentHistoryList
-                                userId={realtor.user_id ?? undefined}
+                                userId={realtorRelatedId ? undefined : (realtor.user_id ?? undefined)}
                                 relatedType={realtorRelatedId ? "realtor" : undefined}
                                 relatedId={realtorRelatedId}
                                 canEditNotes
