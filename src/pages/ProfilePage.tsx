@@ -133,128 +133,131 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 container py-8 max-w-2xl">
+      <main className="flex-1 container py-8 max-w-3xl">
         <h1 className="text-3xl font-display font-bold mb-6">My Profile</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {loading ? (
-              <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
-            ) : (
-              <>
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={profile.avatar_url ?? undefined} />
-                    <AvatarFallback>{profile.display_name?.[0] ?? user.email?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                    >
-                      {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Camera className="h-4 w-4 mr-2" />}
-                      Upload Photo
+        <Tabs defaultValue="info" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="info" className="gap-2"><UserIcon className="h-4 w-4" /> Personal Info</TabsTrigger>
+            <TabsTrigger value="payments" className="gap-2"><Receipt className="h-4 w-4" /> Payment History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info">
+            <Card>
+              <CardHeader>
+                <CardTitle>Personal Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {loading ? (
+                  <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage src={profile.avatar_url ?? undefined} />
+                        <AvatarFallback>{profile.display_name?.[0] ?? user.email?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading}
+                        >
+                          {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Camera className="h-4 w-4 mr-2" />}
+                          Upload Photo
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Display Name</Label>
+                        <Input value={profile.display_name ?? ""} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} maxLength={100} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input value={profile.email ?? ""} disabled />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Phone</Label>
+                        <Input value={profile.phone ?? ""} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} maxLength={30} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Job Title</Label>
+                        <Input value={profile.job_title ?? ""} onChange={(e) => setProfile({ ...profile, job_title: e.target.value })} maxLength={100} />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label>Street Address</Label>
+                        <Input value={profile.street_address ?? ""} onChange={(e) => setProfile({ ...profile, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" maxLength={200} />
+                      </div>
+                      {(() => {
+                        const loc = parseLocation(profile.location);
+                        return (
+                          <>
+                            <div className="space-y-2">
+                              <Label>City</Label>
+                              <Select
+                                value={loc.city}
+                                onValueChange={(city) => {
+                                  const district = getDistrictForCity(city) || loc.district;
+                                  setProfile({ ...profile, location: joinLocation(city, district) });
+                                }}
+                              >
+                                <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                                <SelectContent>
+                                  {NEPAL_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>District</Label>
+                              <Select
+                                value={loc.district}
+                                onValueChange={(district) => {
+                                  const cityDist = getDistrictForCity(loc.city);
+                                  const nextCity = cityDist && cityDist !== district ? "" : loc.city;
+                                  setProfile({ ...profile, location: joinLocation(nextCity, district) });
+                                }}
+                              >
+                                <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                                <SelectContent>
+                                  {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    <Button onClick={handleSave} disabled={saving}>
+                      {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      Save Changes
                     </Button>
-                  </div>
-                </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Display Name</Label>
-                    <Input
-                      value={profile.display_name ?? ""}
-                      onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
-                      maxLength={100}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input value={profile.email ?? ""} disabled />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input
-                      value={profile.phone ?? ""}
-                      onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                      maxLength={30}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Job Title</Label>
-                    <Input
-                      value={profile.job_title ?? ""}
-                      onChange={(e) => setProfile({ ...profile, job_title: e.target.value })}
-                      maxLength={100}
-                    />
-                  </div>
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label>Street Address</Label>
-                    <Input
-                      value={profile.street_address ?? ""}
-                      onChange={(e) => setProfile({ ...profile, street_address: e.target.value })}
-                      placeholder="e.g. Thamel, Ward No. 26"
-                      maxLength={200}
-                    />
-                  </div>
-                  {(() => {
-                    const loc = parseLocation(profile.location);
-                    return (
-                      <>
-                        <div className="space-y-2">
-                          <Label>City</Label>
-                          <Select
-                            value={loc.city}
-                            onValueChange={(city) => {
-                              const district = getDistrictForCity(city) || loc.district;
-                              setProfile({ ...profile, location: joinLocation(city, district) });
-                            }}
-                          >
-                            <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
-                            <SelectContent>
-                              {NEPAL_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>District</Label>
-                          <Select
-                            value={loc.district}
-                            onValueChange={(district) => {
-                              const cityDist = getDistrictForCity(loc.city);
-                              const nextCity = cityDist && cityDist !== district ? "" : loc.city;
-                              setProfile({ ...profile, location: joinLocation(nextCity, district) });
-                            }}
-                          >
-                            <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
-                            <SelectContent>
-                              {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Save Changes
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PaymentHistoryList userId={user.id} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
       <Footer />
     </div>
