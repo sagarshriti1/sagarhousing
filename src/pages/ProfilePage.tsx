@@ -9,11 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Loader2, Receipt, User as UserIcon } from "lucide-react";
+import { Camera, CreditCard, Loader2, Receipt, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
+import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
+import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
+import { logPayment } from "@/lib/paymentHistory";
+import { Badge } from "@/components/ui/badge";
+import { CardDescription } from "@/components/ui/card";
 
 const parseLocation = (loc: string | null | undefined): { city: string; district: string } => {
   if (!loc) return { city: "", district: "" };
