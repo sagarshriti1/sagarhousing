@@ -166,6 +166,10 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
               <Label>Years Experience</Label>
               <Input type="number" value={form.years_experience ?? ""} onChange={(e) => setForm({ ...form, years_experience: e.target.value ? Number(e.target.value) : null })} />
             </div>
+            <div className="col-span-2">
+              <Label>Street Address</Label>
+              <Input value={form.street_address} onChange={(e) => setForm({ ...form, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
+            </div>
             <div>
               <Label>City</Label>
               <Select value={form.city} onValueChange={handleCityChange}>
@@ -184,11 +188,6 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div>
-            <Label>Street Address</Label>
-            <Input value={form.street_address} onChange={(e) => setForm({ ...form, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
           </div>
           <div>
             <Label>Bio</Label>
