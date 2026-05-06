@@ -450,8 +450,8 @@ const AdminDashboard = () => {
               promo_label: promoActive ? flagRow?.promo_label : null,
               expiration_date: data.expiration_date ? new Date(data.expiration_date).toISOString() : null,
               notes: status === "bypassed"
-                ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}${!data.user_id ? " · Realtor not linked to a user account." : ""}`
-                : (!data.user_id ? "Realtor not linked to a user account — recorded for admin tracking." : null),
+                ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}`
+                : null,
             });
           }
           toast.success("Realtor updated");
@@ -476,8 +476,8 @@ const AdminDashboard = () => {
           promo_label: promoActive ? flagRow?.promo_label : null,
           expiration_date: newData.expiration_date ? new Date(newData.expiration_date).toISOString() : null,
           notes: status === "bypassed"
-            ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}${!newData?.user_id ? " · Realtor not linked to a user account." : ""}`
-            : (!newData?.user_id ? "Realtor not linked to a user account — recorded for admin tracking." : null),
+            ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}`
+            : null,
         });
       }
       toast.success("Realtor created!");
