@@ -28,6 +28,7 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [showRealtorPayment, setShowRealtorPayment] = useState(false);
   const [realtorPaymentComplete, setRealtorPaymentComplete] = useState(false);
+  const { fee: REALTOR_SIGNUP_FEE, isFree: realtorFree, promoLabel: realtorPromoLabel } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
   const navigate = useNavigate();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
