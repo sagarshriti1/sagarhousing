@@ -188,20 +188,50 @@ const MyListingsPage = () => {
           );
         })()}
 
-        {loading ? (
-          <div className="text-center py-16 text-muted-foreground">Loading...</div>
-        ) : listings.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg mb-4">You haven't listed any properties yet.</p>
-            <Link to="/list-property">
-              <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
-                <Plus className="h-4 w-4" /> List Your First Property
-              </Button>
-            </Link>
+        {!loading && listings.length > 0 && (
+          <div className="relative mb-4 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by ID, title, address, city…"
+              className="pl-9"
+            />
           </div>
-        ) : (
+        )}
+
+        {(() => {
+          const q = search.trim().toLowerCase().replace(/^#/, "");
+          const filtered = q
+            ? listings.filter((l) => {
+                const code = String((l as any).property_code ?? "");
+                return (
+                  code.includes(q) ||
+                  l.title.toLowerCase().includes(q) ||
+                  (l.address || "").toLowerCase().includes(q) ||
+                  (l.city || "").toLowerCase().includes(q) ||
+                  (l.district || "").toLowerCase().includes(q)
+                );
+              })
+            : listings;
+
+          if (loading) return <div className="text-center py-16 text-muted-foreground">Loading...</div>;
+          if (listings.length === 0) return (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground text-lg mb-4">You haven't listed any properties yet.</p>
+              <Link to="/list-property">
+                <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+                  <Plus className="h-4 w-4" /> List Your First Property
+                </Button>
+              </Link>
+            </div>
+          );
+          if (filtered.length === 0) return (
+            <div className="text-center py-16 text-muted-foreground">No matches for "{search}"</div>
+          );
+          return (
           <div className="space-y-4">
-            {listings.map((listing) => (
+            {filtered.map((listing) => (
               <div
                 key={listing.id}
                 className="flex gap-4 bg-card rounded-lg border border-border overflow-hidden shadow-card cursor-pointer hover:bg-muted/30 transition-colors"
@@ -220,6 +250,9 @@ const MyListingsPage = () => {
                       <div className="flex items-center gap-2 mb-1">
                         <Badge className={`border-0 capitalize ${statusColor(listing.status)}`}>{listing.status}</Badge>
                         <Badge variant="outline" className="capitalize">{listing.listing_type === "sale" ? "For Sale" : "For Rent"}</Badge>
+                        {(listing as any).property_code != null && (
+                          <span className="font-mono text-xs text-muted-foreground">#{(listing as any).property_code}</span>
+                        )}
                       </div>
                       <h3 className="font-display text-lg font-bold text-foreground">{listing.title}</h3>
                       <p className="text-sm text-muted-foreground">{listing.address}, {listing.city}{listing.district ? `, ${listing.district}` : ''}</p>
