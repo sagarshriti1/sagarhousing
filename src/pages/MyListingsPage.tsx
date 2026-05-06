@@ -237,15 +237,23 @@ const MyListingsPage = () => {
 
                         return null;
                       })()}
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/edit-property/${listing.id}`)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(listing.id)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/edit-property/${listing.id}`); }}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(listing.id); }}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 </div>
+                </div>
+                {isExpanded && (
+                  <div className="border-t border-border bg-muted/20 p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <h4 className="text-sm font-semibold text-foreground">Payment History</h4>
+                    <PaymentHistoryList relatedType="property" relatedId={listing.id} compact />
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
