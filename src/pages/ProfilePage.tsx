@@ -235,6 +235,9 @@ const ProfilePage = () => {
         <Tabs defaultValue="info" className="space-y-6">
           <TabsList>
             <TabsTrigger value="info" className="gap-2"><UserIcon className="h-4 w-4" /> Personal Info</TabsTrigger>
+            {role === "realtor" && (
+              <TabsTrigger value="promote" className="gap-2"><CreditCard className="h-4 w-4" /> Promote Your Profile</TabsTrigger>
+            )}
             <TabsTrigger value="payments" className="gap-2"><Receipt className="h-4 w-4" /> Payment History</TabsTrigger>
           </TabsList>
 
