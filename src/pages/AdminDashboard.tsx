@@ -851,6 +851,7 @@ const AdminDashboard = () => {
                           onCheckedChange={() => togglePropertySelection(prop.id)}
                         />
                       </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">#{(prop as any).property_code ?? '—'}</TableCell>
                       <TableCell className="font-medium text-foreground">{prop.title}</TableCell>
                       <TableCell>{[prop.city, prop.district].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
