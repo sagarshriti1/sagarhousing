@@ -683,23 +683,12 @@ const AdminDashboard = () => {
               <p className="text-sm text-muted-foreground">
                 {realtors.filter((r) => r.is_featured).length} featured
               </p>
-              {selectedRealtorIds.size > 0 && (
-                <Button variant="destructive" size="sm" onClick={bulkDeleteRealtors} className="gap-2">
-                  <Trash2 className="h-4 w-4" /> Delete {selectedRealtorIds.size} selected
-                </Button>
-              )}
             </div>
 
             <div className="rounded-lg border border-border overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={filteredRealtors.length > 0 && selectedRealtorIds.size === filteredRealtors.length}
-                        onCheckedChange={toggleAllRealtors}
-                      />
-                    </TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
@@ -720,13 +709,7 @@ const AdminDashboard = () => {
                     const notExpired = !realtor.expiration_date || new Date(realtor.expiration_date) >= new Date(new Date().toDateString());
                     const isActive = profileActive && notExpired;
                     return (
-                    <TableRow key={realtor.id} className={selectedRealtorIds.has(realtor.id) ? "bg-muted/50" : ""}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedRealtorIds.has(realtor.id)}
-                          onCheckedChange={() => toggleRealtorSelection(realtor.id)}
-                        />
-                      </TableCell>
+                    <TableRow key={realtor.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
