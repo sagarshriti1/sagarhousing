@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { CalendarIcon, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ import { Separator } from "@/components/ui/separator";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 import { CreditCard, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
+import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 
 export interface RealtorFormData {
   id?: string;
@@ -87,6 +88,9 @@ interface RealtorFormDialogProps {
 }
 
 const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: RealtorFormDialogProps) => {
+  const isCreate = mode === "create";
+  const { fee: realtorFee, isFree: realtorPromoFree, promoLabel: realtorPromoLabel } =
+    useFeatureFlag(isCreate ? FEATURE_KEYS.REALTOR_SIGNUP : FEATURE_KEYS.REALTOR_RENEWAL);
   const [form, setForm] = useState<RealtorFormData>(realtor ?? emptyRealtor);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -100,6 +104,13 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     setForm(realtor ?? emptyRealtor);
     setBypassPayment(realtor?.payment_bypassed ?? false);
   }
+
+  // Auto-mark as promotion when free promo flag is active
+  useEffect(() => {
+    if (realtorPromoFree && form.payment_status !== "promotion" && form.payment_status !== "paid") {
+      setForm(prev => ({ ...prev, payment_status: "promotion", payment_bypassed: true }));
+    }
+  }, [realtorPromoFree]);
 
   const handleCityChange = (city: string) => {
     const district = getDistrictForCity(city);
@@ -138,7 +149,6 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     onSave(form);
   };
 
-  const isCreate = mode === "create";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -260,17 +270,28 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                 <Badge
                   variant={
                     form.payment_status === "paid" ? "default" :
-                    form.payment_status === "bypassed" ? "secondary" :
+                    form.payment_status === "bypassed" || form.payment_status === "promotion" ? "secondary" :
                     "destructive"
                   }
                 >
                   {form.payment_status === "paid" ? "Paid" :
                    form.payment_status === "bypassed" ? "Bypassed" :
+                   form.payment_status === "promotion" ? "Promotion (Free)" :
                    "Pending"}
                 </Badge>
               </div>
 
-              {/* Bypass Payment */}
+              {realtorPromoFree && (
+                <div className="flex items-center gap-3 p-3 rounded-md border border-accent/40 bg-accent/10">
+                  <ShieldCheck className="h-5 w-5 text-accent shrink-0" />
+                  <div className="flex-1 text-sm">
+                    <p className="font-medium text-foreground">🎉 {realtorPromoLabel || "Free promotion active"}</p>
+                    <p className="text-xs text-muted-foreground">No payment required for this service right now.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Bypass Payment (per-realtor manual override) */}
               <div className="flex items-center gap-3 p-3 rounded-md border border-dashed border-border bg-background">
                 <ShieldCheck className="h-5 w-5 text-accent shrink-0" />
                 <div className="flex-1">
@@ -278,16 +299,19 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                   <p className="text-xs text-muted-foreground">Skip payment verification for this realtor</p>
                 </div>
                 <Checkbox
-                  checked={bypassPayment}
+                  checked={bypassPayment || realtorPromoFree}
+                  disabled={realtorPromoFree}
                   onCheckedChange={(checked) => handleBypassToggle(!!checked)}
                 />
               </div>
 
               {/* Simulated Payment Form */}
-              {!bypassPayment && (
+              {!bypassPayment && !realtorPromoFree && (
                 <SimulatedPaymentForm
                   paid={form.payment_status === "paid"}
                   onPaymentComplete={() => setForm(prev => ({ ...prev, payment_status: "paid" }))}
+                  amount={realtorFee}
+                  label={isCreate ? "Realtor signup fee" : "Realtor renewal fee"}
                 />
               )}
             </div>
