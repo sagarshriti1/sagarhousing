@@ -71,6 +71,7 @@ const ListPropertyPage = () => {
   });
   const [paymentDate, setPaymentDate] = useState<string | null>(null);
   const [expirationDate, setExpirationDate] = useState<string | null>(null);
+  const [propertyCode, setPropertyCode] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
