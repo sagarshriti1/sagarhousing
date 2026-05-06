@@ -9,11 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Loader2, Receipt, User as UserIcon } from "lucide-react";
+import { Camera, CreditCard, Loader2, Receipt, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
+import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
+import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
+import { logPayment } from "@/lib/paymentHistory";
+import { Badge } from "@/components/ui/badge";
+import { CardDescription } from "@/components/ui/card";
 
 const parseLocation = (loc: string | null | undefined): { city: string; district: string } => {
   if (!loc) return { city: "", district: "" };
@@ -33,8 +38,19 @@ interface ProfileData {
   avatar_url: string | null;
 }
 
+interface RealtorRow {
+  id: string;
+  name: string;
+  payment_status: string;
+  start_date: string | null;
+  expiration_date: string | null;
+}
+
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const { fee: SIGNUP_FEE, isFree: signupFree, promoLabel: signupPromoLabel } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
+  const [realtor, setRealtor] = useState<RealtorRow | null>(null);
+  const [activating, setActivating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,6 +92,87 @@ const ProfilePage = () => {
       setLoading(false);
     })();
   }, [user]);
+
+  const fetchRealtor = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("realtors")
+      .select("id, name, payment_status, start_date, expiration_date")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setRealtor(data);
+  };
+
+  useEffect(() => {
+    if (role === "realtor") fetchRealtor();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, user]);
+
+  const handlePromotePayment = async () => {
+    if (!user) return;
+    setActivating(true);
+    const now = new Date();
+    const expiration = new Date(now);
+    expiration.setMonth(expiration.getMonth() + 1);
+    const startStr = now.toISOString().split("T")[0];
+    const expStr = expiration.toISOString().split("T")[0];
+
+    let realtorId = realtor?.id ?? null;
+    let realtorName = realtor?.name ?? profile.display_name ?? user.email ?? "Realtor";
+
+    if (realtor) {
+      await supabase
+        .from("realtors")
+        .update({ payment_status: "paid", start_date: startStr, expiration_date: expStr })
+        .eq("id", realtor.id);
+      setRealtor({ ...realtor, payment_status: "paid", start_date: startStr, expiration_date: expStr });
+    } else {
+      const { data, error } = await supabase
+        .from("realtors")
+        .insert({
+          user_id: user.id,
+          name: realtorName,
+          email: profile.email,
+          phone: profile.phone,
+          city: "",
+          district: "",
+          state: "Nepal",
+          payment_status: "paid",
+          start_date: startStr,
+          expiration_date: expStr,
+        })
+        .select("id, name, payment_status, start_date, expiration_date")
+        .single();
+      if (error) {
+        toast.error("Failed to activate profile");
+        setActivating(false);
+        return;
+      }
+      realtorId = data.id;
+      realtorName = data.name;
+      setRealtor(data);
+    }
+
+    await logPayment({
+      user_id: user.id,
+      service_key: realtor ? FEATURE_KEYS.REALTOR_RENEWAL : FEATURE_KEYS.REALTOR_SIGNUP,
+      service_label: realtor ? "Realtor Renewal" : "Realtor Signup",
+      related_type: "realtor",
+      related_id: realtorId,
+      related_label: realtorName,
+      amount: signupFree ? 0 : SIGNUP_FEE,
+      status: signupFree ? "promotion" : "paid",
+      promo_label: signupFree ? signupPromoLabel : null,
+      expiration_date: expiration.toISOString(),
+    });
+
+    toast.success("Subscription activated! 🎉", {
+      description: signupFree
+        ? "Free promotion applied. Your profile is active for 1 month."
+        : `Payment of Rs. ${SIGNUP_FEE.toLocaleString()} received. Active for 1 month.`,
+    });
+    setActivating(false);
+  };
 
   const handleUpload = async (file: File) => {
     if (!user) return;
@@ -138,6 +235,9 @@ const ProfilePage = () => {
         <Tabs defaultValue="info" className="space-y-6">
           <TabsList>
             <TabsTrigger value="info" className="gap-2"><UserIcon className="h-4 w-4" /> Personal Info</TabsTrigger>
+            {role === "realtor" && (
+              <TabsTrigger value="promote" className="gap-2"><CreditCard className="h-4 w-4" /> Promote Your Profile</TabsTrigger>
+            )}
             <TabsTrigger value="payments" className="gap-2"><Receipt className="h-4 w-4" /> Payment History</TabsTrigger>
           </TabsList>
 
@@ -246,6 +346,56 @@ const ProfilePage = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {role === "realtor" && (
+            <TabsContent value="promote">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Promote Your Profile
+                  </CardTitle>
+                  <CardDescription>
+                    {signupFree
+                      ? (signupPromoLabel || "🎉 Free promotion active — no payment required to activate your realtor profile.")
+                      : `A monthly fee of Rs. ${SIGNUP_FEE.toLocaleString()} keeps your realtor profile active and visible in the directory.`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {realtor?.expiration_date && (
+                    <div className="flex items-center justify-between rounded-md border p-3">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium">
+                          Active until: {new Date(realtor.expiration_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Rs. {SIGNUP_FEE.toLocaleString()}/month</p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {new Date(realtor.expiration_date) > new Date() ? 'Active' : 'Expired'}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {signupFree ? (
+                    <Button
+                      onClick={handlePromotePayment}
+                      disabled={activating}
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                    >
+                      {activating ? "Activating..." : realtor ? "Renew (Free)" : "Activate Profile (Free)"}
+                    </Button>
+                  ) : (
+                    <SimulatedPaymentForm
+                      paid={false}
+                      onPaymentComplete={handlePromotePayment}
+                      amount={SIGNUP_FEE}
+                      label={realtor ? "Realtor monthly renewal" : "Realtor monthly subscription"}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="payments">
             <Card>
