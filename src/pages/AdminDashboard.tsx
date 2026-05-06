@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User } from "lucide-react";
+import { Search, Star, Pencil, Trash2, Shield, Users, Home, MapPin, Plus, Camera, Loader2, KeyRound, UserCheck, UserX, User, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import RealtorFormDialog, { type RealtorFormData } from "@/components/admin/RealtorFormDialog";
@@ -141,6 +141,47 @@ const AdminDashboard = () => {
   // Multi-select
   const [selectedRealtorIds, setSelectedRealtorIds] = useState<Set<string>>(new Set());
   const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(new Set());
+
+  // Per-tab sorting
+  const [sortConfig, setSortConfig] = useState<Record<string, { key: string; dir: 'asc' | 'desc' } | null>>({});
+  const getSort = (tab: string) => sortConfig[tab] ?? null;
+  const toggleSort = (tab: string, key: string) => {
+    setSortConfig((prev) => {
+      const cur = prev[tab];
+      let next: { key: string; dir: 'asc' | 'desc' } | null;
+      if (!cur || cur.key !== key) next = { key, dir: 'asc' };
+      else if (cur.dir === 'asc') next = { key, dir: 'desc' };
+      else next = null;
+      return { ...prev, [tab]: next };
+    });
+  };
+  const SortHeader = ({ tab, sortKey, children, className }: { tab: string; sortKey: string; children: React.ReactNode; className?: string }) => {
+    const cur = getSort(tab);
+    const active = cur?.key === sortKey;
+    const Icon = !active ? ArrowUpDown : cur!.dir === 'asc' ? ArrowUp : ArrowDown;
+    return (
+      <TableHead className={className}>
+        <button type="button" onClick={() => toggleSort(tab, sortKey)} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+          {children}
+          <Icon className={`h-3.5 w-3.5 ${active ? 'text-foreground' : 'text-muted-foreground/60'}`} />
+        </button>
+      </TableHead>
+    );
+  };
+  const sortList = <T,>(list: T[], tab: string, accessors: Record<string, (item: T) => any>): T[] => {
+    const cur = getSort(tab);
+    if (!cur || !accessors[cur.key]) return list;
+    const acc = accessors[cur.key];
+    const dir = cur.dir === 'asc' ? 1 : -1;
+    return [...list].sort((a, b) => {
+      const av = acc(a); const bv = acc(b);
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' }) * dir;
+    });
+  };
 
   // Create User dialog
   const [createUserOpen, setCreateUserOpen] = useState(false);
@@ -487,7 +528,22 @@ const AdminDashboard = () => {
       return showInactive ? !isActive : isActive;
     });
   })();
-  const filteredRealtors = unifiedRealtors;
+  const filteredRealtors = sortList(unifiedRealtors as any[], 'realtors', {
+    name: (r) => (r.name || '').toLowerCase(),
+    email: (r) => (r.email || '').toLowerCase(),
+    phone: (r) => r.phone || '',
+    location: (r) => `${r.city || ''} ${r.district || ''}`.toLowerCase(),
+    payment: (r) => r.payment_status || '',
+    start_date: (r) => r.start_date ? new Date(r.start_date).getTime() : null,
+    expiration_date: (r) => r.expiration_date ? new Date(r.expiration_date).getTime() : null,
+    status: (r) => {
+      const profileActive = r.profile ? r.profile.is_active : true;
+      const notExpired = !r.expiration_date || new Date(r.expiration_date) >= new Date(new Date().toDateString());
+      return (profileActive && notExpired) ? 1 : 0;
+    },
+    featured: (r) => r.is_featured ? 1 : 0,
+    updated_by: (r) => updatedByLabel(r.updated_by).toLowerCase(),
+  });
 
   const getProfilesByRole = (target: "admin" | "realtor" | "user") => {
     return profiles.filter((profile) => {
@@ -541,7 +597,16 @@ const AdminDashboard = () => {
 
   // Reusable user-account table
   const renderAccountsTable = (target: "admin" | "realtor" | "user", title: string) => {
-    const list = getProfilesByRole(target);
+    const rawList = getProfilesByRole(target);
+    const list = sortList(rawList, target, {
+      name: (p) => (p.display_name || '').toLowerCase(),
+      email: (p) => (p.email || '').toLowerCase(),
+      phone: (p) => p.phone || '',
+      job_title: (p) => (p.job_title || '').toLowerCase(),
+      location: (p) => { const l = parseLocation(p.location); return `${l.city} ${l.district}`.toLowerCase(); },
+      status: (p) => (p.is_active ? 1 : 0),
+      updated_by: (p) => updatedByLabel(p.updated_by).toLowerCase(),
+    });
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-4 flex-wrap">
@@ -578,13 +643,13 @@ const AdminDashboard = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                {target === "admin" && <TableHead>Job Title</TableHead>}
-                <TableHead>City / District</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Updated By</TableHead>
+                <SortHeader tab={target} sortKey="name">Name</SortHeader>
+                <SortHeader tab={target} sortKey="email">Email</SortHeader>
+                <SortHeader tab={target} sortKey="phone">Phone</SortHeader>
+                {target === "admin" && <SortHeader tab={target} sortKey="job_title">Job Title</SortHeader>}
+                <SortHeader tab={target} sortKey="location">City / District</SortHeader>
+                <SortHeader tab={target} sortKey="status">Status</SortHeader>
+                <SortHeader tab={target} sortKey="updated_by">Updated By</SortHeader>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -695,16 +760,15 @@ const AdminDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>City / District</TableHead>
-                    
-                    <TableHead>Payment</TableHead>
-                    <TableHead>Dates</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Featured</TableHead>
-                    <TableHead>Updated By</TableHead>
+                    <SortHeader tab="realtors" sortKey="name">Name</SortHeader>
+                    <SortHeader tab="realtors" sortKey="email">Email</SortHeader>
+                    <SortHeader tab="realtors" sortKey="phone">Phone</SortHeader>
+                    <SortHeader tab="realtors" sortKey="location">City / District</SortHeader>
+                    <SortHeader tab="realtors" sortKey="payment">Payment</SortHeader>
+                    <SortHeader tab="realtors" sortKey="expiration_date">Dates</SortHeader>
+                    <SortHeader tab="realtors" sortKey="status">Status</SortHeader>
+                    <SortHeader tab="realtors" sortKey="featured">Featured</SortHeader>
+                    <SortHeader tab="realtors" sortKey="updated_by">Updated By</SortHeader>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -794,10 +858,22 @@ const AdminDashboard = () => {
           {/* PROPERTIES TAB */}
           <TabsContent value="properties" className="space-y-4">
             {(() => {
-              const filteredProperties = properties.filter((p) => {
+              const baseFiltered = properties.filter((p) => {
                 const notExpired = !p.expiration_date || new Date(p.expiration_date) >= new Date(new Date().toDateString());
                 const isActive = p.status === "active" && notExpired;
                 return showInactive ? !isActive : isActive;
+              });
+              const filteredProperties = sortList(baseFiltered, 'properties', {
+                property_code: (p) => p.property_code ?? null,
+                title: (p) => (p.title || '').toLowerCase(),
+                location: (p) => `${p.city || ''} ${p.district || ''}`.toLowerCase(),
+                price: (p) => Number(p.price) || 0,
+                status: (p) => {
+                  const expired = p.expiration_date && new Date(p.expiration_date) < new Date(new Date().toDateString());
+                  return expired ? 'expired' : p.status;
+                },
+                listing_type: (p) => p.listing_type || '',
+                updated_by: (p) => updatedByLabel(p.updated_by).toLowerCase(),
               });
               return (
             <>
@@ -830,13 +906,13 @@ const AdminDashboard = () => {
                         }}
                       />
                     </TableHead>
-                    <TableHead>Property ID</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>City / District</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Updated By</TableHead>
+                    <SortHeader tab="properties" sortKey="property_code">Property ID</SortHeader>
+                    <SortHeader tab="properties" sortKey="title">Title</SortHeader>
+                    <SortHeader tab="properties" sortKey="location">City / District</SortHeader>
+                    <SortHeader tab="properties" sortKey="price">Price</SortHeader>
+                    <SortHeader tab="properties" sortKey="status">Status</SortHeader>
+                    <SortHeader tab="properties" sortKey="listing_type">Type</SortHeader>
+                    <SortHeader tab="properties" sortKey="updated_by">Updated By</SortHeader>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
