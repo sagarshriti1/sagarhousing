@@ -323,6 +323,23 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                 />
               </div>
 
+              {bypassPayment && !realtorPromoFree && (
+                <div className="space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5">
+                  <Label className="text-sm">
+                    Reason for bypass <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    value={form.bypass_reason ?? ""}
+                    onChange={(e) => setForm({ ...form, bypass_reason: e.target.value })}
+                    placeholder="Explain why payment is being bypassed (e.g. complimentary access, partner agreement, manual offline payment)…"
+                    rows={2}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This reason is mandatory and will be visible in the payment history for both the admin and the realtor.
+                  </p>
+                </div>
+              )}
+
               {/* Simulated Payment Form */}
               {!bypassPayment && !realtorPromoFree && (
                 <SimulatedPaymentForm
