@@ -217,7 +217,13 @@ const MyListingsPage = () => {
                         }
                         return null;
                       })()}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(listing.id); }}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit listing" onClick={(e) => { e.stopPropagation(); navigate(`/edit-property/${listing.id}`); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="View payments" onClick={(e) => { e.stopPropagation(); setPaymentsListing(listing); }}>
+                        <Receipt className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Delete" onClick={(e) => { e.stopPropagation(); handleDelete(listing.id); }}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
