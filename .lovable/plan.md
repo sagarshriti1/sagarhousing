@@ -1,25 +1,27 @@
-# Plan: Reuse profile data for Become Featured
+## Limit non-realtors to 2 listings
 
-The Promote tab should never ask for fields the user already provided at signup or on Personal Info. Payment is the only interaction; on success the realtor row is created (if needed) and marked featured using existing data.
+**Goal:** Prevent users with role `user` (non-realtors, non-admins) from creating more than 2 property listings. Show a clear message when blocked.
 
-## Changes (`src/pages/ProfilePage.tsx`)
+### Behavior
 
-1. **No extra input fields** in the Promote tab. The only inputs come from `SimulatedPaymentForm` (card details) when payment is required.
-2. **Reuse existing data** when creating the realtor row inside `handleBecomeFeatured` (only when `realtor` is null):
-   - `name` ← `profile.display_name` || `user.email`
-   - `email` ← `profile.email` || `user.email`
-   - `phone` ← `profile.phone`
-   - `street_address` ← `profile.street_address`
-   - `city` / `district` ← parsed from `profile.location` (`"City, District"`) using the same `parseLocation` helper already in this file
-   - `state` ← `"Nepal"`
-   - `payment_status: "paid"`, `is_featured: true`
-   - If `realtor` exists, only `UPDATE realtors SET is_featured = true`.
-3. **Payment handles everything**:
-   - Bypass active (`featuredFree`) → single button "Become Featured (Free)" calls `handleBecomeFeatured` directly.
-   - Otherwise → `SimulatedPaymentForm` with `amount={FEATURED_FEE}`, `onPaymentComplete={handleBecomeFeatured}`. No redirect to Realtor Dashboard.
-4. Keep status row (name + Featured/Not Featured badge) and "Already Featured ✓" disabled state. Remove the "Activate from Realtor Dashboard" message.
-5. Log payment with `FEATURED_REALTOR` key as today.
+- Limit applies to role `user` only. `realtor` and `admin` are unrestricted.
+- Counts all rows in `user_properties` for that `user_id` (any status), so deleting a listing frees a slot.
+- Limit = 2.
 
-## Out of scope
-- Personal Info tab unchanged (still where the user maintains display_name, phone, location, etc.).
-- No DB schema changes.
+### UI changes (`src/pages/ListPropertyPage.tsx`)
+
+- On mount (create mode only, non-realtor/non-admin), query `count` of `user_properties` for current `user.id`.
+- If count ≥ 2:
+  - Show a blocking `Alert` (destructive) at top of the form: *"You've reached the 2-listing limit for standard accounts. Delete an existing listing or upgrade to a Realtor account to post more."*
+  - Disable the Submit button.
+- On submit, re-check count as a safeguard; if ≥ 2, toast the same message and abort.
+
+### UI changes (`src/pages/MyListingsPage.tsx`)
+
+- For non-realtor/non-admin users, show a small helper line near the "Add Property" button: *"Standard accounts can post up to 2 listings (X/2 used)."*
+- When at limit, the "Add Property" button becomes disabled with a tooltip explaining why; otherwise unchanged.
+
+### Out of scope
+
+- No DB schema changes / no DB-level enforcement (kept client-side per the UI-focused request).
+- No changes to realtor flow, payment flow, or admin behavior.
