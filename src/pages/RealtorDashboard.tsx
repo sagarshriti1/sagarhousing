@@ -103,6 +103,45 @@ const RealtorDashboard = () => {
               </Card>
             )}
 
+            {profile && (() => {
+              const today = new Date(new Date().toDateString());
+              const featuredActive = profile.is_featured && (!profile.featured_expiration_date || new Date(profile.featured_expiration_date) >= today);
+              const everFeatured = !!profile.featured_start_date || !!profile.featured_expiration_date;
+              return (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5 text-yellow-500" />
+                      Featured Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="space-y-1">
+                        <p className="text-sm text-foreground font-medium">
+                          {featuredActive
+                            ? `Featured until: ${new Date(profile.featured_expiration_date!).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+                            : everFeatured
+                              ? `Featured expired on ${profile.featured_expiration_date ? new Date(profile.featured_expiration_date).toLocaleDateString() : "—"}`
+                              : "Not featured. Boost your placement to stand out in the directory."}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={featuredActive ? "default" : "secondary"} className="text-xs">
+                          {featuredActive ? "Active" : everFeatured ? "Expired" : "Not Featured"}
+                        </Badge>
+                        {!featuredActive && (
+                          <Button asChild size="sm" variant="outline">
+                            <Link to="/profile">{everFeatured ? "Renew Featured" : "Get Featured"}</Link>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
             {profile && (
               <Card>
                 <CardHeader>
