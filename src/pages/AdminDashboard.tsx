@@ -628,13 +628,13 @@ const AdminDashboard = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                {target === "admin" && <TableHead>Job Title</TableHead>}
-                <TableHead>City / District</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Updated By</TableHead>
+                <SortHeader tab={target} sortKey="name">Name</SortHeader>
+                <SortHeader tab={target} sortKey="email">Email</SortHeader>
+                <SortHeader tab={target} sortKey="phone">Phone</SortHeader>
+                {target === "admin" && <SortHeader tab={target} sortKey="job_title">Job Title</SortHeader>}
+                <SortHeader tab={target} sortKey="location">City / District</SortHeader>
+                <SortHeader tab={target} sortKey="status">Status</SortHeader>
+                <SortHeader tab={target} sortKey="updated_by">Updated By</SortHeader>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
