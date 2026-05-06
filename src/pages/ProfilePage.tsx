@@ -41,14 +41,12 @@ interface ProfileData {
 interface RealtorRow {
   id: string;
   name: string;
-  payment_status: string;
-  start_date: string | null;
-  expiration_date: string | null;
+  is_featured: boolean;
 }
 
 const ProfilePage = () => {
   const { user, role } = useAuth();
-  const { fee: SIGNUP_FEE, isFree: signupFree, promoLabel: signupPromoLabel } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
+  const { fee: FEATURED_FEE, isFree: featuredFree, promoLabel: featuredPromoLabel } = useFeatureFlag(FEATURE_KEYS.FEATURED_REALTOR);
   const [realtor, setRealtor] = useState<RealtorRow | null>(null);
   const [activating, setActivating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -97,7 +95,7 @@ const ProfilePage = () => {
     if (!user) return;
     const { data } = await supabase
       .from("realtors")
-      .select("id, name, payment_status, start_date, expiration_date")
+      .select("id, name, is_featured")
       .eq("user_id", user.id)
       .maybeSingle();
     setRealtor(data);
@@ -108,71 +106,42 @@ const ProfilePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, user]);
 
-  const handlePromotePayment = async () => {
-    if (!user) return;
+  const handleBecomeFeatured = async () => {
+    if (!user || !realtor) return;
     setActivating(true);
-    const now = new Date();
-    const expiration = new Date(now);
-    expiration.setMonth(expiration.getMonth() + 1);
-    const startStr = now.toISOString().split("T")[0];
-    const expStr = expiration.toISOString().split("T")[0];
 
-    let realtorId = realtor?.id ?? null;
-    let realtorName = realtor?.name ?? profile.display_name ?? user.email ?? "Realtor";
+    const { error } = await supabase
+      .from("realtors")
+      .update({ is_featured: true })
+      .eq("id", realtor.id);
 
-    if (realtor) {
-      await supabase
-        .from("realtors")
-        .update({ payment_status: "paid", start_date: startStr, expiration_date: expStr })
-        .eq("id", realtor.id);
-      setRealtor({ ...realtor, payment_status: "paid", start_date: startStr, expiration_date: expStr });
-    } else {
-      const { data, error } = await supabase
-        .from("realtors")
-        .insert({
-          user_id: user.id,
-          name: realtorName,
-          email: profile.email,
-          phone: profile.phone,
-          city: "",
-          district: "",
-          state: "Nepal",
-          payment_status: "paid",
-          start_date: startStr,
-          expiration_date: expStr,
-        })
-        .select("id, name, payment_status, start_date, expiration_date")
-        .single();
-      if (error) {
-        toast.error("Failed to activate profile");
-        setActivating(false);
-        return;
-      }
-      realtorId = data.id;
-      realtorName = data.name;
-      setRealtor(data);
+    if (error) {
+      toast.error("Failed to mark as featured");
+      setActivating(false);
+      return;
     }
+    setRealtor({ ...realtor, is_featured: true });
 
     await logPayment({
       user_id: user.id,
-      service_key: realtor ? FEATURE_KEYS.REALTOR_RENEWAL : FEATURE_KEYS.REALTOR_SIGNUP,
-      service_label: realtor ? "Realtor Renewal" : "Realtor Signup",
+      service_key: FEATURE_KEYS.FEATURED_REALTOR,
+      service_label: "Featured Realtor",
       related_type: "realtor",
-      related_id: realtorId,
-      related_label: realtorName,
-      amount: signupFree ? 0 : SIGNUP_FEE,
-      status: signupFree ? "promotion" : "paid",
-      promo_label: signupFree ? signupPromoLabel : null,
-      expiration_date: expiration.toISOString(),
+      related_id: realtor.id,
+      related_label: realtor.name,
+      amount: featuredFree ? 0 : FEATURED_FEE,
+      status: featuredFree ? "promotion" : "paid",
+      promo_label: featuredFree ? featuredPromoLabel : null,
     });
 
-    toast.success("Subscription activated! 🎉", {
-      description: signupFree
-        ? "Free promotion applied. Your profile is active for 1 month."
-        : `Payment of Rs. ${SIGNUP_FEE.toLocaleString()} received. Active for 1 month.`,
+    toast.success("You're now featured! ⭐", {
+      description: featuredFree
+        ? "Free promotion applied — your profile is boosted in the directory."
+        : `Payment of Rs. ${FEATURED_FEE.toLocaleString()} received.`,
     });
     setActivating(false);
   };
+
 
   const handleUpload = async (file: File) => {
     if (!user) return;
@@ -356,41 +325,51 @@ const ProfilePage = () => {
                     Promote Your Profile
                   </CardTitle>
                   <CardDescription>
-                    {signupFree
-                      ? (signupPromoLabel || "🎉 Free promotion active — no payment required to activate your realtor profile.")
-                      : `A monthly fee of Rs. ${SIGNUP_FEE.toLocaleString()} keeps your realtor profile active and visible in the directory.`}
+                    {featuredFree
+                      ? (featuredPromoLabel || "🎉 Free promotion active — get featured at no cost and stand out in the directory.")
+                      : `Become a Featured Realtor for Rs. ${FEATURED_FEE.toLocaleString()}/month and get top placement in the directory.`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {realtor?.expiration_date && (
-                    <div className="flex items-center justify-between rounded-md border p-3">
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium">
-                          Active until: {new Date(realtor.expiration_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Rs. {SIGNUP_FEE.toLocaleString()}/month</p>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        {new Date(realtor.expiration_date) > new Date() ? 'Active' : 'Expired'}
-                      </Badge>
-                    </div>
-                  )}
-
-                  {signupFree ? (
-                    <Button
-                      onClick={handlePromotePayment}
-                      disabled={activating}
-                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-                    >
-                      {activating ? "Activating..." : realtor ? "Renew (Free)" : "Activate Profile (Free)"}
-                    </Button>
+                  {!realtor ? (
+                    <p className="text-sm text-muted-foreground">
+                      Activate your realtor profile from the{" "}
+                      <a href="/realtor-dashboard" className="text-primary underline">Realtor Dashboard</a>{" "}
+                      first to become featured.
+                    </p>
                   ) : (
-                    <SimulatedPaymentForm
-                      paid={false}
-                      onPaymentComplete={handlePromotePayment}
-                      amount={SIGNUP_FEE}
-                      label={realtor ? "Realtor monthly renewal" : "Realtor monthly subscription"}
-                    />
+                    <>
+                      <div className="flex items-center justify-between rounded-md border p-3">
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-medium">{realtor.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {realtor.is_featured ? "Boosted in the directory" : "Standard listing"}
+                          </p>
+                        </div>
+                        <Badge variant={realtor.is_featured ? "default" : "secondary"} className="text-xs">
+                          {realtor.is_featured ? "Featured ⭐" : "Not Featured"}
+                        </Badge>
+                      </div>
+
+                      {realtor.is_featured ? (
+                        <Button disabled className="w-full">Already Featured ✓</Button>
+                      ) : featuredFree ? (
+                        <Button
+                          onClick={handleBecomeFeatured}
+                          disabled={activating}
+                          className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                        >
+                          {activating ? "Activating..." : "Become Featured (Free)"}
+                        </Button>
+                      ) : (
+                        <SimulatedPaymentForm
+                          paid={false}
+                          onPaymentComplete={handleBecomeFeatured}
+                          amount={FEATURED_FEE}
+                          label="Featured Realtor placement"
+                        />
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>
