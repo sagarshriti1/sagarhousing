@@ -152,7 +152,7 @@ const AdminDashboard = () => {
       supabase.from("realtors").select("*"),
       supabase.from("profiles").select("*"),
       supabase.from("user_roles").select("*"),
-      supabase.from("user_properties").select("id, title, city, state, price, status, listing_type, user_id, updated_by, expiration_date"),
+      supabase.from("user_properties").select("id, title, city, district, state, price, status, listing_type, user_id, updated_by, expiration_date"),
     ]);
     setRealtors(r.data ?? []);
     setProfiles((p.data ?? []) as UserProfile[]);
