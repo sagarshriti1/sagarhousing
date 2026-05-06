@@ -829,6 +829,7 @@ const AdminDashboard = () => {
                         }}
                       />
                     </TableHead>
+                    <TableHead>Property ID</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>City / District</TableHead>
                     <TableHead>Price</TableHead>
