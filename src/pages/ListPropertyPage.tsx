@@ -546,16 +546,20 @@ const ListPropertyPage = () => {
             </section>
           )}
 
-          {!isEdit && !isAdmin && (
-            <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground mb-1">Listing Fee</p>
-              <p>Your property will be saved as <strong>inactive</strong>. To activate and publish it, pay the listing fee from your My Listings page:</p>
-              <ul className="list-disc list-inside mt-1">
-                <li>For Rent: <strong>Rs. 1,000</strong></li>
-                <li>For Sale: <strong>Rs. 5,000</strong></li>
-              </ul>
-            </div>
-          )}
+          {!isEdit && !isAdmin && (() => {
+            const saleFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_SALE);
+            const rentFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_RENT);
+            return (
+              <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground mb-1">Listing Fee</p>
+                <p>Your property will be saved as <strong>inactive</strong>. To activate and publish it, pay the listing fee from your My Listings page:</p>
+                <ul className="list-disc list-inside mt-1">
+                  <li>For Rent: <strong>{rentFlag.isFree ? "Free 🎉" : `Rs. ${rentFlag.fee.toLocaleString()}`}</strong>{rentFlag.isFree && rentFlag.promoLabel ? ` — ${rentFlag.promoLabel}` : ""}</li>
+                  <li>For Sale: <strong>{saleFlag.isFree ? "Free 🎉" : `Rs. ${saleFlag.fee.toLocaleString()}`}</strong>{saleFlag.isFree && saleFlag.promoLabel ? ` — ${saleFlag.promoLabel}` : ""}</li>
+                </ul>
+              </div>
+            );
+          })()}
 
           <div className='flex gap-3'>
             <Button type='button' variant='outline' onClick={handleBack} className='py-6 text-lg gap-2' disabled={loading}>
