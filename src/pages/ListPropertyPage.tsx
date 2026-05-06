@@ -78,6 +78,7 @@ const ListPropertyPage = () => {
   const [paymentDate, setPaymentDate] = useState<string | null>(isAdmin && !isEdit ? todayDateStr : null);
   const [expirationDate, setExpirationDate] = useState<string | null>(isAdmin && !isEdit ? addMonthsStr(todayDateStr, 1) : null);
   const [propertyCode, setPropertyCode] = useState<number | null>(null);
+  const [bypassReason, setBypassReason] = useState<string>('');
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
@@ -222,6 +223,11 @@ const ListPropertyPage = () => {
         toast.error('Start date must be earlier than expiration date');
         return;
       }
+      const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+      if (!isEdit && !flag.isFree && bypassReason.trim().length < 3) {
+        toast.error('Please provide a reason for bypassing payment');
+        return;
+      }
     }
     setLoading(true);
     try {
@@ -290,7 +296,9 @@ const ListPropertyPage = () => {
             status: flag.isFree ? 'promotion' : 'bypassed',
             promo_label: flag.isFree ? flag.promoLabel : null,
             expiration_date: expirationDate ? new Date(expirationDate).toISOString() : null,
-            notes: flag.isFree ? null : 'Admin activated this listing without payment.',
+            notes: flag.isFree
+              ? null
+              : `Payment bypassed by admin. Reason: ${bypassReason.trim() || '(no reason provided)'}`,
           });
         }
         toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
@@ -568,6 +576,20 @@ const ListPropertyPage = () => {
               </div>
               {paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate) && (
                 <p className='text-xs text-destructive'>Start date must be earlier than expiration date.</p>
+              )}
+              {!isEdit && !(form.listing_type === 'rent' ? rentFlag.isFree : saleFlag.isFree) && (
+                <div className='space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5'>
+                  <Label>Reason for bypassing payment <span className='text-destructive'>*</span></Label>
+                  <Textarea
+                    value={bypassReason}
+                    onChange={(e) => setBypassReason(e.target.value)}
+                    placeholder='Explain why this listing is being activated without payment (e.g. complimentary listing, partner agreement, manual offline payment)…'
+                    rows={2}
+                  />
+                  <p className='text-xs text-muted-foreground'>
+                    Mandatory. This reason will appear in the payment history for both the admin and the listing owner.
+                  </p>
+                </div>
               )}
             </section>
           )}
