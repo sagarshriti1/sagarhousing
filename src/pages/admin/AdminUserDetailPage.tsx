@@ -47,6 +47,7 @@ const AdminUserDetailPage = () => {
   const { user, role, loading } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userRole, setUserRole] = useState<string>("user");
+  const [properties, setProperties] = useState<any[]>([]);
   const [draft, setDraft] = useState<Profile | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [confirm, setConfirm] = useState<{ title: string; description: string; onConfirm: () => Promise<void> | void } | null>(null);
@@ -54,12 +55,18 @@ const AdminUserDetailPage = () => {
   useEffect(() => {
     const load = async () => {
       if (!userId) return;
-      const [{ data: p }, { data: r }] = await Promise.all([
+      const [{ data: p }, { data: r }, { data: props }] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("user_properties")
+          .select("id, title, city, district, listing_type, price, status, expiration_date")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false }),
       ]);
       setProfile(p as Profile);
       setUserRole(r?.role ?? "user");
+      setProperties(props ?? []);
     };
     if (role === "admin") load();
   }, [userId, role]);
