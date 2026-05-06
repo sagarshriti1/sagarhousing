@@ -28,6 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } from '@/data/nepalLocations';
 import SearchableCombobox from '@/components/SearchableCombobox';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
+import PaymentHistoryList from '@/components/PaymentHistoryList';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
@@ -574,6 +575,13 @@ const ListPropertyPage = () => {
                 <li>For Sale: <strong>{saleFlag.isFree ? "Free 🎉" : `Rs. ${saleFlag.fee.toLocaleString()}`}</strong>{saleFlag.isFree && saleFlag.promoLabel ? ` — ${saleFlag.promoLabel}` : ""}</li>
               </ul>
             </div>
+          )}
+
+          {isEdit && isAdmin && editId && (
+            <section className="space-y-3">
+              <h2 className="font-display text-xl font-semibold text-foreground border-b border-border pb-2">Payment History</h2>
+              <PaymentHistoryList relatedType="property" relatedId={editId} canEditNotes compact />
+            </section>
           )}
 
           <div className='flex gap-3'>
