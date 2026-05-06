@@ -145,8 +145,14 @@ const MyListingsPage = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {listings.map((listing) => (
-              <div key={listing.id} className="flex gap-4 bg-card rounded-lg border border-border overflow-hidden shadow-card">
+            {listings.map((listing) => {
+              const isExpanded = expandedId === listing.id;
+              return (
+              <div key={listing.id} className="bg-card rounded-lg border border-border overflow-hidden shadow-card">
+                <div
+                  className="flex gap-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => setExpandedId(isExpanded ? null : listing.id)}
+                >
                 <div className="w-48 h-36 shrink-0">
                   {listing.images && listing.images.length > 0 ? (
                     <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" loading="lazy" />
