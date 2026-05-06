@@ -497,24 +497,19 @@ const AdminDashboard = () => {
     }
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     if (!editingProfile) return;
     if (!editingProfile.display_name?.trim()) { toast.error("Name is required"); return; }
     if (!editingProfile.email?.trim()) { toast.error("Email is required"); return; }
-    confirm({
-      title: "Update User Profile",
-      description: `Are you sure you want to save changes to "${editingProfile.display_name || "this user"}"?`,
-      onConfirm: async () => {
-        const { id, ...rest } = editingProfile;
-        const { error } = await supabase.from("profiles").update(rest).eq("id", id);
-        if (error) toast.error("Failed to save profile");
-        else {
-          toast.success("Profile updated");
-          setProfiles((prev) => prev.map((p) => (p.id === id ? editingProfile : p)));
-          setEditingProfile(null);
-        }
-      },
-    });
+    const { id, ...rest } = editingProfile;
+    const { error } = await supabase.from("profiles").update(rest).eq("id", id);
+    if (error) toast.error("Failed to save profile");
+    else {
+      toast.success("Profile updated");
+      setProfiles((prev) => prev.map((p) => (p.id === id ? editingProfile : p)));
+      setProfileDirty(false);
+      setEditingProfileState(null);
+    }
   };
 
   const deleteProperty = (id: string) => {
