@@ -71,6 +71,7 @@ const ListPropertyPage = () => {
   });
   const [paymentDate, setPaymentDate] = useState<string | null>(null);
   const [expirationDate, setExpirationDate] = useState<string | null>(null);
+  const [propertyCode, setPropertyCode] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
@@ -138,6 +139,7 @@ const ListPropertyPage = () => {
       const ed = (data as any).expiration_date;
       setPaymentDate(pd ? format(new Date(pd), 'yyyy-MM-dd') : null);
       setExpirationDate(ed ? format(new Date(ed), 'yyyy-MM-dd') : null);
+      setPropertyCode((data as any).property_code ?? null);
       setFetching(false);
     };
     fetchProperty();
@@ -307,6 +309,12 @@ const ListPropertyPage = () => {
           {/* Basic Info */}
           <section className='space-y-4'>
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Basic Information</h2>
+            {isEdit && propertyCode != null && (
+              <div className='space-y-2'>
+                <Label htmlFor='property_code'>Property ID</Label>
+                <Input id='property_code' value={`#${propertyCode}`} readOnly disabled className='font-mono bg-muted' />
+              </div>
+            )}
             <div className='space-y-2'>
               <Label htmlFor='title'>Listing Title *</Label>
               <Input id='title' value={form.title} onChange={e => updateForm('title', e.target.value)} placeholder='e.g. Beautiful Modern Home in Downtown' required />

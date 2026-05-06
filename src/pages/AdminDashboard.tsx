@@ -829,6 +829,7 @@ const AdminDashboard = () => {
                         }}
                       />
                     </TableHead>
+                    <TableHead>Property ID</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>City / District</TableHead>
                     <TableHead>Price</TableHead>
@@ -850,6 +851,7 @@ const AdminDashboard = () => {
                           onCheckedChange={() => togglePropertySelection(prop.id)}
                         />
                       </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">#{(prop as any).property_code ?? '—'}</TableCell>
                       <TableCell className="font-medium text-foreground">{prop.title}</TableCell>
                       <TableCell>{[prop.city, prop.district].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
@@ -873,7 +875,7 @@ const AdminDashboard = () => {
                   })}
                   {filteredProperties.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

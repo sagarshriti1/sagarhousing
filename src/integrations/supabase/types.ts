@@ -203,6 +203,7 @@ export type Database = {
           maintenance_fee: number | null
           payment_date: string | null
           price: number
+          property_code: number
           property_type: Database["public"]["Enums"]["property_type"]
           sqft: number | null
           state: string
@@ -235,6 +236,7 @@ export type Database = {
           maintenance_fee?: number | null
           payment_date?: string | null
           price: number
+          property_code?: number
           property_type?: Database["public"]["Enums"]["property_type"]
           sqft?: number | null
           state?: string
@@ -267,6 +269,7 @@ export type Database = {
           maintenance_fee?: number | null
           payment_date?: string | null
           price?: number
+          property_code?: number
           property_type?: Database["public"]["Enums"]["property_type"]
           sqft?: number | null
           state?: string
