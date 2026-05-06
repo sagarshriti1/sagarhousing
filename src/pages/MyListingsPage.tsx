@@ -178,7 +178,7 @@ const MyListingsPage = () => {
                     <span className="flex items-center gap-1"><Bed className="h-4 w-4" /> {listing.bedrooms} bd</span>
                     <span className="flex items-center gap-1"><Bath className="h-4 w-4" /> {listing.bathrooms} ba</span>
                     {listing.sqft && <span className="flex items-center gap-1"><Maximize className="h-4 w-4" /> {listing.sqft.toLocaleString()} sqft</span>}
-                    <div className="ml-auto flex items-center gap-3">
+                    <div className="ml-auto flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                       {/* Expiration / date info */}
                       {(() => {
                         const exp = (listing as any).expiration_date;
