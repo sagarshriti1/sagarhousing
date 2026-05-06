@@ -183,6 +183,11 @@ const AdminRealtorDetailPage = () => {
     user_id: realtor.user_id,
     specialties: realtor.specialties,
     license_number: realtor.license_number,
+    featured_start_date: realtor.featured_start_date ?? null,
+    featured_expiration_date: realtor.featured_expiration_date ?? null,
+    featured_payment_status: realtor.featured_payment_status ?? "none",
+    featured_payment_bypassed: realtor.featured_payment_bypassed ?? false,
+    featured_bypass_reason: null,
   };
 
   const notExpired = !realtor.expiration_date || new Date(realtor.expiration_date) >= new Date(new Date().toDateString());
