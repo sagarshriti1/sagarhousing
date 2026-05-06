@@ -334,6 +334,22 @@ const RealtorDashboard = () => {
               </Card>
             )}
 
+            {/* Payment History */}
+            {profile && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Payment History
+                  </CardTitle>
+                  <CardDescription>All payments and renewals tied to your realtor profile.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PaymentHistoryList relatedType="realtor" relatedId={profile.id} compact />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Profile Form */}
             <Card>
               <CardHeader>
