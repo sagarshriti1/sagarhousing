@@ -19,7 +19,9 @@ import { logPayment } from "@/lib/paymentHistory";
 const MyListingsPage = () => {
   const { user, role } = useAuth();
   const FREE_USER_LISTING_LIMIT = 2;
-  const isStandardUser = !!user && role !== 'realtor' && role !== 'admin';
+  const isRealtor = role === 'realtor';
+  const isStandardUser = !!user && !isRealtor && role !== 'admin';
+  const [realtorInactive, setRealtorInactive] = useState(false);
   const navigate = useNavigate();
   const saleFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_SALE);
   const rentFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_RENT);
