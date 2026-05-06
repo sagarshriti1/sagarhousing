@@ -89,6 +89,7 @@ const buildEmptyRealtor = (): RealtorFormData => {
     user_id: null,
     specialties: null,
     license_number: null,
+    bypass_reason: null,
   };
 };
 
