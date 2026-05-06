@@ -59,25 +59,35 @@ export interface RealtorFormData {
   license_number: string | null;
 }
 
-const emptyRealtor: RealtorFormData = {
-  name: "",
-  email: "",
-  phone: "",
-  photo_url: "",
-  city: "",
-  state: "",
-  district: "",
-  street_address: "",
-  bio: "",
-  years_experience: null,
-  is_featured: false,
-  start_date: null,
-  expiration_date: null,
-  payment_status: "pending",
-  payment_bypassed: false,
-  user_id: null,
-  specialties: null,
-  license_number: null,
+const addMonths = (dateStr: string, months: number) => {
+  const d = new Date(dateStr);
+  d.setMonth(d.getMonth() + months);
+  return format(d, "yyyy-MM-dd");
+};
+const todayStr = () => format(new Date(), "yyyy-MM-dd");
+
+const buildEmptyRealtor = (): RealtorFormData => {
+  const start = todayStr();
+  return {
+    name: "",
+    email: "",
+    phone: "",
+    photo_url: "",
+    city: "",
+    state: "",
+    district: "",
+    street_address: "",
+    bio: "",
+    years_experience: null,
+    is_featured: false,
+    start_date: start,
+    expiration_date: addMonths(start, 1),
+    payment_status: "pending",
+    payment_bypassed: false,
+    user_id: null,
+    specialties: null,
+    license_number: null,
+  };
 };
 
 interface RealtorFormDialogProps {
@@ -92,7 +102,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const isCreate = mode === "create";
   const { fee: realtorFee, isFree: realtorPromoFree, promoLabel: realtorPromoLabel } =
     useFeatureFlag(isCreate ? FEATURE_KEYS.REALTOR_SIGNUP : FEATURE_KEYS.REALTOR_RENEWAL);
-  const [form, setForm] = useState<RealtorFormData>(realtor ?? emptyRealtor);
+  const [form, setForm] = useState<RealtorFormData>(realtor ?? buildEmptyRealtor());
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [bypassPayment, setBypassPayment] = useState(realtor?.payment_bypassed ?? false);
@@ -102,7 +112,7 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const [lastId, setLastId] = useState<string | null>(null);
   if (currentId !== lastId) {
     setLastId(currentId);
-    setForm(realtor ?? emptyRealtor);
+    setForm(realtor ?? buildEmptyRealtor());
     setBypassPayment(realtor?.payment_bypassed ?? false);
   }
 
@@ -332,8 +342,11 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                     <Calendar
                       mode="single"
                       selected={form.start_date ? new Date(form.start_date) : undefined}
-                      onSelect={(date) => setForm({ ...form, start_date: date ? format(date, "yyyy-MM-dd") : null })}
-                      disabled={form.expiration_date ? { from: new Date(form.expiration_date), to: new Date(8640000000000000) } : undefined}
+                      onSelect={(date) => {
+                        if (!date) { setForm({ ...form, start_date: null }); return; }
+                        const s = format(date, "yyyy-MM-dd");
+                        setForm({ ...form, start_date: s, expiration_date: addMonths(s, 1) });
+                      }}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
