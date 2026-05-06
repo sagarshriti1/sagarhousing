@@ -105,6 +105,13 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     setBypassPayment(realtor?.payment_bypassed ?? false);
   }
 
+  // Auto-mark as promotion when free promo flag is active
+  useEffect(() => {
+    if (realtorPromoFree && form.payment_status !== "promotion" && form.payment_status !== "paid") {
+      setForm(prev => ({ ...prev, payment_status: "promotion", payment_bypassed: true }));
+    }
+  }, [realtorPromoFree]);
+
   const handleCityChange = (city: string) => {
     const district = getDistrictForCity(city);
     setForm(prev => ({ ...prev, city, ...(district ? { state: district, district } : {}) }));
