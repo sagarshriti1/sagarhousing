@@ -890,6 +890,15 @@ const AdminDashboard = () => {
               return (
             <>
             <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Property ID or creator email..."
+                  className="pl-10"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
               {selectedPropertyIds.size > 0 && (
                 <Button variant="destructive" size="sm" onClick={bulkDeleteProperties} className="gap-2">
                   <Trash2 className="h-4 w-4" /> Delete {selectedPropertyIds.size} selected
