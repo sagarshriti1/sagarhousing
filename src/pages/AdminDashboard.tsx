@@ -979,6 +979,11 @@ const AdminDashboard = () => {
               );
             })()}
           </TabsContent>
+
+          {/* FEATURES TAB */}
+          <TabsContent value="features">
+            <FeaturesTab />
+          </TabsContent>
         </Tabs>
       </main>
       <Footer />
