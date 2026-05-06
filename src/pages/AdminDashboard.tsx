@@ -528,7 +528,22 @@ const AdminDashboard = () => {
       return showInactive ? !isActive : isActive;
     });
   })();
-  const filteredRealtors = unifiedRealtors;
+  const filteredRealtors = sortList(unifiedRealtors as any[], 'realtors', {
+    name: (r) => (r.name || '').toLowerCase(),
+    email: (r) => (r.email || '').toLowerCase(),
+    phone: (r) => r.phone || '',
+    location: (r) => `${r.city || ''} ${r.district || ''}`.toLowerCase(),
+    payment: (r) => r.payment_status || '',
+    start_date: (r) => r.start_date ? new Date(r.start_date).getTime() : null,
+    expiration_date: (r) => r.expiration_date ? new Date(r.expiration_date).getTime() : null,
+    status: (r) => {
+      const profileActive = r.profile ? r.profile.is_active : true;
+      const notExpired = !r.expiration_date || new Date(r.expiration_date) >= new Date(new Date().toDateString());
+      return (profileActive && notExpired) ? 1 : 0;
+    },
+    featured: (r) => r.is_featured ? 1 : 0,
+    updated_by: (r) => updatedByLabel(r.updated_by).toLowerCase(),
+  });
 
   const getProfilesByRole = (target: "admin" | "realtor" | "user") => {
     return profiles.filter((profile) => {
