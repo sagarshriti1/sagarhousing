@@ -199,6 +199,7 @@ const ProfilePage = () => {
       amount: featuredFree ? 0 : FEATURED_FEE,
       status: featuredFree ? "promotion" : "paid",
       promo_label: featuredFree ? featuredPromoLabel : null,
+      expiration_date: new Date(expiration).toISOString(),
     });
 
     toast.success("You're now featured! ⭐", {
