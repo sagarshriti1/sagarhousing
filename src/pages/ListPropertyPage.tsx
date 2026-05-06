@@ -27,6 +27,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { NEPAL_CITIES, NEPAL_DISTRICTS, CITY_TO_DISTRICT, getDistrictForCity } from '@/data/nepalLocations';
 import SearchableCombobox from '@/components/SearchableCombobox';
+import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
