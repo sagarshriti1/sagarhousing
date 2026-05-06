@@ -864,10 +864,15 @@ const AdminDashboard = () => {
           {/* PROPERTIES TAB */}
           <TabsContent value="properties" className="space-y-4">
             {(() => {
+              const q = search.trim().toLowerCase().replace(/^#/, '');
               const baseFiltered = properties.filter((p) => {
                 const notExpired = !p.expiration_date || new Date(p.expiration_date) >= new Date(new Date().toDateString());
                 const isActive = p.status === "active" && notExpired;
-                return showInactive ? !isActive : isActive;
+                if (showInactive ? isActive : !isActive) return false;
+                if (!q) return true;
+                const code = String((p as any).property_code ?? '');
+                const email = creatorEmail(p.user_id).toLowerCase();
+                return code.includes(q) || email.includes(q);
               });
               const filteredProperties = sortList(baseFiltered, 'properties', {
                 property_code: (p) => p.property_code ?? null,
