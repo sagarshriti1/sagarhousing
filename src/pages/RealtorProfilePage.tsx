@@ -37,7 +37,13 @@ const RealtorProfilePage = () => {
     const fetch = async () => {
       if (!id) return;
       const { data } = await supabase.from("realtors").select("*").eq("id", id).maybeSingle();
-      setRealtor(data);
+      if (data) {
+        const today = new Date(new Date().toDateString());
+        const featuredActive = data.is_featured && (!data.featured_expiration_date || new Date(data.featured_expiration_date) >= today);
+        setRealtor({ ...data, is_featured: featuredActive } as any);
+      } else {
+        setRealtor(null);
+      }
       setLoading(false);
     };
     fetch();
