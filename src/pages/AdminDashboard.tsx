@@ -772,7 +772,7 @@ const AdminDashboard = () => {
                   })}
                   {filteredRealtors.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No realtors found</TableCell>
+                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No realtors found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
