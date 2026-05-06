@@ -875,7 +875,7 @@ const AdminDashboard = () => {
                   })}
                   {filteredProperties.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
