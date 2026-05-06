@@ -269,6 +269,22 @@ const ListPropertyPage = () => {
       }
     }
 
+    if (!isEdit && isRealtor) {
+      const { data } = await supabase
+        .from('realtors')
+        .select('payment_status, expiration_date')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const active = !!data
+        && (data.payment_status === 'paid' || data.payment_status === 'promotion' || data.payment_status === 'bypassed')
+        && (!data.expiration_date || new Date(data.expiration_date) > new Date());
+      if (!active) {
+        setRealtorInactive(true);
+        toast.error(realtorInactiveMessage);
+        return;
+      }
+    }
+
     if (!form.title || !form.address || !form.district || !form.price) {
       toast.error('Please fill in all required fields');
       return;
