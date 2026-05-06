@@ -296,7 +296,8 @@ const ListPropertyPage = () => {
         if (error) throw error;
         if (isAdmin && inserted) {
           const { logPayment } = await import('@/lib/paymentHistory');
-          const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+          const finalStatus: 'paid' | 'bypassed' | 'promotion' =
+            flag.isFree ? 'promotion' : (paymentStatus === 'paid' ? 'paid' : 'bypassed');
           await logPayment({
             user_id: user.id,
             service_key: form.listing_type === 'rent' ? FEATURE_KEYS.PROPERTY_RENT : FEATURE_KEYS.PROPERTY_SALE,
@@ -304,16 +305,16 @@ const ListPropertyPage = () => {
             related_type: 'property',
             related_id: (inserted as any).id,
             related_label: form.title,
-            amount: 0,
-            status: flag.isFree ? 'promotion' : 'bypassed',
+            amount: finalStatus === 'paid' ? flag.fee : 0,
+            status: finalStatus,
             promo_label: flag.isFree ? flag.promoLabel : null,
             expiration_date: expirationDate ? new Date(expirationDate).toISOString() : null,
-            notes: flag.isFree
-              ? null
-              : `Payment bypassed by admin. Reason: ${bypassReason.trim() || '(no reason provided)'}`,
+            notes: finalStatus === 'bypassed'
+              ? `Payment bypassed by admin. Reason: ${bypassReason.trim() || '(no reason provided)'}`
+              : null,
           });
         }
-        toast.success('Property saved! Pay the listing fee from My Listings to activate it.');
+        toast.success(isAdmin ? 'Property created and activated!' : 'Property saved! Pay the listing fee from My Listings to activate it.');
       }
       setIsDirty(false);
       navigate(-1);
