@@ -129,7 +129,7 @@ const AdminUserDetailPage = () => {
     });
   };
 
-  const openEdit = () => { if (profile) { setDraft({ ...profile }); setEditOpen(true); } };
+  const openEdit = () => { if (profile) { setDraftState({ ...profile }); setEditDirty(false); setEditOpen(true); } };
 
   const saveEdit = async () => {
     if (!draft) return;
@@ -141,6 +141,7 @@ const AdminUserDetailPage = () => {
     else {
       toast.success("Profile updated");
       setProfile(draft);
+      setEditDirty(false);
       setEditOpen(false);
     }
   };
