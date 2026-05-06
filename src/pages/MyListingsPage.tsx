@@ -17,6 +17,11 @@ import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 const MyListingsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const saleFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_SALE);
+  const rentFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_RENT);
+  const flagFor = (listingType: string) => (listingType === "rent" ? rentFlag : saleFlag);
+  const getListingFee = (listingType: string) => flagFor(listingType).fee;
+  const isFreeFor = (listingType: string) => flagFor(listingType).isFree;
   const [listings, setListings] = useState<Tables<"user_properties">[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
