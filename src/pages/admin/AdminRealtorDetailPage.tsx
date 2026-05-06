@@ -26,6 +26,7 @@ const AdminRealtorDetailPage = () => {
   const [realtor, setRealtor] = useState<any>(null);
   const [linkedEmail, setLinkedEmail] = useState<string | null>(null);
   const [properties, setProperties] = useState<any[]>([]);
+  const [propertiesMatchedByEmail, setPropertiesMatchedByEmail] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [confirm, setConfirm] = useState<{ title: string; description: string; onConfirm: () => Promise<void> | void } | null>(null);
 
@@ -33,13 +34,37 @@ const AdminRealtorDetailPage = () => {
     if (!id) return;
     const { data } = await supabase.from("realtors").select("*").eq("id", id).maybeSingle();
     setRealtor(data);
-    if (data?.user_id) {
-      const { data: p } = await supabase.from("profiles").select("email").eq("user_id", data.user_id).maybeSingle();
+    if (!data) return;
+
+    let effectiveUserId: string | null = data.user_id ?? null;
+    let matchedByEmail = false;
+
+    if (effectiveUserId) {
+      const { data: p } = await supabase.from("profiles").select("email").eq("user_id", effectiveUserId).maybeSingle();
       setLinkedEmail(p?.email ?? null);
+    } else if (data.email) {
+      // Fallback: try to resolve a profile by the realtor's email
+      const { data: p } = await supabase.from("profiles").select("user_id, email").ilike("email", data.email).maybeSingle();
+      if (p?.user_id) {
+        effectiveUserId = p.user_id;
+        matchedByEmail = true;
+        setLinkedEmail(p.email);
+        // Self-heal: persist the link so the trigger-style relationship is maintained
+        await supabase.from("realtors").update({ user_id: p.user_id }).eq("id", data.id);
+      } else {
+        setLinkedEmail(null);
+      }
+    } else {
+      setLinkedEmail(null);
+    }
+
+    setPropertiesMatchedByEmail(matchedByEmail);
+
+    if (effectiveUserId) {
       const { data: props } = await supabase
         .from("user_properties")
         .select("id, title, city, district, listing_type, price, status, expiration_date")
-        .eq("user_id", data.user_id)
+        .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false });
       setProperties(props ?? []);
     } else {
