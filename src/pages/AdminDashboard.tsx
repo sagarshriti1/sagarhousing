@@ -1096,7 +1096,7 @@ const AdminDashboard = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                    </>
+                    </React.Fragment>
                     );
                   })}
                   {filteredProperties.length === 0 && (
