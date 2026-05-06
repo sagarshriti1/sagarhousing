@@ -60,6 +60,12 @@ export interface RealtorFormData {
   license_number: string | null;
   /** Reason admin entered when bypassing payment. Not stored on the realtor row — passed through to payment_history.notes. */
   bypass_reason?: string | null;
+  // Featured subscription
+  featured_start_date: string | null;
+  featured_expiration_date: string | null;
+  featured_payment_status: string;
+  featured_payment_bypassed: boolean;
+  featured_bypass_reason?: string | null;
 }
 
 const addMonths = (dateStr: string, months: number) => {
