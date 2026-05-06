@@ -19,6 +19,9 @@ import FavoritesPage from "./pages/FavoritesPage.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
 import SavedRealtorsPage from "./pages/SavedRealtorsPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AdminUserDetailPage from "./pages/admin/AdminUserDetailPage.tsx";
+import AdminRealtorDetailPage from "./pages/admin/AdminRealtorDetailPage.tsx";
+import AdminPropertyDetailPage from "./pages/admin/AdminPropertyDetailPage.tsx";
 
 const queryClient = new QueryClient();
 
