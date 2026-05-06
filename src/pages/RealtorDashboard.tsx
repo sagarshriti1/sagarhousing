@@ -331,11 +331,12 @@ const RealtorDashboard = () => {
                   <div>
                     <Label>Years of Experience</Label>
                     <Input type="number" value={formData.years_experience} onChange={(e) => setFormData({ ...formData, years_experience: e.target.value })} placeholder="e.g. 10" />
-                   <div className="md:col-span-2">
-                     <Label>Street Address</Label>
-                     <Input value={formData.street_address} onChange={(e) => setFormData({ ...formData, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
-                   </div>
-                    <div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Street Address</Label>
+                    <Input value={formData.street_address} onChange={(e) => setFormData({ ...formData, street_address: e.target.value })} placeholder="e.g. Thamel, Ward No. 26" />
+                  </div>
+                   <div>
                      <Label>City</Label>
                      <Select value={formData.city} onValueChange={(v) => {
                        const district = getDistrictForCity(v);
