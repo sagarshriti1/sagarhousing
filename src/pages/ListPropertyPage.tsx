@@ -223,6 +223,11 @@ const ListPropertyPage = () => {
         toast.error('Start date must be earlier than expiration date');
         return;
       }
+      const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+      if (!isEdit && !flag.isFree && bypassReason.trim().length < 3) {
+        toast.error('Please provide a reason for bypassing payment');
+        return;
+      }
     }
     setLoading(true);
     try {
