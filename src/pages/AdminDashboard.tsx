@@ -880,6 +880,7 @@ const AdminDashboard = () => {
                 },
                 listing_type: (p) => p.listing_type || '',
                 updated_by: (p) => updatedByLabel(p.updated_by).toLowerCase(),
+                creator_email: (p) => creatorEmail(p.user_id).toLowerCase(),
               });
               return (
             <>
