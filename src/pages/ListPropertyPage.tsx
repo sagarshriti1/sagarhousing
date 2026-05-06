@@ -16,7 +16,11 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
-import { Upload, X, Plus, Loader2, CalendarIcon, ArrowLeft } from 'lucide-react';
+import { Upload, X, Plus, Loader2, CalendarIcon, ArrowLeft, CreditCard, ShieldCheck } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import SimulatedPaymentForm from '@/components/SimulatedPaymentForm';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
