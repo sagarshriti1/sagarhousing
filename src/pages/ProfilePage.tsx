@@ -347,6 +347,56 @@ const ProfilePage = () => {
             </Card>
           </TabsContent>
 
+          {role === "realtor" && (
+            <TabsContent value="promote">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Promote Your Profile
+                  </CardTitle>
+                  <CardDescription>
+                    {signupFree
+                      ? (signupPromoLabel || "🎉 Free promotion active — no payment required to activate your realtor profile.")
+                      : `A monthly fee of Rs. ${SIGNUP_FEE.toLocaleString()} keeps your realtor profile active and visible in the directory.`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {realtor?.expiration_date && (
+                    <div className="flex items-center justify-between rounded-md border p-3">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium">
+                          Active until: {new Date(realtor.expiration_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Rs. {SIGNUP_FEE.toLocaleString()}/month</p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {new Date(realtor.expiration_date) > new Date() ? 'Active' : 'Expired'}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {signupFree ? (
+                    <Button
+                      onClick={handlePromotePayment}
+                      disabled={activating}
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                    >
+                      {activating ? "Activating..." : realtor ? "Renew (Free)" : "Activate Profile (Free)"}
+                    </Button>
+                  ) : (
+                    <SimulatedPaymentForm
+                      paid={false}
+                      onPaymentComplete={handlePromotePayment}
+                      amount={SIGNUP_FEE}
+                      label={realtor ? "Realtor monthly renewal" : "Realtor monthly subscription"}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
           <TabsContent value="payments">
             <Card>
               <CardHeader>
