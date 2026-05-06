@@ -449,9 +449,9 @@ const AdminDashboard = () => {
               status,
               promo_label: promoActive ? flagRow?.promo_label : null,
               expiration_date: data.expiration_date ? new Date(data.expiration_date).toISOString() : null,
-              notes: !data.user_id
-                ? "Realtor not linked to a user account — recorded for admin tracking."
-                : status === "bypassed" ? "Admin updated subscription without charging." : null,
+              notes: status === "bypassed"
+                ? `Payment bypassed by admin. Reason: ${data.bypass_reason?.trim() || "(no reason provided)"}${!data.user_id ? " · Realtor not linked to a user account." : ""}`
+                : (!data.user_id ? "Realtor not linked to a user account — recorded for admin tracking." : null),
             });
           }
           toast.success("Realtor updated");
