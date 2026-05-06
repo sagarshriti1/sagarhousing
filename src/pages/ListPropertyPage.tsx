@@ -38,6 +38,8 @@ const COMMON_FEATURES = [
 const ListPropertyPage = () => {
   const { user, role } = useAuth();
   const isAdmin = role === 'admin';
+  const saleFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_SALE);
+  const rentFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_RENT);
   const navigate = useNavigate();
   const { id: editId } = useParams<{ id?: string }>();
   const isEdit = !!editId;
