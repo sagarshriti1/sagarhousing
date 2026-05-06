@@ -344,10 +344,10 @@ const ProfilePage = () => {
                       })()}
                     </div>
 
-                    <Button onClick={handleSave} disabled={saving}>
+                    <ConfirmSaveButton onConfirm={handleSave} disabled={saving || !dirty}>
                       {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                       Save Changes
-                    </Button>
+                    </ConfirmSaveButton>
                   </>
                 )}
               </CardContent>
