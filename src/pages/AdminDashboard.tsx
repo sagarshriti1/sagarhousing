@@ -220,6 +220,12 @@ const AdminDashboard = () => {
     return p?.display_name || p?.email || uid.slice(0, 8);
   };
 
+  const creatorEmail = (uid?: string | null) => {
+    if (!uid) return "—";
+    const p = profiles.find((pr) => pr.user_id === uid);
+    return p?.email || "—";
+  };
+
   const handleCreateUser = async () => {
     if (!newUser.displayName.trim()) { toast.error("Name is required"); return; }
     if (!newUser.email || !newUser.password) { toast.error("Email and password are required"); return; }
@@ -874,6 +880,7 @@ const AdminDashboard = () => {
                 },
                 listing_type: (p) => p.listing_type || '',
                 updated_by: (p) => updatedByLabel(p.updated_by).toLowerCase(),
+                creator_email: (p) => creatorEmail(p.user_id).toLowerCase(),
               });
               return (
             <>
@@ -912,6 +919,7 @@ const AdminDashboard = () => {
                     <SortHeader tab="properties" sortKey="price">Price</SortHeader>
                     <SortHeader tab="properties" sortKey="status">Status</SortHeader>
                     <SortHeader tab="properties" sortKey="listing_type">Type</SortHeader>
+                    <SortHeader tab="properties" sortKey="creator_email">Created By (Email)</SortHeader>
                     <SortHeader tab="properties" sortKey="updated_by">Updated By</SortHeader>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -936,6 +944,7 @@ const AdminDashboard = () => {
                         <Badge variant={isActive ? "default" : "secondary"}>{expired ? "expired" : prop.status}</Badge>
                       </TableCell>
                       <TableCell className="capitalize">{prop.listing_type}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{creatorEmail(prop.user_id)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{updatedByLabel(prop.updated_by)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
@@ -952,7 +961,7 @@ const AdminDashboard = () => {
                   })}
                   {filteredProperties.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
+                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No properties found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
