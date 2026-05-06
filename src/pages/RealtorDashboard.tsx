@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard } from "lucide-react";
-import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
+
 import PaymentHistoryList from "@/components/PaymentHistoryList";
 
 interface RealtorProfile {
@@ -21,7 +21,7 @@ interface RealtorProfile {
 
 const RealtorDashboard = () => {
   const { user, role, loading } = useAuth();
-  const { fee: SIGNUP_FEE } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
+  
   const [profile, setProfile] = useState<RealtorProfile | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -90,9 +90,6 @@ const RealtorDashboard = () => {
                       <p className="text-sm text-foreground font-medium">
                         Active until: {new Date(profile.expiration_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        Rs. {SIGNUP_FEE.toLocaleString()}/month — auto-renewal required
-                      </p>
                     </div>
                     <Badge variant="secondary" className="text-xs">
                       {new Date(profile.expiration_date) > new Date() ? 'Active' : 'Expired'}
@@ -109,7 +106,7 @@ const RealtorDashboard = () => {
                     <CreditCard className="h-5 w-5 text-primary" />
                     Payment History
                   </CardTitle>
-                  <CardDescription>All payments and renewals tied to your realtor profile.</CardDescription>
+                  
                 </CardHeader>
                 <CardContent>
                   <PaymentHistoryList relatedType="realtor" relatedId={profile.id} compact />
