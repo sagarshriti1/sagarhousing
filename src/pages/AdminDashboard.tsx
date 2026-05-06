@@ -919,6 +919,7 @@ const AdminDashboard = () => {
                     <SortHeader tab="properties" sortKey="price">Price</SortHeader>
                     <SortHeader tab="properties" sortKey="status">Status</SortHeader>
                     <SortHeader tab="properties" sortKey="listing_type">Type</SortHeader>
+                    <SortHeader tab="properties" sortKey="creator_email">Created By (Email)</SortHeader>
                     <SortHeader tab="properties" sortKey="updated_by">Updated By</SortHeader>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
