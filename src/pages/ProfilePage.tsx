@@ -107,28 +107,56 @@ const ProfilePage = () => {
   }, [role, user]);
 
   const handleBecomeFeatured = async () => {
-    if (!user || !realtor) return;
+    if (!user) return;
     setActivating(true);
 
-    const { error } = await supabase
-      .from("realtors")
-      .update({ is_featured: true })
-      .eq("id", realtor.id);
+    let current = realtor;
 
-    if (error) {
-      toast.error("Failed to mark as featured");
-      setActivating(false);
-      return;
+    if (!current) {
+      const loc = parseLocation(profile.location);
+      const { data, error } = await supabase
+        .from("realtors")
+        .insert({
+          user_id: user.id,
+          name: profile.display_name || user.email || "Realtor",
+          email: profile.email || user.email,
+          phone: profile.phone,
+          street_address: profile.street_address,
+          city: loc.city,
+          district: loc.district,
+          state: "Nepal",
+          payment_status: "paid",
+          is_featured: true,
+        })
+        .select("id, name, is_featured")
+        .single();
+      if (error || !data) {
+        toast.error("Failed to create realtor profile");
+        setActivating(false);
+        return;
+      }
+      current = data;
+      setRealtor(data);
+    } else {
+      const { error } = await supabase
+        .from("realtors")
+        .update({ is_featured: true })
+        .eq("id", current.id);
+      if (error) {
+        toast.error("Failed to mark as featured");
+        setActivating(false);
+        return;
+      }
+      setRealtor({ ...current, is_featured: true });
     }
-    setRealtor({ ...realtor, is_featured: true });
 
     await logPayment({
       user_id: user.id,
       service_key: FEATURE_KEYS.FEATURED_REALTOR,
       service_label: "Featured Realtor",
       related_type: "realtor",
-      related_id: realtor.id,
-      related_label: realtor.name,
+      related_id: current.id,
+      related_label: current.name,
       amount: featuredFree ? 0 : FEATURED_FEE,
       status: featuredFree ? "promotion" : "paid",
       promo_label: featuredFree ? featuredPromoLabel : null,
