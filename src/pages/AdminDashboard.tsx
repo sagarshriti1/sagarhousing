@@ -94,6 +94,7 @@ interface UserRole {
 
 interface Property {
   id: string;
+  property_code?: number | null;
   title: string;
   city: string;
   district?: string;
