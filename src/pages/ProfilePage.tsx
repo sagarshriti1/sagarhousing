@@ -41,14 +41,12 @@ interface ProfileData {
 interface RealtorRow {
   id: string;
   name: string;
-  payment_status: string;
-  start_date: string | null;
-  expiration_date: string | null;
+  is_featured: boolean;
 }
 
 const ProfilePage = () => {
   const { user, role } = useAuth();
-  const { fee: SIGNUP_FEE, isFree: signupFree, promoLabel: signupPromoLabel } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
+  const { fee: FEATURED_FEE, isFree: featuredFree, promoLabel: featuredPromoLabel } = useFeatureFlag(FEATURE_KEYS.FEATURED_REALTOR);
   const [realtor, setRealtor] = useState<RealtorRow | null>(null);
   const [activating, setActivating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
