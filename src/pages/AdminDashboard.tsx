@@ -453,6 +453,40 @@ const AdminDashboard = () => {
       "bypassed";
     const amount = status === "paid" ? flagFee : 0;
 
+    // Determine if a featured payment log is needed (newly activated or renewed)
+    const original = realtors.find((r) => r.id === data.id);
+    const featuredChanged =
+      data.is_featured && (
+        !original?.is_featured ||
+        (original?.featured_expiration_date ?? null) !== (data.featured_expiration_date ?? null)
+      );
+    const { data: featFlag } = await supabase.from("feature_flags").select("*").eq("key", FEATURE_KEYS.FEATURED_REALTOR).maybeSingle();
+    const featFee = Number(featFlag?.fee ?? 0);
+    const featPromoActive = !!featFlag?.bypass_payment && (!featFlag?.promo_ends_at || new Date(featFlag.promo_ends_at).getTime() > Date.now());
+    const featStatus: "paid" | "bypassed" | "promotion" =
+      data.featured_payment_status === "paid" ? "paid" :
+      featPromoActive ? "promotion" :
+      "bypassed";
+    const featAmount = featStatus === "paid" ? featFee : 0;
+    const logFeatured = async (relatedId: string, relatedLabel: string, userId: string) => {
+      if (!featuredChanged) return;
+      await logPayment({
+        user_id: userId,
+        service_key: FEATURE_KEYS.FEATURED_REALTOR,
+        service_label: "Featured Realtor",
+        related_type: "realtor",
+        related_id: relatedId,
+        related_label: relatedLabel,
+        amount: featAmount,
+        status: featStatus,
+        promo_label: featPromoActive ? featFlag?.promo_label : null,
+        expiration_date: data.featured_expiration_date ? new Date(data.featured_expiration_date).toISOString() : null,
+        notes: featStatus === "bypassed"
+          ? `Featured payment bypassed by admin. Reason: ${data.featured_bypass_reason?.trim() || "(no reason provided)"}`
+          : null,
+      });
+    };
+
     if (realtorDialogMode === "edit" && data.id) {
       confirm({
         title: "Update Realtor",
