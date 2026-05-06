@@ -159,9 +159,20 @@ const MyListingsPage = () => {
                       {/* Expiration / date info */}
                       {(() => {
                         const exp = (listing as any).expiration_date;
-                        const paid = (listing as any).payment_date;
                         const isExpired = exp && new Date(exp) < new Date();
-                        
+                        const free = isFreeFor(listing.listing_type);
+                        const fee = getListingFee(listing.listing_type);
+                        const promoLabel = flagFor(listing.listing_type).promoLabel;
+                        const startPay = () => {
+                          if (free) {
+                            setPaymentListing(listing);
+                            // auto-complete free flow
+                            setTimeout(() => handlePaymentComplete(), 0);
+                          } else {
+                            setPaymentListing(listing);
+                          }
+                        };
+
                         if (isExpired) {
                           return (
                             <div className="flex items-center gap-2">
@@ -170,15 +181,15 @@ const MyListingsPage = () => {
                                 variant="default"
                                 size="sm"
                                 className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90"
-                                onClick={() => setPaymentListing(listing)}
+                                onClick={startPay}
                               >
                                 <CreditCard className="h-3.5 w-3.5" />
-                                Renew Rs. {getListingFee(listing.listing_type).toLocaleString()}
+                                {free ? (promoLabel || "Renew Free 🎉") : `Renew Rs. ${fee.toLocaleString()}`}
                               </Button>
                             </div>
                           );
                         }
-                        
+
                         if (listing.status === "active" && exp) {
                           return (
                             <span className="text-xs text-muted-foreground">
@@ -186,21 +197,21 @@ const MyListingsPage = () => {
                             </span>
                           );
                         }
-                        
+
                         if (listing.status === "pending") {
                           return (
                             <Button
                               variant="default"
                               size="sm"
                               className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90"
-                              onClick={() => setPaymentListing(listing)}
+                              onClick={startPay}
                             >
                               <CreditCard className="h-3.5 w-3.5" />
-                              Pay Rs. {getListingFee(listing.listing_type).toLocaleString()} to Activate
+                              {free ? (promoLabel || "Activate Free 🎉") : `Pay Rs. ${fee.toLocaleString()} to Activate`}
                             </Button>
                           );
                         }
-                        
+
                         return null;
                       })()}
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/edit-property/${listing.id}`)}><Pencil className="h-4 w-4" /></Button>
