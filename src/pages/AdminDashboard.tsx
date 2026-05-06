@@ -716,10 +716,18 @@ const AdminDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {list.map((profile) => (
-                <TableRow key={profile.id}>
+              {list.map((profile) => {
+                const isExpanded = expandedAccountId === profile.id;
+                return (
+                <>
+                <TableRow
+                  key={profile.id}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => setExpandedAccountId(isExpanded ? null : profile.id)}
+                >
                   <TableCell>
                     <div className="flex items-center gap-3">
+                      {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       <div className="h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
                         {profile.avatar_url ? (
                           <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -740,21 +748,35 @@ const AdminDashboard = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{updatedByLabel(profile.updated_by)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" title="Edit" onClick={() => setEditingProfile(profile)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Reset password" onClick={() => resetPassword(profile)}>
-                        <KeyRound className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" title="Delete" onClick={() => deleteUser(profile)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="text-destructive" title="Delete" onClick={() => deleteUser(profile)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+                {isExpanded && (
+                  <TableRow key={`${profile.id}-expanded`} className="bg-muted/20 hover:bg-muted/20">
+                    <TableCell colSpan={target === "admin" ? 8 : 7} className="p-4">
+                      <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" className="gap-2" onClick={() => setEditingProfile(profile)}>
+                            <Pencil className="h-4 w-4" /> Edit
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-2" onClick={() => resetPassword(profile)}>
+                            <KeyRound className="h-4 w-4" /> Reset Password
+                          </Button>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground mb-2">Payment History</h4>
+                          <PaymentHistoryList userId={profile.user_id} canEditNotes compact />
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                </>
+                );
+              })}
               {list.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={target === "admin" ? 8 : 7} className="text-center py-8 text-muted-foreground">
