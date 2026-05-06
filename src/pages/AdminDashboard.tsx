@@ -575,7 +575,7 @@ const AdminDashboard = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 {target === "admin" && <TableHead>Job Title</TableHead>}
-                <TableHead>Location</TableHead>
+                <TableHead>City / District</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Updated By</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -599,7 +599,7 @@ const AdminDashboard = () => {
                   <TableCell className="text-muted-foreground">{profile.email || "—"}</TableCell>
                   <TableCell>{profile.phone || "—"}</TableCell>
                   {target === "admin" && <TableCell>{profile.job_title || "—"}</TableCell>}
-                  <TableCell>{profile.location || "—"}</TableCell>
+                  <TableCell>{(() => { const l = parseLocation(profile.location); return [l.city, l.district].filter(Boolean).join(", ") || "—"; })()}</TableCell>
                   <TableCell>
                     <Badge variant={profile.is_active ? "default" : "secondary"}>
                       {profile.is_active ? "Active" : "Inactive"}
@@ -702,7 +702,7 @@ const AdminDashboard = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead>City / District</TableHead>
                     
                     <TableHead>Payment</TableHead>
                     <TableHead>Dates</TableHead>
@@ -841,7 +841,7 @@ const AdminDashboard = () => {
                       />
                     </TableHead>
                     <TableHead>Title</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead>City / District</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Type</TableHead>
@@ -862,7 +862,7 @@ const AdminDashboard = () => {
                         />
                       </TableCell>
                       <TableCell className="font-medium text-foreground">{prop.title}</TableCell>
-                      <TableCell>{prop.city}</TableCell>
+                      <TableCell>{[prop.city, prop.district].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge variant={isActive ? "default" : "secondary"}>{expired ? "expired" : prop.status}</Badge>
