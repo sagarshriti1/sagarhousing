@@ -342,8 +342,11 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                     <Calendar
                       mode="single"
                       selected={form.start_date ? new Date(form.start_date) : undefined}
-                      onSelect={(date) => setForm({ ...form, start_date: date ? format(date, "yyyy-MM-dd") : null })}
-                      disabled={form.expiration_date ? { from: new Date(form.expiration_date), to: new Date(8640000000000000) } : undefined}
+                      onSelect={(date) => {
+                        if (!date) { setForm({ ...form, start_date: null }); return; }
+                        const s = format(date, "yyyy-MM-dd");
+                        setForm({ ...form, start_date: s, expiration_date: addMonths(s, 1) });
+                      }}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
