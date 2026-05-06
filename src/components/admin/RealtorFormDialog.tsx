@@ -34,6 +34,7 @@ import { Separator } from "@/components/ui/separator";
 import { NEPAL_CITIES, NEPAL_DISTRICTS, getDistrictForCity } from "@/data/nepalLocations";
 import { CreditCard, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 import SimulatedPaymentForm from "@/components/SimulatedPaymentForm";
+import { useFeatureFlag, FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 
 export interface RealtorFormData {
   id?: string;
