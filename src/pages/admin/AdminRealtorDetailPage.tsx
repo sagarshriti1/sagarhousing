@@ -236,10 +236,15 @@ const AdminRealtorDetailPage = () => {
             <CardTitle className="flex items-center gap-2"><Home className="h-5 w-5" /> Listed Properties ({properties.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            {!realtor.user_id ? (
-              <p className="text-sm text-muted-foreground">No linked user account — cannot list properties.</p>
-            ) : properties.length === 0 ? (
-              <p className="text-sm text-muted-foreground">This realtor has no listed properties yet.</p>
+            {propertiesMatchedByEmail && (
+              <p className="text-xs text-muted-foreground mb-3">Auto-matched by email.</p>
+            )}
+            {properties.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {realtor.email
+                  ? <>No listings yet. When this realtor signs up with <span className="font-medium text-foreground">{realtor.email}</span>, their listings will appear here automatically.</>
+                  : "No listings yet. Add an email to this realtor profile so listings can be linked when they sign up."}
+              </p>
             ) : (
               <ul className="divide-y divide-border">
                 {properties.map((p) => (
