@@ -142,7 +142,6 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
     onSave(form);
   };
 
-  const isCreate = mode === "create";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
