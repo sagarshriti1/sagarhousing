@@ -288,7 +288,7 @@ const AdminUserDetailPage = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={saveEdit}>Save Changes</Button>
+            <ConfirmSaveButton onConfirm={saveEdit} disabled={!editDirty}>Save Changes</ConfirmSaveButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
