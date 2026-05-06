@@ -310,6 +310,13 @@ const ListPropertyPage = () => {
           <section className='space-y-4'>
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Basic Information</h2>
             <div className='space-y-2'>
+            {isEdit && propertyCode != null && (
+              <div className='space-y-2'>
+                <Label htmlFor='property_code'>Property ID</Label>
+                <Input id='property_code' value={`#${propertyCode}`} readOnly disabled className='font-mono bg-muted' />
+              </div>
+            )}
+            <div className='space-y-2'>
               <Label htmlFor='title'>Listing Title *</Label>
               <Input id='title' value={form.title} onChange={e => updateForm('title', e.target.value)} placeholder='e.g. Beautiful Modern Home in Downtown' required />
             </div>
