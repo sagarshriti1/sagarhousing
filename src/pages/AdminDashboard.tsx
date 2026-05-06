@@ -942,7 +942,7 @@ const AdminDashboard = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                    </>
+                    </React.Fragment>
                     );
                   })}
                   {filteredRealtors.length === 0 && (
