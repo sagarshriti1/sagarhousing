@@ -263,6 +263,7 @@ const AdminRealtorDetailPage = () => {
             <div><span className="text-muted-foreground">License #:</span> <span className="text-foreground">{realtor.license_number || "—"}</span></div>
             <div><span className="text-muted-foreground">Years Experience:</span> <span className="text-foreground">{realtor.years_experience ?? "—"}</span></div>
             <div><span className="text-muted-foreground">Subscription:</span> <span className="text-foreground">{realtor.start_date ? format(new Date(realtor.start_date), "MMM d, yyyy") : "—"} → {realtor.expiration_date ? format(new Date(realtor.expiration_date), "MMM d, yyyy") : "—"}</span></div>
+            <div><span className="text-muted-foreground">Featured:</span> <span className="text-foreground">{realtor.featured_start_date ? format(new Date(realtor.featured_start_date), "MMM d, yyyy") : "—"} → {realtor.featured_expiration_date ? format(new Date(realtor.featured_expiration_date), "MMM d, yyyy") : "—"} {realtor.is_featured && realtor.featured_expiration_date && new Date(realtor.featured_expiration_date) < new Date(new Date().toDateString()) ? <Badge variant="destructive" className="ml-2">Expired</Badge> : realtor.is_featured ? <Badge className="ml-2">Active</Badge> : null}</span></div>
             {realtor.bio && <div className="sm:col-span-2"><span className="text-muted-foreground">Bio:</span> <span className="text-foreground">{realtor.bio}</span></div>}
           </CardContent>
         </Card>
