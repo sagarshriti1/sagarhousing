@@ -90,9 +90,6 @@ const RealtorDashboard = () => {
                       <p className="text-sm text-foreground font-medium">
                         Active until: {new Date(profile.expiration_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        Rs. {SIGNUP_FEE.toLocaleString()}/month — auto-renewal required
-                      </p>
                     </div>
                     <Badge variant="secondary" className="text-xs">
                       {new Date(profile.expiration_date) > new Date() ? 'Active' : 'Expired'}
