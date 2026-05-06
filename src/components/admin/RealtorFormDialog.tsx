@@ -44,6 +44,7 @@ export interface RealtorFormData {
   city: string;
   state: string;
   district: string;
+  street_address: string;
   bio: string;
   years_experience: number | null;
   is_featured: boolean;
@@ -64,6 +65,7 @@ const emptyRealtor: RealtorFormData = {
   city: "",
   state: "",
   district: "",
+  street_address: "",
   bio: "",
   years_experience: null,
   is_featured: false,
