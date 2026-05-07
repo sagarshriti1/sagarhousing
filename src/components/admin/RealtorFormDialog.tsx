@@ -650,11 +650,11 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             {isCreate ? (
-              <Button onClick={handleSubmit} disabled={!isValid}>
+              <Button onClick={handleSubmit}>
                 Create Realtor
               </Button>
             ) : (
-              <ConfirmSaveButton onConfirm={handleSubmit} disabled={!isValid || !dirty}>
+              <ConfirmSaveButton onConfirm={handleSubmit} disabled={!dirty}>
                 Save Changes
               </ConfirmSaveButton>
             )}
