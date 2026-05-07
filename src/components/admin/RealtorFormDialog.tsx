@@ -292,12 +292,13 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
             </div>
             <div>
               <Label>District *</Label>
-              <Select value={form.state || form.district} onValueChange={handleDistrictChange}>
-                <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+              <Select value={form.state || form.district} onValueChange={(v) => { handleDistrictChange(v); clearError('district'); }}>
+                <SelectTrigger aria-invalid={!!errors.district}><SelectValue placeholder="Select District" /></SelectTrigger>
                 <SelectContent>
                   {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {errors.district && <p className="text-xs text-destructive mt-1">{errors.district}</p>}
             </div>
           </div>
           <div>
