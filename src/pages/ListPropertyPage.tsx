@@ -72,7 +72,7 @@ const ListPropertyPage = () => {
     listing_type: 'sale' as 'sale' | 'rent',
     year_built: '',
     lot_size: '0',
-    
+    lot_unit: 'Aana',
     maintenance_fee: '0',
     bike_parking: '0',
     car_parking: '0',
