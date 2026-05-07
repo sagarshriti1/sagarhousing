@@ -589,8 +589,8 @@ const AdminDashboard = () => {
   const deleteProperty = (id: string) => {
     const prop = properties.find((p) => p.id === id);
     confirm({
-      title: "Delete Property",
-      description: `Are you sure you want to delete "${prop?.title ?? "this property"}"? This action cannot be undone.`,
+      title: "Delete property?",
+      description: `This will permanently delete "${prop?.title ?? "this property"}". This action cannot be undone.`,
       onConfirm: async () => {
         const { error } = await supabase.from("user_properties").delete().eq("id", id);
         if (error) toast.error("Failed to delete property");
