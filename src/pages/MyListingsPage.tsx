@@ -36,6 +36,7 @@ const MyListingsPage = () => {
   const [paymentsListing, setPaymentsListing] = useState<Tables<"user_properties"> | null>(null);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [blockedDeleteOpen, setBlockedDeleteOpen] = useState(false);
 
 
   useEffect(() => {
@@ -74,7 +75,7 @@ const MyListingsPage = () => {
   const handleDelete = (id: string) => {
     const listing = listings.find((l) => l.id === id);
     if (listing?.status === "active") {
-      toast.error("Active listings cannot be deleted. Please change the status to Inactive before deleting.");
+      setBlockedDeleteOpen(true);
       return;
     }
     setDeleteId(id);
@@ -392,6 +393,20 @@ const MyListingsPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={blockedDeleteOpen} onOpenChange={setBlockedDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cannot delete active listing</AlertDialogTitle>
+            <AlertDialogDescription>
+              Active listings cannot be deleted. Please change the status to Inactive before deleting.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setBlockedDeleteOpen(false)}>Got it</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>

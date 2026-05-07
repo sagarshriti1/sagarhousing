@@ -34,6 +34,8 @@ import SearchableCombobox from '@/components/SearchableCombobox';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
@@ -86,6 +88,10 @@ const ListPropertyPage = () => {
   const [bypassReason, setBypassReason] = useState<string>('');
   const [bypassPayment, setBypassPayment] = useState<boolean>(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'bypassed' | 'promotion'>('pending');
+  const [currentStatus, setCurrentStatus] = useState<'active' | 'pending' | 'sold' | 'rented'>('pending');
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false);
+  const [reactivatePayOpen, setReactivatePayOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const clearError = (k: string) => setErrors(prev => { if (!prev[k]) return prev; const { [k]: _, ...rest } = prev; return rest; });
   const [isDirty, setIsDirty] = useState(false);
@@ -198,10 +204,84 @@ const ListPropertyPage = () => {
       setPaymentDate(pd ? format(new Date(pd), 'yyyy-MM-dd') : null);
       setExpirationDate(ed ? format(new Date(ed), 'yyyy-MM-dd') : null);
       setPropertyCode((data as any).property_code ?? null);
+      setCurrentStatus(((data as any).status ?? 'pending') as any);
       setFetching(false);
     };
     fetchProperty();
   }, [editId, user, navigate]);
+
+  const handleDeactivateNow = async () => {
+    if (!editId) return;
+    setStatusBusy(true);
+    const { error } = await supabase
+      .from('user_properties')
+      .update({ status: 'pending' as const })
+      .eq('id', editId);
+    setStatusBusy(false);
+    setConfirmDeactivateOpen(false);
+    if (error) { toast.error('Failed to deactivate listing'); return; }
+    setCurrentStatus('pending');
+    toast.success('Listing deactivated');
+  };
+
+  const handleReactivateClick = async () => {
+    if (!editId) return;
+    const withinPeriod = expirationDate && new Date(expirationDate) > new Date();
+    const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+    if (withinPeriod || isAdmin) {
+      setStatusBusy(true);
+      const { error } = await supabase
+        .from('user_properties')
+        .update({ status: 'active' as const })
+        .eq('id', editId);
+      setStatusBusy(false);
+      if (error) { toast.error('Failed to reactivate listing'); return; }
+      setCurrentStatus('active');
+      toast.success('Listing reactivated');
+      return;
+    }
+    if (flag.isFree) {
+      // Free promotion: activate + log + set new period
+      await completeReactivationPayment();
+      return;
+    }
+    setReactivatePayOpen(true);
+  };
+
+  const completeReactivationPayment = async () => {
+    if (!editId || !user) return;
+    const now = new Date();
+    const expiration = new Date(now);
+    expiration.setMonth(expiration.getMonth() + 1);
+    const { error } = await supabase
+      .from('user_properties')
+      .update({
+        status: 'active' as const,
+        payment_date: now.toISOString(),
+        expiration_date: expiration.toISOString(),
+      } as any)
+      .eq('id', editId);
+    if (error) { toast.error('Failed to activate listing'); return; }
+    const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+    const { logPayment } = await import('@/lib/paymentHistory');
+    await logPayment({
+      user_id: user.id,
+      service_key: form.listing_type === 'rent' ? FEATURE_KEYS.PROPERTY_RENT : FEATURE_KEYS.PROPERTY_SALE,
+      service_label: form.listing_type === 'rent' ? 'Property Listing — For Rent' : 'Property Listing — For Sale',
+      related_type: 'property',
+      related_id: editId,
+      related_label: form.title,
+      amount: flag.isFree ? 0 : flag.fee,
+      status: flag.isFree ? 'promotion' : 'paid',
+      promo_label: flag.isFree ? flag.promoLabel : null,
+      expiration_date: expiration.toISOString(),
+    });
+    setCurrentStatus('active');
+    setPaymentDate(format(now, 'yyyy-MM-dd'));
+    setExpirationDate(format(expiration, 'yyyy-MM-dd'));
+    setReactivatePayOpen(false);
+    toast.success('Payment successful! Your listing is now active for 1 month 🎉');
+  };
 
   const updateForm = (field: string, value: string) => {
     setForm(prev => {
@@ -448,6 +528,34 @@ const ListPropertyPage = () => {
               </button>
             </AlertDescription>
           </Alert>
+        )}
+
+        {isEdit && (
+          <div className='mb-6 rounded-lg border border-border bg-card p-4 flex items-center justify-between gap-4'>
+            <div className='flex items-center gap-3 flex-wrap'>
+              <Badge className={`border-0 capitalize ${currentStatus === 'active' ? 'bg-badge-new text-badge-new-foreground' : 'bg-yellow-500 text-foreground'}`}>
+                {currentStatus === 'active' ? 'Active' : 'Inactive'}
+              </Badge>
+              {currentStatus === 'active' && expirationDate && (
+                <span className='text-sm text-muted-foreground'>Active until {format(new Date(expirationDate), 'MMM d, yyyy')}</span>
+              )}
+              {currentStatus !== 'active' && expirationDate && new Date(expirationDate) > new Date() && (
+                <span className='text-sm text-muted-foreground'>Paid period until {format(new Date(expirationDate), 'MMM d, yyyy')} — reactivation is free</span>
+              )}
+            </div>
+            <div className='flex items-center gap-2'>
+              <Label htmlFor='status-toggle' className='text-sm'>{currentStatus === 'active' ? 'Active' : 'Inactive'}</Label>
+              <Switch
+                id='status-toggle'
+                checked={currentStatus === 'active'}
+                disabled={statusBusy}
+                onCheckedChange={(checked) => {
+                  if (checked) handleReactivateClick();
+                  else setConfirmDeactivateOpen(true);
+                }}
+              />
+            </div>
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className='space-y-8'>
@@ -833,6 +941,41 @@ const ListPropertyPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={confirmDeactivateOpen} onOpenChange={setConfirmDeactivateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate this listing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your listing will be hidden from buyers. You can reactivate it any time
+              {expirationDate && new Date(expirationDate) > new Date()
+                ? ' for free while your paid period is still valid.'
+                : '.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivateNow}>Deactivate</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={reactivatePayOpen} onOpenChange={setReactivatePayOpen}>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Reactivate Listing</DialogTitle>
+            <DialogDescription>
+              Your active period has expired. Pay the listing fee to reactivate <strong>{form.title}</strong> for another month.
+            </DialogDescription>
+          </DialogHeader>
+          <SimulatedPaymentForm
+            paid={false}
+            onPaymentComplete={completeReactivationPayment}
+            amount={(form.listing_type === 'rent' ? rentFlag : saleFlag).fee}
+            label={`Listing fee (${form.listing_type === 'rent' ? 'Rental' : 'Sale'})`}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
