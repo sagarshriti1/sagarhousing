@@ -265,6 +265,20 @@ const AuthPage = () => {
                 />
                 {errors.password && <p className='text-xs text-destructive'>{errors.password}</p>}
               </div>
+              {isSignUp && (
+                <div className='space-y-2'>
+                  <Label htmlFor='confirmPassword'>Confirm Password</Label>
+                  <Input
+                    id='confirmPassword'
+                    type='password'
+                    value={confirmPassword}
+                    onChange={e => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
+                    placeholder='••••••••'
+                    aria-invalid={!!errors.confirmPassword}
+                  />
+                  {errors.confirmPassword && <p className='text-xs text-destructive'>{errors.confirmPassword}</p>}
+                </div>
+              )}
               {/* Realtor payment / promo during signup */}
               {isSignUp && selectedRole === 'realtor' && realtorFree && (
                 <div className='rounded-md border border-dashed p-3 bg-muted/30 flex items-start gap-2'>
