@@ -147,10 +147,11 @@ const AuthPage = () => {
                   id='email'
                   type='email'
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => { setEmail(e.target.value); clearError('email'); }}
                   placeholder='you@example.com'
-                  required
+                  aria-invalid={!!errors.email}
                 />
+                {errors.email && <p className='text-xs text-destructive'>{errors.email}</p>}
               </div>
               <Button
                 type='submit'
