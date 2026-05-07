@@ -36,6 +36,7 @@ const MyListingsPage = () => {
   const [paymentsListing, setPaymentsListing] = useState<Tables<"user_properties"> | null>(null);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [blockedDeleteOpen, setBlockedDeleteOpen] = useState(false);
 
 
   useEffect(() => {
