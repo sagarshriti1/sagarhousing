@@ -720,7 +720,7 @@ const ListPropertyPage = () => {
               <div>
                 <h3 className='font-medium text-foreground mb-3 flex items-center gap-2'><CalendarIcon className='h-4 w-4 text-muted-foreground' /> Listing Period</h3>
                 <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
+                  <div className='space-y-2' data-field='paymentDate'>
                     <Label>Start Date *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -738,14 +738,17 @@ const ListPropertyPage = () => {
                             const s = format(d, 'yyyy-MM-dd');
                             setPaymentDate(s);
                             setExpirationDate(addMonthsStr(s, 1));
+                            clearError('paymentDate');
+                            clearError('expirationDate');
                           }}
                           initialFocus
                           className={cn('p-3 pointer-events-auto')}
                         />
                       </PopoverContent>
                     </Popover>
+                    {errors.paymentDate && <p className='text-xs text-destructive'>{errors.paymentDate}</p>}
                   </div>
-                  <div className='space-y-2'>
+                  <div className='space-y-2' data-field='expirationDate'>
                     <Label>Expiration Date *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -758,17 +761,15 @@ const ListPropertyPage = () => {
                         <Calendar
                           mode='single'
                           selected={expirationDate ? new Date(expirationDate) : undefined}
-                          onSelect={(d) => setExpirationDate(d ? format(d, 'yyyy-MM-dd') : null)}
+                          onSelect={(d) => { setExpirationDate(d ? format(d, 'yyyy-MM-dd') : null); clearError('expirationDate'); }}
                           initialFocus
                           className={cn('p-3 pointer-events-auto')}
                         />
                       </PopoverContent>
                     </Popover>
+                    {errors.expirationDate && <p className='text-xs text-destructive'>{errors.expirationDate}</p>}
                   </div>
                 </div>
-                {paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate) && (
-                  <p className='text-xs text-destructive mt-2'>Start date must be earlier than expiration date.</p>
-                )}
               </div>
             </section>
             );
