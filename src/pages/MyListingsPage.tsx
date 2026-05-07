@@ -139,6 +139,19 @@ const MyListingsPage = () => {
     }
   };
 
+  const handleReactivate = async (listing: Tables<"user_properties">) => {
+    const { error } = await supabase
+      .from("user_properties")
+      .update({ status: "active" as const })
+      .eq("id", listing.id);
+    if (error) {
+      toast.error("Failed to reactivate listing");
+    } else {
+      setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, status: "active" as const } : l));
+      toast.success("Listing reactivated");
+    }
+  };
+
   const statusColor = (status: string) => {
     switch (status) {
       case "active": return "bg-badge-new text-badge-new-foreground";

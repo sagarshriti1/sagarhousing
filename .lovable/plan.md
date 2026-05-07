@@ -1,34 +1,35 @@
 ## Plan
 
-### Problem
+Make reactivation of a deactivated (`pending`) listing free when it still has time left in its paid period. Only listings whose paid period has expired are charged.
 
-`src/pages/MyListingsPage.tsx` uses the browser's native `window.confirm(...)` for the "Delete listing" action. In an embedded preview / iframe, the browser prefixes that dialog with `An embedded page at <domain> says…`, which looks broken and unprofessional. Every other delete action in the app already uses the styled in-app `AlertDialog` (admin pages use a `confirm({...})` helper from a confirm context).
+### Rule
 
-### Fix
+A listing is "still within its active period" if `expiration_date` exists AND `new Date(expiration_date) > now`.
 
-1. **Replace the native confirm in `MyListingsPage**` with a styled `AlertDialog` so it matches the rest of the app:
-  - Add local state `deleteId: string | null`.
-  - `handleDelete(id)` just opens the dialog (sets `deleteId`); the actual Supabase delete runs from the dialog's confirm action.
-  - Render an `AlertDialog` at the bottom of the page with:
-    - **Title:** `Delete listing?`
-    - **Description:** `This will permanently remove this listing. This action cannot be undone.`
-    - **Cancel:** `Cancel`
-    - **Confirm (destructive):** `Delete`
-2. **Standardize delete confirmation copy** across all admin delete dialogs so the wording is uniform and clean. Today the copy is mixed ("This cannot be undone." vs "This action cannot be undone.", "Permanently delete…" vs "Are you sure you want to delete…"). Normalize to:
+| State | Expiration | Reactivate action | Charge? |
+|---|---|---|---|
+| `pending` | future date | **Reactivate** (free, just flip status) | No |
+| `pending` | past / null | **Pay to Activate** (existing flow) | Yes (or free promo if flag is free) |
+| `active` (expired) | past | **Renew** (existing flow) | Yes (or free promo) |
+| `active` (valid) | future | "Active until …" label | — |
 
-  | Action                       | Title                         | Description                                                                      |
-  | ---------------------------- | ----------------------------- | -------------------------------------------------------------------------------- |
-  | Delete user                  | `Delete user account?`        | `This will permanently delete "<name>". This action cannot be undone.`           |
-  | Delete realtor (single)      | `Delete realtor?`             | `This will permanently delete "<name>". This action cannot be undone.`           |
-  | Delete realtors (bulk)       | `Delete selected realtors?`   | `This will permanently delete <N> realtor(s). This action cannot be undone.`     |
-  | Delete property (single)     | `Delete property?`            | `This will permanently delete "<title>". This action cannot be undone.`          |
-  | Delete properties (bulk)     | `Delete selected properties?` | `This will permanently delete <N> propert(y/ies). This action cannot be undone.` |
-  | Delete listing (My Listings) | `Delete listing?`             | `This will permanently remove this listing. This action cannot be undone.`       |
+### Changes — `src/pages/MyListingsPage.tsx`
 
-   Files updated: `src/pages/AdminDashboard.tsx`, `src/pages/admin/AdminUserDetailPage.tsx`, `src/pages/admin/AdminRealtorDetailPage.tsx`, `src/pages/admin/AdminPropertyDetailPage.tsx`, `src/pages/MyListingsPage.tsx`.
+1. **New handler `handleReactivate(listing)`**:
+   - `update({ status: 'active' })` on `user_properties` for that id.
+   - On success, update local state and toast `"Listing reactivated"`.
+   - **Do not** call `logPayment` and **do not** change `payment_date` / `expiration_date` (they were already paid for and still valid).
+
+2. **Update the action-cell logic (around line 306)** for `status === "pending"`:
+   - Compute `withinActivePeriod = exp && new Date(exp) > new Date()`.
+   - If `withinActivePeriod`: render a green "Reactivate" button that calls `handleReactivate(listing)` (icon: `Power` or reuse a check icon).
+   - Else: render the existing "Pay Rs. X to Activate" / "Activate Free 🎉" button as today.
+
+3. No change to the expired-active "Renew" branch — it already correctly charges.
+4. No change to `handleDeactivate` (it already preserves `expiration_date`, which is what makes free reactivation possible).
 
 ### Out of scope
 
-- No backend / RLS / DB changes.
-- No new shared confirm component — the admin pages already share one; My Listings just gets a local `AlertDialog`.
-- No styling overhaul of the existing dialog component.
+- No DB schema or RLS changes.
+- No admin-side changes; admins can already toggle status freely.
+- No change to the realtor-inactive gate (separate concern).
