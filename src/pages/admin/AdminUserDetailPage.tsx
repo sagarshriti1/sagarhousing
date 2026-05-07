@@ -264,8 +264,16 @@ const AdminUserDetailPage = () => {
           <DialogHeader><DialogTitle>Edit Profile</DialogTitle></DialogHeader>
           {draft && (
             <div className="space-y-4">
-              <div><Label>Name *</Label><Input value={draft.display_name ?? ""} onChange={(e) => setDraft({ ...draft, display_name: e.target.value })} /></div>
-              <div><Label>Email *</Label><Input value={draft.email ?? ""} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></div>
+              <div>
+                <Label>Name *</Label>
+                <Input value={draft.display_name ?? ""} onChange={(e) => { setDraft({ ...draft, display_name: e.target.value }); clearEditError('display_name'); }} aria-invalid={!!editErrors.display_name} />
+                {editErrors.display_name && <p className="text-xs text-destructive mt-1">{editErrors.display_name}</p>}
+              </div>
+              <div>
+                <Label>Email *</Label>
+                <Input value={draft.email ?? ""} onChange={(e) => { setDraft({ ...draft, email: e.target.value }); clearEditError('email'); }} aria-invalid={!!editErrors.email} />
+                {editErrors.email && <p className="text-xs text-destructive mt-1">{editErrors.email}</p>}
+              </div>
               <div><Label>Phone</Label><Input value={draft.phone ?? ""} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></div>
               {userRole === "admin" && (
                 <div><Label>Job Title</Label><Input value={draft.job_title ?? ""} onChange={(e) => setDraft({ ...draft, job_title: e.target.value })} /></div>
