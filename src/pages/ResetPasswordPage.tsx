@@ -98,11 +98,11 @@ const ResetPasswordPage = () => {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); clearError('password'); }}
               placeholder="••••••••"
-              required
-              minLength={6}
+              aria-invalid={!!errors.password}
             />
+            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -110,11 +110,11 @@ const ResetPasswordPage = () => {
               id="confirmPassword"
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
               placeholder="••••••••"
-              required
-              minLength={6}
+              aria-invalid={!!errors.confirmPassword}
             />
+            {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
           </div>
           <Button
             type="submit"
