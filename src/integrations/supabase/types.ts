@@ -314,6 +314,7 @@ export type Database = {
           images: string[] | null
           listing_type: Database["public"]["Enums"]["listing_type"]
           lot_size: number | null
+          lot_unit: string | null
           maintenance_fee: number | null
           payment_date: string | null
           price: number
@@ -347,6 +348,7 @@ export type Database = {
           images?: string[] | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
           lot_size?: number | null
+          lot_unit?: string | null
           maintenance_fee?: number | null
           payment_date?: string | null
           price: number
@@ -380,6 +382,7 @@ export type Database = {
           images?: string[] | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
           lot_size?: number | null
+          lot_unit?: string | null
           maintenance_fee?: number | null
           payment_date?: string | null
           price?: number

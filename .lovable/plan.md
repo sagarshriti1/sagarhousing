@@ -1,28 +1,31 @@
-## Add Confirm Password to Sign Up
+## Plan
 
-Add a "Confirm Password" field that appears only on the sign-up form (not sign-in or forgot-password) in `src/pages/AuthPage.tsx`.
+### 1. Auto-select numeric input values on focus
 
-### Changes (single file: `src/pages/AuthPage.tsx`)
+For all numeric inputs in `src/pages/ListPropertyPage.tsx` (Price, Bedrooms, Bathrooms, Square Meter, Year Built, Lot Size, Maintenance Fee, Bike Parking, Car Parking, Stories), add an `onFocus` handler that calls `e.target.select()`. When a user clicks/tabs into the field, the existing value (e.g. `0`) is auto-highlighted so typing replaces it instantly — no manual delete needed.
 
-1. **State**: add `const [confirmPassword, setConfirmPassword] = useState('');`
+Defaults stay as `0`; submission/validation logic is unchanged.
 
-2. **UI**: render a new field directly below the existing Password input, gated on `isSignUp`:
-   - Label: "Confirm Password"
-   - Type: password
-   - `aria-invalid={!!errors.confirmPassword}`
-   - Inline red error `<p className='text-xs text-destructive'>` when present
-   - `onChange` clears the `confirmPassword` error (matching existing pattern)
+### 2. Lot Size split input (value + unit dropdown)
 
-3. **Validation in `handleSubmit`** (only when `isSignUp`):
-   - Existing rule kept: `password.length >= 6` → error "Password must be at least 6 characters"
-   - New rule: if `!confirmPassword` → "Please confirm your password"
-   - New rule: if `password !== confirmPassword` → "Passwords do not match" (set on `confirmPassword`)
-   - All errors surface inline (red text under the relevant field), consistent with the existing UX style.
+Convert the current single `Lot Size (Aana)` input into a split control:
 
-4. **Reset**: clear `confirmPassword` and its error when toggling between Sign In ↔ Sign Up so stale values don't carry over.
+- **Left**: numeric input bound to `form.lot_size` (with the same auto-select-on-focus behavior as task 1).
+- **Right**: a `Select` dropdown bound to a new `form.lot_unit` field.
+- **Unit options (alphabetical):** `Aana`, `Bigha`, `Daam`, `Dhur`, `Katha`, `Paisa`, `Ropani`, `Sq. Ft.`
+- Default unit: `Aana` (matches today's behavior).
+- Label updates to just `Lot Size` (the unit now lives in the dropdown).
+
+**Persistence (DB change required):** add a `lot_unit TEXT` column (nullable, default `'Aana'`) to `public.user_properties`. The form will read/write it alongside `lot_size`. Existing rows keep `Aana` as their unit.
+
+No other pages currently read `lot_size`, so display surfaces don't need updates as part of this task. (If you'd like the unit shown on PropertyCard / PropertyDetail, say so and I'll add it.)
+
+### Files touched
+
+- `src/pages/ListPropertyPage.tsx` — focus-select handler on numeric inputs; replace Lot Size input with split input + unit dropdown; include `lot_unit` in form state, fetch (edit mode), and submit payload.
+- DB migration — add `lot_unit` column to `user_properties`.
 
 ### Out of scope
 
-- No changes to sign-in, forgot-password, or reset-password flows.
-- No DB / RLS / business-logic changes.
-- No styling beyond reusing existing `Input`, `Label`, and `text-destructive` patterns.
+- No changes to filters, listings display, or unit-conversion math.
+- No changes to validation rules or business logic beyond persisting the unit.

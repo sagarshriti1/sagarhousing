@@ -1,0 +1,1 @@
+ALTER TABLE public.user_properties ADD COLUMN IF NOT EXISTS lot_unit TEXT DEFAULT 'Aana';
