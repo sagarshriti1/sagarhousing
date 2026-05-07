@@ -320,7 +320,7 @@ const AuthPage = () => {
             <p className='text-center text-sm text-muted-foreground mt-6'>
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
-                onClick={() => setIsSignUp(!isSignUp)}
+                onClick={() => { setIsSignUp(!isSignUp); setConfirmPassword(''); setErrors({}); }}
                 className='text-accent hover:underline font-medium'
               >
                 {isSignUp ? 'Sign In' : 'Sign Up'}
