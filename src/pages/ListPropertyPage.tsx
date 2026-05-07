@@ -86,6 +86,10 @@ const ListPropertyPage = () => {
   const [bypassReason, setBypassReason] = useState<string>('');
   const [bypassPayment, setBypassPayment] = useState<boolean>(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'bypassed' | 'promotion'>('pending');
+  const [currentStatus, setCurrentStatus] = useState<'active' | 'pending' | 'sold' | 'rented'>('pending');
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false);
+  const [reactivatePayOpen, setReactivatePayOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const clearError = (k: string) => setErrors(prev => { if (!prev[k]) return prev; const { [k]: _, ...rest } = prev; return rest; });
   const [isDirty, setIsDirty] = useState(false);
