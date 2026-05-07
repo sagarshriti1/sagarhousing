@@ -139,6 +139,19 @@ const MyListingsPage = () => {
     }
   };
 
+  const handleReactivate = async (listing: Tables<"user_properties">) => {
+    const { error } = await supabase
+      .from("user_properties")
+      .update({ status: "active" as const })
+      .eq("id", listing.id);
+    if (error) {
+      toast.error("Failed to reactivate listing");
+    } else {
+      setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, status: "active" as const } : l));
+      toast.success("Listing reactivated");
+    }
+  };
+
   const statusColor = (status: string) => {
     switch (status) {
       case "active": return "bg-badge-new text-badge-new-foreground";
@@ -304,6 +317,14 @@ const MyListingsPage = () => {
                           return <span className="text-xs text-muted-foreground">Active until {format(new Date(exp), "MMM d, yyyy")}</span>;
                         }
                         if (listing.status === "pending") {
+                          const withinActivePeriod = exp && new Date(exp) > new Date();
+                          if (withinActivePeriod) {
+                            return (
+                              <Button variant="default" size="sm" className="gap-1.5" onClick={() => handleReactivate(listing)}>
+                                Reactivate
+                              </Button>
+                            );
+                          }
                           return (
                             <Button variant="default" size="sm" className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={startPay}>
                               <CreditCard className="h-3.5 w-3.5" />
