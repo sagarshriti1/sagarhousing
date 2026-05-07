@@ -605,13 +605,18 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                   </Label>
                   <Textarea
                     value={form.bypass_reason ?? ""}
-                    onChange={(e) => setForm({ ...form, bypass_reason: e.target.value })}
+                    onChange={(e) => { setForm({ ...form, bypass_reason: e.target.value }); clearError('bypass_reason'); }}
                     placeholder="Explain why payment is being bypassed (e.g. complimentary access, partner agreement, manual offline payment)…"
                     rows={2}
+                    aria-invalid={!!errors.bypass_reason}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    This reason is mandatory and will be visible in the payment history for both the admin and the realtor.
-                  </p>
+                  {errors.bypass_reason ? (
+                    <p className="text-xs text-destructive">{errors.bypass_reason}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      This reason is mandatory and will be visible in the payment history for both the admin and the realtor.
+                    </p>
+                  )}
                 </div>
               )}
 
