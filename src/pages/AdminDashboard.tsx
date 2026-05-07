@@ -606,8 +606,8 @@ const AdminDashboard = () => {
   const bulkDeleteProperties = () => {
     if (selectedPropertyIds.size === 0) return;
     confirm({
-      title: "Delete Selected Properties",
-      description: `Are you sure you want to delete ${selectedPropertyIds.size} property(ies)? This action cannot be undone.`,
+      title: "Delete selected properties?",
+      description: `This will permanently delete ${selectedPropertyIds.size} propert${selectedPropertyIds.size === 1 ? 'y' : 'ies'}. This action cannot be undone.`,
       onConfirm: async () => {
         const ids = Array.from(selectedPropertyIds);
         const { error } = await supabase.from("user_properties").delete().in("id", ids);
