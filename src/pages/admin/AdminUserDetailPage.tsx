@@ -52,6 +52,8 @@ const AdminUserDetailPage = () => {
   const [draft, setDraftState] = useState<Profile | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const clearEditError = (k: string) => setEditErrors(prev => { if (!prev[k]) return prev; const { [k]: _, ...rest } = prev; return rest; });
   const setDraft = (next: Profile | null) => { setEditDirty(true); setDraftState(next); };
   const [confirm, setConfirm] = useState<{ title: string; description: string; onConfirm: () => Promise<void> | void } | null>(null);
 
