@@ -23,6 +23,7 @@ const AuthPage = () => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [selectedRole, setSelectedRole] = useState<AccountType>('user');
   const [loading, setLoading] = useState(false);
@@ -66,6 +67,10 @@ const AuthPage = () => {
     else if (!validEmail(email)) errs.email = 'Enter a valid email address';
     if (!password) errs.password = 'Password is required';
     else if (password.length < 6) errs.password = 'Password must be at least 6 characters';
+    if (isSignUp) {
+      if (!confirmPassword) errs.confirmPassword = 'Please confirm your password';
+      else if (password && password !== confirmPassword) errs.confirmPassword = 'Passwords do not match';
+    }
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
 
@@ -260,6 +265,20 @@ const AuthPage = () => {
                 />
                 {errors.password && <p className='text-xs text-destructive'>{errors.password}</p>}
               </div>
+              {isSignUp && (
+                <div className='space-y-2'>
+                  <Label htmlFor='confirmPassword'>Confirm Password</Label>
+                  <Input
+                    id='confirmPassword'
+                    type='password'
+                    value={confirmPassword}
+                    onChange={e => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
+                    placeholder='••••••••'
+                    aria-invalid={!!errors.confirmPassword}
+                  />
+                  {errors.confirmPassword && <p className='text-xs text-destructive'>{errors.confirmPassword}</p>}
+                </div>
+              )}
               {/* Realtor payment / promo during signup */}
               {isSignUp && selectedRole === 'realtor' && realtorFree && (
                 <div className='rounded-md border border-dashed p-3 bg-muted/30 flex items-start gap-2'>
@@ -301,7 +320,7 @@ const AuthPage = () => {
             <p className='text-center text-sm text-muted-foreground mt-6'>
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
-                onClick={() => setIsSignUp(!isSignUp)}
+                onClick={() => { setIsSignUp(!isSignUp); setConfirmPassword(''); setErrors({}); }}
                 className='text-accent hover:underline font-medium'
               >
                 {isSignUp ? 'Sign In' : 'Sign Up'}
