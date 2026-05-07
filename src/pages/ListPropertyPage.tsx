@@ -72,7 +72,7 @@ const ListPropertyPage = () => {
     listing_type: 'sale' as 'sale' | 'rent',
     year_built: '',
     lot_size: '0',
-    
+    lot_unit: 'Aana',
     maintenance_fee: '0',
     bike_parking: '0',
     car_parking: '0',
@@ -184,6 +184,7 @@ const ListPropertyPage = () => {
         listing_type: data.listing_type ?? 'sale',
         year_built: data.year_built != null ? String(data.year_built) : '',
         lot_size: data.lot_size != null ? String(data.lot_size) : '0',
+        lot_unit: ((data as any).lot_unit as string) || 'Aana',
 
         maintenance_fee: String((data as any).maintenance_fee ?? 0),
         bike_parking: String((data as any).bike_parking ?? 0),
@@ -348,6 +349,7 @@ const ListPropertyPage = () => {
         listing_type: form.listing_type,
         year_built: form.year_built ? parseInt(form.year_built) : null,
         lot_size: form.lot_size ? parseFloat(form.lot_size) : null,
+        lot_unit: form.lot_unit || 'Aana',
         features: selectedFeatures,
         images: allImages,
         maintenance_fee: parseFloat(form.maintenance_fee) || 0,
@@ -538,44 +540,54 @@ const ListPropertyPage = () => {
             <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
               <div className='space-y-2'>
                 <Label htmlFor='price'>Price (Rs.) *</Label>
-                <Input id='price' type='number' value={form.price} onChange={e => updateForm('price', e.target.value)} placeholder='450000' min='0' aria-invalid={!!errors.price} />
+                <Input id='price' type='number' value={form.price} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('price', e.target.value)} placeholder='450000' min='0' aria-invalid={!!errors.price} />
                 {errors.price && <p className='text-xs text-destructive'>{errors.price}</p>}
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='bedrooms'>Bedrooms</Label>
-                <Input id='bedrooms' type='number' value={form.bedrooms} onChange={e => updateForm('bedrooms', e.target.value)} min='0' />
+                <Input id='bedrooms' type='number' value={form.bedrooms} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('bedrooms', e.target.value)} min='0' />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='bathrooms'>Bathrooms</Label>
-                <Input id='bathrooms' type='number' value={form.bathrooms} onChange={e => updateForm('bathrooms', e.target.value)} min='0' step='0.5' />
+                <Input id='bathrooms' type='number' value={form.bathrooms} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('bathrooms', e.target.value)} min='0' step='0.5' />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='sqft'>Square Meter</Label>
-                <Input id='sqft' type='number' value={form.sqft} onChange={e => updateForm('sqft', e.target.value)} placeholder='200' min='0' />
+                <Input id='sqft' type='number' value={form.sqft} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('sqft', e.target.value)} placeholder='200' min='0' />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='yearBuilt'>Year Built</Label>
-                <Input id='yearBuilt' type='number' value={form.year_built} onChange={e => updateForm('year_built', e.target.value)} placeholder='2020' min='1800' max={new Date().getFullYear()} />
+                <Input id='yearBuilt' type='number' value={form.year_built} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('year_built', e.target.value)} placeholder='2020' min='1800' max={new Date().getFullYear()} />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='lotSize'>Lot Size (Aana)</Label>
-                <Input id='lotSize' type='number' value={form.lot_size} onChange={e => updateForm('lot_size', e.target.value)} placeholder='4' min='0' step='0.01' />
+                <Label htmlFor='lotSize'>Lot Size</Label>
+                <div className='flex gap-2'>
+                  <Input id='lotSize' type='number' value={form.lot_size} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('lot_size', e.target.value)} placeholder='4' min='0' step='0.01' className='flex-1' />
+                  <Select value={form.lot_unit} onValueChange={v => updateForm('lot_unit', v)}>
+                    <SelectTrigger className='w-[110px]'><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {['Aana','Bigha','Daam','Dhur','Katha','Paisa','Ropani','Sq. Ft.'].map(u => (
+                        <SelectItem key={u} value={u}>{u}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='maintenance_fee'>Maintenance Fee (Rs.)</Label>
-                <Input id='maintenance_fee' type='number' value={form.maintenance_fee} onChange={e => updateForm('maintenance_fee', e.target.value)} placeholder='0' min='0' />
+                <Input id='maintenance_fee' type='number' value={form.maintenance_fee} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('maintenance_fee', e.target.value)} placeholder='0' min='0' />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='bike_parking'>Motor Bike Parking</Label>
-                <Input id='bike_parking' type='number' value={form.bike_parking} onChange={e => updateForm('bike_parking', e.target.value)} placeholder='0' min='0' />
+                <Input id='bike_parking' type='number' value={form.bike_parking} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('bike_parking', e.target.value)} placeholder='0' min='0' />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='car_parking'>Car Parking</Label>
-                <Input id='car_parking' type='number' value={form.car_parking} onChange={e => updateForm('car_parking', e.target.value)} placeholder='0' min='0' />
+                <Input id='car_parking' type='number' value={form.car_parking} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('car_parking', e.target.value)} placeholder='0' min='0' />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='stories'>Stories</Label>
-                <Input id='stories' type='number' value={form.stories} onChange={e => updateForm('stories', e.target.value)} placeholder='0' min='0' />
+                <Input id='stories' type='number' value={form.stories} onFocus={e => e.currentTarget.select()} onChange={e => updateForm('stories', e.target.value)} placeholder='0' min='0' />
               </div>
             </div>
           </section>
