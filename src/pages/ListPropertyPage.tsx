@@ -498,7 +498,8 @@ const ListPropertyPage = () => {
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Location</h2>
             <div className='space-y-2'>
               <Label htmlFor='address'>Street Address *</Label>
-              <Input id='address' value={form.address} onChange={e => updateForm('address', e.target.value)} placeholder='e.g. Thamel, Ward No. 26' required />
+              <Input id='address' value={form.address} onChange={e => updateForm('address', e.target.value)} placeholder='e.g. Thamel, Ward No. 26' aria-invalid={!!errors.address} />
+              {errors.address && <p className='text-xs text-destructive'>{errors.address}</p>}
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
