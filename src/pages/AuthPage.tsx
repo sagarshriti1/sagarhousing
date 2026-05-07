@@ -225,10 +225,11 @@ const AuthPage = () => {
                   id='email'
                   type='email'
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => { setEmail(e.target.value); clearError('email'); }}
                   placeholder='you@example.com'
-                  required
+                  aria-invalid={!!errors.email}
                 />
+                {errors.email && <p className='text-xs text-destructive'>{errors.email}</p>}
               </div>
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
@@ -247,11 +248,11 @@ const AuthPage = () => {
                   id='password'
                   type='password'
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => { setPassword(e.target.value); clearError('password'); }}
                   placeholder='••••••••'
-                  required
-                  minLength={6}
+                  aria-invalid={!!errors.password}
                 />
+                {errors.password && <p className='text-xs text-destructive'>{errors.password}</p>}
               </div>
               {/* Realtor payment / promo during signup */}
               {isSignUp && selectedRole === 'realtor' && realtorFree && (
