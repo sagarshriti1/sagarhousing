@@ -370,8 +370,8 @@ const AdminDashboard = () => {
   const deleteRealtor = (id: string) => {
     const realtor = realtors.find((r) => r.id === id);
     confirm({
-      title: "Delete Realtor",
-      description: `Are you sure you want to delete "${realtor?.name ?? "this realtor"}"? This action cannot be undone.`,
+      title: "Delete realtor?",
+      description: `This will permanently delete "${realtor?.name ?? "this realtor"}". This action cannot be undone.`,
       onConfirm: async () => {
         const { error } = await supabase.from("realtors").delete().eq("id", id);
         if (error) toast.error("Failed to delete realtor");
