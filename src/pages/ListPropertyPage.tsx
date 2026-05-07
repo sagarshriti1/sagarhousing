@@ -941,6 +941,41 @@ const ListPropertyPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={confirmDeactivateOpen} onOpenChange={setConfirmDeactivateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate this listing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your listing will be hidden from buyers. You can reactivate it any time
+              {expirationDate && new Date(expirationDate) > new Date()
+                ? ' for free while your paid period is still valid.'
+                : '.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivateNow}>Deactivate</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={reactivatePayOpen} onOpenChange={setReactivatePayOpen}>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Reactivate Listing</DialogTitle>
+            <DialogDescription>
+              Your active period has expired. Pay the listing fee to reactivate <strong>{form.title}</strong> for another month.
+            </DialogDescription>
+          </DialogHeader>
+          <SimulatedPaymentForm
+            paid={false}
+            onPaymentComplete={completeReactivationPayment}
+            amount={(form.listing_type === 'rent' ? rentFlag : saleFlag).fee}
+            label={`Listing fee (${form.listing_type === 'rent' ? 'Rental' : 'Sale'})`}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
