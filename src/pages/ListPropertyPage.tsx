@@ -460,7 +460,8 @@ const ListPropertyPage = () => {
             )}
             <div className='space-y-2'>
               <Label htmlFor='title'>Listing Title *</Label>
-              <Input id='title' value={form.title} onChange={e => updateForm('title', e.target.value)} placeholder='e.g. Beautiful Modern Home in Downtown' required />
+              <Input id='title' value={form.title} onChange={e => updateForm('title', e.target.value)} placeholder='e.g. Beautiful Modern Home in Downtown' aria-invalid={!!errors.title} />
+              {errors.title && <p className='text-xs text-destructive'>{errors.title}</p>}
             </div>
             <div className='space-y-2'>
               <Label htmlFor='description'>Description</Label>
