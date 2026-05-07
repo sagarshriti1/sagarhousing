@@ -394,6 +394,20 @@ const MyListingsPage = () => {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog open={blockedDeleteOpen} onOpenChange={setBlockedDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cannot delete active listing</AlertDialogTitle>
+            <AlertDialogDescription>
+              Active listings cannot be deleted. Please change the status to Inactive before deleting.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setBlockedDeleteOpen(false)}>Got it</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
