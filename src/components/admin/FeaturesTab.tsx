@@ -208,7 +208,11 @@ const FeaturesTab = () => {
                 )}
 
                 <div className="flex justify-end">
-                  <Button onClick={() => save(flag.id)} disabled={saving === flag.id} className="gap-2">
+                  <Button
+                    onClick={() => save(flag.id)}
+                    disabled={saving === flag.id || !isDirty(flag, draft)}
+                    className="gap-2"
+                  >
                     {saving === flag.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
