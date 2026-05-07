@@ -210,12 +210,12 @@ const ListPropertyPage = () => {
         if (district) updated.district = district;
       }
       if (field === 'district') {
-        // Reset city if current city doesn't belong to the new district
         const cityDistrict = getDistrictForCity(prev.city);
         if (cityDistrict !== value) updated.city = '';
       }
       return updated;
     });
+    clearError(field);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
