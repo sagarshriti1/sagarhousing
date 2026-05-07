@@ -287,32 +287,36 @@ const ListPropertyPage = () => {
       }
     }
 
-    if (!form.title || !form.address || !form.district || !form.price) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
+    const newErrors: Record<string, string> = {};
+    if (!form.title.trim()) newErrors.title = 'Listing title is required';
+    if (!form.address.trim()) newErrors.address = 'Street address is required';
+    if (!form.district.trim()) newErrors.district = 'Please select a district';
+    if (!form.price || parseFloat(form.price) <= 0) newErrors.price = 'Price must be greater than 0';
 
     const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
     if (isAdmin) {
-      if (!paymentDate || !expirationDate) {
-        toast.error('Start date and expiration date are required');
-        return;
-      }
-      if (new Date(paymentDate) >= new Date(expirationDate)) {
-        toast.error('Start date must be earlier than expiration date');
-        return;
+      if (!paymentDate) newErrors.paymentDate = 'Start date is required';
+      if (!expirationDate) newErrors.expirationDate = 'Expiration date is required';
+      if (paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate)) {
+        newErrors.expirationDate = 'Expiration date must be after start date';
       }
       if (!isEdit && !flag.isFree) {
         if (!bypassPayment && paymentStatus !== 'paid') {
-          toast.error('Please complete payment or bypass it with a reason');
-          return;
+          newErrors.payment = 'Please complete payment or enable bypass with a reason';
         }
         if (bypassPayment && bypassReason.trim().length < 3) {
-          toast.error('Please provide a reason for bypassing payment');
-          return;
+          newErrors.bypassReason = 'Please provide a reason for bypassing payment (min 3 characters)';
         }
       }
     }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      const firstKey = Object.keys(newErrors)[0];
+      const el = document.getElementById(firstKey) || document.querySelector(`[data-field="${firstKey}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setErrors({});
     setLoading(true);
     try {
       const newImageUrls: string[] = [];
