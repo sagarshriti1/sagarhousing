@@ -385,12 +385,14 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                               if (!date) { setForm({ ...form, featured_start_date: null }); return; }
                               const s = format(date, "yyyy-MM-dd");
                               setForm({ ...form, featured_start_date: s, featured_expiration_date: addMonths(s, 1) });
+                              clearError('featured_start_date'); clearError('featured_expiration_date');
                             }}
                             initialFocus
                             className={cn("p-3 pointer-events-auto")}
                           />
                         </PopoverContent>
                       </Popover>
+                      {errors.featured_start_date && <p className="text-xs text-destructive">{errors.featured_start_date}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label>Featured Expiration *</Label>
@@ -405,13 +407,14 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                           <Calendar
                             mode="single"
                             selected={form.featured_expiration_date ? new Date(form.featured_expiration_date) : undefined}
-                            onSelect={(date) => setForm({ ...form, featured_expiration_date: date ? format(date, "yyyy-MM-dd") : null })}
+                            onSelect={(date) => { setForm({ ...form, featured_expiration_date: date ? format(date, "yyyy-MM-dd") : null }); clearError('featured_expiration_date'); }}
                             disabled={form.featured_start_date ? { from: new Date(-8640000000000000), to: new Date(form.featured_start_date) } : undefined}
                             initialFocus
                             className={cn("p-3 pointer-events-auto")}
                           />
                         </PopoverContent>
                       </Popover>
+                      {errors.featured_expiration_date && <p className="text-xs text-destructive">{errors.featured_expiration_date}</p>}
                     </div>
                   </div>
 
