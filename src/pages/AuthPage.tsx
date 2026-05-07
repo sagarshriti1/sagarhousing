@@ -28,11 +28,20 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [showRealtorPayment, setShowRealtorPayment] = useState(false);
   const [realtorPaymentComplete, setRealtorPaymentComplete] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const clearError = (k: string) => setErrors(prev => { if (!prev[k]) return prev; const { [k]: _, ...rest } = prev; return rest; });
   const { fee: REALTOR_SIGNUP_FEE, isFree: realtorFree, promoLabel: realtorPromoLabel } = useFeatureFlag(FEATURE_KEYS.REALTOR_SIGNUP);
   const navigate = useNavigate();
 
+  const validEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errs: Record<string, string> = {};
+    if (!email.trim()) errs.email = 'Email is required';
+    else if (!validEmail(email)) errs.email = 'Enter a valid email address';
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -50,6 +59,15 @@ const AuthPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errs: Record<string, string> = {};
+    if (isSignUp && !displayName.trim()) errs.displayName = 'Display name is required';
+    if (!email.trim()) errs.email = 'Email is required';
+    else if (!validEmail(email)) errs.email = 'Enter a valid email address';
+    if (!password) errs.password = 'Password is required';
+    else if (password.length < 6) errs.password = 'Password must be at least 6 characters';
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
 
     // For realtor signup, require payment first (unless free promo)
     if (isSignUp && selectedRole === 'realtor' && !realtorFree) {
@@ -129,10 +147,11 @@ const AuthPage = () => {
                   id='email'
                   type='email'
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => { setEmail(e.target.value); clearError('email'); }}
                   placeholder='you@example.com'
-                  required
+                  aria-invalid={!!errors.email}
                 />
+                {errors.email && <p className='text-xs text-destructive'>{errors.email}</p>}
               </div>
               <Button
                 type='submit'
@@ -192,10 +211,11 @@ const AuthPage = () => {
                     <Input
                       id='displayName'
                       value={displayName}
-                      onChange={e => setDisplayName(e.target.value)}
+                      onChange={e => { setDisplayName(e.target.value); clearError('displayName'); }}
                       placeholder='John Doe'
-                      required={isSignUp}
+                      aria-invalid={!!errors.displayName}
                     />
+                    {errors.displayName && <p className='text-xs text-destructive'>{errors.displayName}</p>}
                   </div>
                 </>
               )}
@@ -205,10 +225,11 @@ const AuthPage = () => {
                   id='email'
                   type='email'
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => { setEmail(e.target.value); clearError('email'); }}
                   placeholder='you@example.com'
-                  required
+                  aria-invalid={!!errors.email}
                 />
+                {errors.email && <p className='text-xs text-destructive'>{errors.email}</p>}
               </div>
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
@@ -227,11 +248,11 @@ const AuthPage = () => {
                   id='password'
                   type='password'
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => { setPassword(e.target.value); clearError('password'); }}
                   placeholder='••••••••'
-                  required
-                  minLength={6}
+                  aria-invalid={!!errors.password}
                 />
+                {errors.password && <p className='text-xs text-destructive'>{errors.password}</p>}
               </div>
               {/* Realtor payment / promo during signup */}
               {isSignUp && selectedRole === 'realtor' && realtorFree && (

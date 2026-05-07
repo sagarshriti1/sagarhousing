@@ -52,6 +52,8 @@ const AdminUserDetailPage = () => {
   const [draft, setDraftState] = useState<Profile | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const clearEditError = (k: string) => setEditErrors(prev => { if (!prev[k]) return prev; const { [k]: _, ...rest } = prev; return rest; });
   const setDraft = (next: Profile | null) => { setEditDirty(true); setDraftState(next); };
   const [confirm, setConfirm] = useState<{ title: string; description: string; onConfirm: () => Promise<void> | void } | null>(null);
 
@@ -129,12 +131,18 @@ const AdminUserDetailPage = () => {
     });
   };
 
-  const openEdit = () => { if (profile) { setDraftState({ ...profile }); setEditDirty(false); setEditOpen(true); } };
+  const openEdit = () => { if (profile) { setDraftState({ ...profile }); setEditDirty(false); setEditErrors({}); setEditOpen(true); } };
+
+  const validEmailFormat = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 
   const saveEdit = async () => {
     if (!draft) return;
-    if (!draft.display_name?.trim()) { toast.error("Name is required"); return; }
-    if (!draft.email?.trim()) { toast.error("Email is required"); return; }
+    const errs: Record<string, string> = {};
+    if (!draft.display_name?.trim()) errs.display_name = 'Name is required';
+    if (!draft.email?.trim()) errs.email = 'Email is required';
+    else if (!validEmailFormat(draft.email)) errs.email = 'Enter a valid email address';
+    if (Object.keys(errs).length) { setEditErrors(errs); return; }
+    setEditErrors({});
     const { id, ...rest } = draft;
     const { error } = await supabase.from("profiles").update(rest).eq("id", id);
     if (error) toast.error("Failed to save profile");
@@ -256,8 +264,16 @@ const AdminUserDetailPage = () => {
           <DialogHeader><DialogTitle>Edit Profile</DialogTitle></DialogHeader>
           {draft && (
             <div className="space-y-4">
-              <div><Label>Name *</Label><Input value={draft.display_name ?? ""} onChange={(e) => setDraft({ ...draft, display_name: e.target.value })} /></div>
-              <div><Label>Email *</Label><Input value={draft.email ?? ""} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></div>
+              <div>
+                <Label>Name *</Label>
+                <Input value={draft.display_name ?? ""} onChange={(e) => { setDraft({ ...draft, display_name: e.target.value }); clearEditError('display_name'); }} aria-invalid={!!editErrors.display_name} />
+                {editErrors.display_name && <p className="text-xs text-destructive mt-1">{editErrors.display_name}</p>}
+              </div>
+              <div>
+                <Label>Email *</Label>
+                <Input value={draft.email ?? ""} onChange={(e) => { setDraft({ ...draft, email: e.target.value }); clearEditError('email'); }} aria-invalid={!!editErrors.email} />
+                {editErrors.email && <p className="text-xs text-destructive mt-1">{editErrors.email}</p>}
+              </div>
               <div><Label>Phone</Label><Input value={draft.phone ?? ""} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></div>
               {userRole === "admin" && (
                 <div><Label>Job Title</Label><Input value={draft.job_title ?? ""} onChange={(e) => setDraft({ ...draft, job_title: e.target.value })} /></div>

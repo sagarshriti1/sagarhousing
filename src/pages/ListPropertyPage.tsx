@@ -86,6 +86,8 @@ const ListPropertyPage = () => {
   const [bypassReason, setBypassReason] = useState<string>('');
   const [bypassPayment, setBypassPayment] = useState<boolean>(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'bypassed' | 'promotion'>('pending');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const clearError = (k: string) => setErrors(prev => { if (!prev[k]) return prev; const { [k]: _, ...rest } = prev; return rest; });
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
@@ -208,12 +210,12 @@ const ListPropertyPage = () => {
         if (district) updated.district = district;
       }
       if (field === 'district') {
-        // Reset city if current city doesn't belong to the new district
         const cityDistrict = getDistrictForCity(prev.city);
         if (cityDistrict !== value) updated.city = '';
       }
       return updated;
     });
+    clearError(field);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -285,32 +287,36 @@ const ListPropertyPage = () => {
       }
     }
 
-    if (!form.title || !form.address || !form.district || !form.price) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
+    const newErrors: Record<string, string> = {};
+    if (!form.title.trim()) newErrors.title = 'Listing title is required';
+    if (!form.address.trim()) newErrors.address = 'Street address is required';
+    if (!form.district.trim()) newErrors.district = 'Please select a district';
+    if (!form.price || parseFloat(form.price) <= 0) newErrors.price = 'Price must be greater than 0';
 
     const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
     if (isAdmin) {
-      if (!paymentDate || !expirationDate) {
-        toast.error('Start date and expiration date are required');
-        return;
-      }
-      if (new Date(paymentDate) >= new Date(expirationDate)) {
-        toast.error('Start date must be earlier than expiration date');
-        return;
+      if (!paymentDate) newErrors.paymentDate = 'Start date is required';
+      if (!expirationDate) newErrors.expirationDate = 'Expiration date is required';
+      if (paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate)) {
+        newErrors.expirationDate = 'Expiration date must be after start date';
       }
       if (!isEdit && !flag.isFree) {
         if (!bypassPayment && paymentStatus !== 'paid') {
-          toast.error('Please complete payment or bypass it with a reason');
-          return;
+          newErrors.payment = 'Please complete payment or enable bypass with a reason';
         }
         if (bypassPayment && bypassReason.trim().length < 3) {
-          toast.error('Please provide a reason for bypassing payment');
-          return;
+          newErrors.bypassReason = 'Please provide a reason for bypassing payment (min 3 characters)';
         }
       }
     }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      const firstKey = Object.keys(newErrors)[0];
+      const el = document.getElementById(firstKey) || document.querySelector(`[data-field="${firstKey}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setErrors({});
     setLoading(true);
     try {
       const newImageUrls: string[] = [];
@@ -454,7 +460,8 @@ const ListPropertyPage = () => {
             )}
             <div className='space-y-2'>
               <Label htmlFor='title'>Listing Title *</Label>
-              <Input id='title' value={form.title} onChange={e => updateForm('title', e.target.value)} placeholder='e.g. Beautiful Modern Home in Downtown' required />
+              <Input id='title' value={form.title} onChange={e => updateForm('title', e.target.value)} placeholder='e.g. Beautiful Modern Home in Downtown' aria-invalid={!!errors.title} />
+              {errors.title && <p className='text-xs text-destructive'>{errors.title}</p>}
             </div>
             <div className='space-y-2'>
               <Label htmlFor='description'>Description</Label>
@@ -491,7 +498,8 @@ const ListPropertyPage = () => {
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>Location</h2>
             <div className='space-y-2'>
               <Label htmlFor='address'>Street Address *</Label>
-              <Input id='address' value={form.address} onChange={e => updateForm('address', e.target.value)} placeholder='e.g. Thamel, Ward No. 26' required />
+              <Input id='address' value={form.address} onChange={e => updateForm('address', e.target.value)} placeholder='e.g. Thamel, Ward No. 26' aria-invalid={!!errors.address} />
+              {errors.address && <p className='text-xs text-destructive'>{errors.address}</p>}
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
@@ -509,7 +517,7 @@ const ListPropertyPage = () => {
                   className="w-full"
                 />
               </div>
-              <div className='space-y-2'>
+              <div className='space-y-2' data-field='district'>
                 <Label>District *</Label>
                 <SearchableCombobox
                   value={form.district}
@@ -519,6 +527,7 @@ const ListPropertyPage = () => {
                   searchPlaceholder="Search districts..."
                   className="w-full"
                 />
+                {errors.district && <p className='text-xs text-destructive'>{errors.district}</p>}
               </div>
             </div>
           </section>
@@ -529,7 +538,8 @@ const ListPropertyPage = () => {
             <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
               <div className='space-y-2'>
                 <Label htmlFor='price'>Price (Rs.) *</Label>
-                <Input id='price' type='number' value={form.price} onChange={e => updateForm('price', e.target.value)} placeholder='450000' required min='0' />
+                <Input id='price' type='number' value={form.price} onChange={e => updateForm('price', e.target.value)} placeholder='450000' min='0' aria-invalid={!!errors.price} />
+                {errors.price && <p className='text-xs text-destructive'>{errors.price}</p>}
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='bedrooms'>Bedrooms</Label>
@@ -672,27 +682,35 @@ const ListPropertyPage = () => {
                   </div>
 
                   {bypassPayment && (
-                    <div className='space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5'>
+                    <div className='space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5' data-field='bypassReason'>
                       <Label>Reason for bypass <span className='text-destructive'>*</span></Label>
                       <Textarea
                         value={bypassReason}
-                        onChange={(e) => setBypassReason(e.target.value)}
+                        onChange={(e) => { setBypassReason(e.target.value); clearError('bypassReason'); }}
                         placeholder='Explain why payment is being bypassed (e.g. complimentary listing, partner agreement, manual offline payment)…'
                         rows={2}
+                        aria-invalid={!!errors.bypassReason}
                       />
-                      <p className='text-xs text-muted-foreground'>
-                        Mandatory. This reason will appear in the payment history for both the admin and the listing owner.
-                      </p>
+                      {errors.bypassReason ? (
+                        <p className='text-xs text-destructive'>{errors.bypassReason}</p>
+                      ) : (
+                        <p className='text-xs text-muted-foreground'>
+                          Mandatory. This reason will appear in the payment history for both the admin and the listing owner.
+                        </p>
+                      )}
                     </div>
                   )}
 
                   {!bypassPayment && (
-                    <SimulatedPaymentForm
-                      paid={paymentStatus === 'paid'}
-                      onPaymentComplete={() => setPaymentStatus('paid')}
-                      amount={flag.fee}
-                      label={form.listing_type === 'rent' ? 'Rent listing fee' : 'Sale listing fee'}
-                    />
+                    <div data-field='payment' className='space-y-2'>
+                      <SimulatedPaymentForm
+                        paid={paymentStatus === 'paid'}
+                        onPaymentComplete={() => { setPaymentStatus('paid'); clearError('payment'); }}
+                        amount={flag.fee}
+                        label={form.listing_type === 'rent' ? 'Rent listing fee' : 'Sale listing fee'}
+                      />
+                      {errors.payment && <p className='text-xs text-destructive'>{errors.payment}</p>}
+                    </div>
                   )}
                 </div>
               )}
@@ -702,7 +720,7 @@ const ListPropertyPage = () => {
               <div>
                 <h3 className='font-medium text-foreground mb-3 flex items-center gap-2'><CalendarIcon className='h-4 w-4 text-muted-foreground' /> Listing Period</h3>
                 <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
+                  <div className='space-y-2' data-field='paymentDate'>
                     <Label>Start Date *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -720,14 +738,17 @@ const ListPropertyPage = () => {
                             const s = format(d, 'yyyy-MM-dd');
                             setPaymentDate(s);
                             setExpirationDate(addMonthsStr(s, 1));
+                            clearError('paymentDate');
+                            clearError('expirationDate');
                           }}
                           initialFocus
                           className={cn('p-3 pointer-events-auto')}
                         />
                       </PopoverContent>
                     </Popover>
+                    {errors.paymentDate && <p className='text-xs text-destructive'>{errors.paymentDate}</p>}
                   </div>
-                  <div className='space-y-2'>
+                  <div className='space-y-2' data-field='expirationDate'>
                     <Label>Expiration Date *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -740,17 +761,15 @@ const ListPropertyPage = () => {
                         <Calendar
                           mode='single'
                           selected={expirationDate ? new Date(expirationDate) : undefined}
-                          onSelect={(d) => setExpirationDate(d ? format(d, 'yyyy-MM-dd') : null)}
+                          onSelect={(d) => { setExpirationDate(d ? format(d, 'yyyy-MM-dd') : null); clearError('expirationDate'); }}
                           initialFocus
                           className={cn('p-3 pointer-events-auto')}
                         />
                       </PopoverContent>
                     </Popover>
+                    {errors.expirationDate && <p className='text-xs text-destructive'>{errors.expirationDate}</p>}
                   </div>
                 </div>
-                {paymentDate && expirationDate && new Date(paymentDate) >= new Date(expirationDate) && (
-                  <p className='text-xs text-destructive mt-2'>Start date must be earlier than expiration date.</p>
-                )}
               </div>
             </section>
             );

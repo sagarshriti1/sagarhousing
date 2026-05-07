@@ -59,6 +59,7 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
   const [profile, setProfileState] = useState<ProfileData>({
     display_name: "",
     email: "",
@@ -233,6 +234,10 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     if (!user) return;
+    const errs: Record<string, string> = {};
+    if (!profile.display_name || !profile.display_name.trim()) errs.display_name = 'Display name is required';
+    if (Object.keys(errs).length) { setProfileErrors(errs); return; }
+    setProfileErrors({});
     setSaving(true);
     const payload = {
       user_id: user.id,
@@ -318,8 +323,9 @@ const ProfilePage = () => {
 
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label>Display Name</Label>
-                        <Input value={profile.display_name ?? ""} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} maxLength={100} />
+                        <Label>Display Name *</Label>
+                        <Input value={profile.display_name ?? ""} onChange={(e) => { setProfile({ ...profile, display_name: e.target.value }); if (profileErrors.display_name) setProfileErrors(({ display_name, ...r }) => r); }} maxLength={100} aria-invalid={!!profileErrors.display_name} />
+                        {profileErrors.display_name && <p className="text-xs text-destructive">{profileErrors.display_name}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label>Email</Label>

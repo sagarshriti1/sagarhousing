@@ -129,6 +129,8 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [bypassPayment, setBypassPayment] = useState(realtor?.payment_bypassed ?? false);
   const [bypassFeatured, setBypassFeatured] = useState(realtor?.featured_payment_bypassed ?? false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const clearError = (k: string) => setErrors(prev => { if (!prev[k]) return prev; const { [k]: _, ...rest } = prev; return rest; });
 
   // Reset form when realtor changes
   const currentId = realtor?.id ?? null;
@@ -216,18 +218,32 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && (form.district || form.state) && datesValid && bypassReasonValid && featuredDatesValid && featuredBypassReasonValid;
 
   const handleSubmit = () => {
-    if (!isValid) {
-      if (form.start_date && form.expiration_date && !datesValid) {
-        toast.error("Start date must be earlier than expiration date");
-      } else if (!bypassReasonValid) {
-        toast.error("Please provide a reason for bypassing payment");
-      } else if (!featuredDatesValid) {
-        toast.error("Featured start date must be earlier than featured expiration date");
-      } else if (!featuredBypassReasonValid) {
-        toast.error("Please provide a reason for bypassing featured payment");
-      }
-      return;
+    const errs: Record<string, string> = {};
+    if (!form.name.trim()) errs.name = 'Name is required';
+    if (!form.email.trim()) errs.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'Enter a valid email address';
+    if (!form.phone.trim()) errs.phone = 'Phone is required';
+    if (!(form.district || form.state)) errs.district = 'Please select a district';
+    if (!form.start_date) errs.start_date = 'Start date is required';
+    if (!form.expiration_date) errs.expiration_date = 'Expiration date is required';
+    if (form.start_date && form.expiration_date && new Date(form.start_date) >= new Date(form.expiration_date)) {
+      errs.expiration_date = 'Expiration date must be after start date';
     }
+    if (bypassPayment && !realtorPromoFree && (!form.bypass_reason || form.bypass_reason.trim().length < 3)) {
+      errs.bypass_reason = 'Please provide a reason (min 3 characters) for bypassing payment';
+    }
+    if (form.is_featured) {
+      if (!form.featured_start_date) errs.featured_start_date = 'Featured start date is required';
+      if (!form.featured_expiration_date) errs.featured_expiration_date = 'Featured expiration date is required';
+      if (form.featured_start_date && form.featured_expiration_date && new Date(form.featured_start_date) >= new Date(form.featured_expiration_date)) {
+        errs.featured_expiration_date = 'Featured expiration must be after featured start';
+      }
+      if (bypassFeatured && !featuredPromoFree && (!form.featured_bypass_reason || form.featured_bypass_reason.trim().length < 3)) {
+        errs.featured_bypass_reason = 'Please provide a reason (min 3 characters) for bypassing featured payment';
+      }
+    }
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
     onSave(form);
   };
 
@@ -244,15 +260,18 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Name *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Input value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); clearError('name'); }} aria-invalid={!!errors.name} />
+              {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
             </div>
             <div>
               <Label>Email *</Label>
-              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Input type="email" value={form.email} onChange={(e) => { setForm({ ...form, email: e.target.value }); clearError('email'); }} aria-invalid={!!errors.email} />
+              {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
             </div>
             <div>
               <Label>Phone *</Label>
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <Input value={form.phone} onChange={(e) => { setForm({ ...form, phone: e.target.value }); clearError('phone'); }} aria-invalid={!!errors.phone} />
+              {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
             </div>
             <div>
               <Label>Years Experience</Label>
@@ -273,12 +292,13 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
             </div>
             <div>
               <Label>District *</Label>
-              <Select value={form.state || form.district} onValueChange={handleDistrictChange}>
-                <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+              <Select value={form.state || form.district} onValueChange={(v) => { handleDistrictChange(v); clearError('district'); }}>
+                <SelectTrigger aria-invalid={!!errors.district}><SelectValue placeholder="Select District" /></SelectTrigger>
                 <SelectContent>
                   {NEPAL_DISTRICTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {errors.district && <p className="text-xs text-destructive mt-1">{errors.district}</p>}
             </div>
           </div>
           <div>
@@ -365,12 +385,14 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                               if (!date) { setForm({ ...form, featured_start_date: null }); return; }
                               const s = format(date, "yyyy-MM-dd");
                               setForm({ ...form, featured_start_date: s, featured_expiration_date: addMonths(s, 1) });
+                              clearError('featured_start_date'); clearError('featured_expiration_date');
                             }}
                             initialFocus
                             className={cn("p-3 pointer-events-auto")}
                           />
                         </PopoverContent>
                       </Popover>
+                      {errors.featured_start_date && <p className="text-xs text-destructive">{errors.featured_start_date}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label>Featured Expiration *</Label>
@@ -385,13 +407,14 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                           <Calendar
                             mode="single"
                             selected={form.featured_expiration_date ? new Date(form.featured_expiration_date) : undefined}
-                            onSelect={(date) => setForm({ ...form, featured_expiration_date: date ? format(date, "yyyy-MM-dd") : null })}
+                            onSelect={(date) => { setForm({ ...form, featured_expiration_date: date ? format(date, "yyyy-MM-dd") : null }); clearError('featured_expiration_date'); }}
                             disabled={form.featured_start_date ? { from: new Date(-8640000000000000), to: new Date(form.featured_start_date) } : undefined}
                             initialFocus
                             className={cn("p-3 pointer-events-auto")}
                           />
                         </PopoverContent>
                       </Popover>
+                      {errors.featured_expiration_date && <p className="text-xs text-destructive">{errors.featured_expiration_date}</p>}
                     </div>
                   </div>
 
@@ -440,10 +463,12 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                       <Label className="text-sm">Reason for bypass <span className="text-destructive">*</span></Label>
                       <Textarea
                         value={form.featured_bypass_reason ?? ""}
-                        onChange={(e) => setForm({ ...form, featured_bypass_reason: e.target.value })}
+                        onChange={(e) => { setForm({ ...form, featured_bypass_reason: e.target.value }); clearError('featured_bypass_reason'); }}
                         placeholder="Explain why featured payment is being bypassed…"
                         rows={2}
+                        aria-invalid={!!errors.featured_bypass_reason}
                       />
+                      {errors.featured_bypass_reason && <p className="text-xs text-destructive">{errors.featured_bypass_reason}</p>}
                     </div>
                   )}
 
@@ -485,12 +510,14 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                         if (!date) { setForm({ ...form, start_date: null }); return; }
                         const s = format(date, "yyyy-MM-dd");
                         setForm({ ...form, start_date: s, expiration_date: addMonths(s, 1) });
+                        clearError('start_date'); clearError('expiration_date');
                       }}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.start_date && <p className="text-xs text-destructive">{errors.start_date}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Expiration Date *</Label>
@@ -505,18 +532,16 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                     <Calendar
                       mode="single"
                       selected={form.expiration_date ? new Date(form.expiration_date) : undefined}
-                      onSelect={(date) => setForm({ ...form, expiration_date: date ? format(date, "yyyy-MM-dd") : null })}
+                      onSelect={(date) => { setForm({ ...form, expiration_date: date ? format(date, "yyyy-MM-dd") : null }); clearError('expiration_date'); }}
                       disabled={form.start_date ? { from: new Date(-8640000000000000), to: new Date(form.start_date) } : undefined}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.expiration_date && <p className="text-xs text-destructive">{errors.expiration_date}</p>}
               </div>
             </div>
-            {form.start_date && form.expiration_date && new Date(form.start_date) >= new Date(form.expiration_date) && (
-              <p className="text-xs text-destructive">Start date must be earlier than expiration date.</p>
-            )}
           </div>
 
           {/* Subscription & Payment Section */}
@@ -580,13 +605,18 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                   </Label>
                   <Textarea
                     value={form.bypass_reason ?? ""}
-                    onChange={(e) => setForm({ ...form, bypass_reason: e.target.value })}
+                    onChange={(e) => { setForm({ ...form, bypass_reason: e.target.value }); clearError('bypass_reason'); }}
                     placeholder="Explain why payment is being bypassed (e.g. complimentary access, partner agreement, manual offline payment)…"
                     rows={2}
+                    aria-invalid={!!errors.bypass_reason}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    This reason is mandatory and will be visible in the payment history for both the admin and the realtor.
-                  </p>
+                  {errors.bypass_reason ? (
+                    <p className="text-xs text-destructive">{errors.bypass_reason}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      This reason is mandatory and will be visible in the payment history for both the admin and the realtor.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -620,11 +650,11 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             {isCreate ? (
-              <Button onClick={handleSubmit} disabled={!isValid}>
+              <Button onClick={handleSubmit}>
                 Create Realtor
               </Button>
             ) : (
-              <ConfirmSaveButton onConfirm={handleSubmit} disabled={!isValid || !dirty}>
+              <ConfirmSaveButton onConfirm={handleSubmit} disabled={!dirty}>
                 Save Changes
               </ConfirmSaveButton>
             )}
