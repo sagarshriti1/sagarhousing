@@ -37,6 +37,16 @@ const FeaturesTab = () => {
     load();
   }, []);
 
+  const isDirty = (flag: FeatureFlag, draft: FeatureFlag) => {
+    const norm = (v: string | null | undefined) => (v?.trim() ? v.trim() : null);
+    return (
+      Number(flag.fee) !== Number(draft.fee) ||
+      flag.bypass_payment !== draft.bypass_payment ||
+      norm(flag.promo_label) !== norm(draft.promo_label) ||
+      (flag.promo_ends_at ?? null) !== (draft.promo_ends_at ?? null)
+    );
+  };
+
   const update = (id: string, patch: Partial<FeatureFlag>) => {
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   };
