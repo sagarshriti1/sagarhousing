@@ -184,6 +184,7 @@ const ListPropertyPage = () => {
         listing_type: data.listing_type ?? 'sale',
         year_built: data.year_built != null ? String(data.year_built) : '',
         lot_size: data.lot_size != null ? String(data.lot_size) : '0',
+        lot_unit: ((data as any).lot_unit as string) || 'Aana',
 
         maintenance_fee: String((data as any).maintenance_fee ?? 0),
         bike_parking: String((data as any).bike_parking ?? 0),
