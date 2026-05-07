@@ -75,7 +75,7 @@ const MyListingsPage = () => {
   const handleDelete = (id: string) => {
     const listing = listings.find((l) => l.id === id);
     if (listing?.status === "active") {
-      toast.error("Active listings cannot be deleted. Please change the status to Inactive before deleting.");
+      setBlockedDeleteOpen(true);
       return;
     }
     setDeleteId(id);
