@@ -131,12 +131,18 @@ const AdminUserDetailPage = () => {
     });
   };
 
-  const openEdit = () => { if (profile) { setDraftState({ ...profile }); setEditDirty(false); setEditOpen(true); } };
+  const openEdit = () => { if (profile) { setDraftState({ ...profile }); setEditDirty(false); setEditErrors({}); setEditOpen(true); } };
+
+  const validEmailFormat = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 
   const saveEdit = async () => {
     if (!draft) return;
-    if (!draft.display_name?.trim()) { toast.error("Name is required"); return; }
-    if (!draft.email?.trim()) { toast.error("Email is required"); return; }
+    const errs: Record<string, string> = {};
+    if (!draft.display_name?.trim()) errs.display_name = 'Name is required';
+    if (!draft.email?.trim()) errs.email = 'Email is required';
+    else if (!validEmailFormat(draft.email)) errs.email = 'Enter a valid email address';
+    if (Object.keys(errs).length) { setEditErrors(errs); return; }
+    setEditErrors({});
     const { id, ...rest } = draft;
     const { error } = await supabase.from("profiles").update(rest).eq("id", id);
     if (error) toast.error("Failed to save profile");
