@@ -218,18 +218,32 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const isValid = form.name.trim() && form.email.trim() && form.phone.trim() && (form.district || form.state) && datesValid && bypassReasonValid && featuredDatesValid && featuredBypassReasonValid;
 
   const handleSubmit = () => {
-    if (!isValid) {
-      if (form.start_date && form.expiration_date && !datesValid) {
-        toast.error("Start date must be earlier than expiration date");
-      } else if (!bypassReasonValid) {
-        toast.error("Please provide a reason for bypassing payment");
-      } else if (!featuredDatesValid) {
-        toast.error("Featured start date must be earlier than featured expiration date");
-      } else if (!featuredBypassReasonValid) {
-        toast.error("Please provide a reason for bypassing featured payment");
-      }
-      return;
+    const errs: Record<string, string> = {};
+    if (!form.name.trim()) errs.name = 'Name is required';
+    if (!form.email.trim()) errs.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'Enter a valid email address';
+    if (!form.phone.trim()) errs.phone = 'Phone is required';
+    if (!(form.district || form.state)) errs.district = 'Please select a district';
+    if (!form.start_date) errs.start_date = 'Start date is required';
+    if (!form.expiration_date) errs.expiration_date = 'Expiration date is required';
+    if (form.start_date && form.expiration_date && new Date(form.start_date) >= new Date(form.expiration_date)) {
+      errs.expiration_date = 'Expiration date must be after start date';
     }
+    if (bypassPayment && !realtorPromoFree && (!form.bypass_reason || form.bypass_reason.trim().length < 3)) {
+      errs.bypass_reason = 'Please provide a reason (min 3 characters) for bypassing payment';
+    }
+    if (form.is_featured) {
+      if (!form.featured_start_date) errs.featured_start_date = 'Featured start date is required';
+      if (!form.featured_expiration_date) errs.featured_expiration_date = 'Featured expiration date is required';
+      if (form.featured_start_date && form.featured_expiration_date && new Date(form.featured_start_date) >= new Date(form.featured_expiration_date)) {
+        errs.featured_expiration_date = 'Featured expiration must be after featured start';
+      }
+      if (bypassFeatured && !featuredPromoFree && (!form.featured_bypass_reason || form.featured_bypass_reason.trim().length < 3)) {
+        errs.featured_bypass_reason = 'Please provide a reason (min 3 characters) for bypassing featured payment';
+      }
+    }
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
     onSave(form);
   };
 
