@@ -202,10 +202,84 @@ const ListPropertyPage = () => {
       setPaymentDate(pd ? format(new Date(pd), 'yyyy-MM-dd') : null);
       setExpirationDate(ed ? format(new Date(ed), 'yyyy-MM-dd') : null);
       setPropertyCode((data as any).property_code ?? null);
+      setCurrentStatus(((data as any).status ?? 'pending') as any);
       setFetching(false);
     };
     fetchProperty();
   }, [editId, user, navigate]);
+
+  const handleDeactivateNow = async () => {
+    if (!editId) return;
+    setStatusBusy(true);
+    const { error } = await supabase
+      .from('user_properties')
+      .update({ status: 'pending' as const })
+      .eq('id', editId);
+    setStatusBusy(false);
+    setConfirmDeactivateOpen(false);
+    if (error) { toast.error('Failed to deactivate listing'); return; }
+    setCurrentStatus('pending');
+    toast.success('Listing deactivated');
+  };
+
+  const handleReactivateClick = async () => {
+    if (!editId) return;
+    const withinPeriod = expirationDate && new Date(expirationDate) > new Date();
+    const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+    if (withinPeriod || isAdmin) {
+      setStatusBusy(true);
+      const { error } = await supabase
+        .from('user_properties')
+        .update({ status: 'active' as const })
+        .eq('id', editId);
+      setStatusBusy(false);
+      if (error) { toast.error('Failed to reactivate listing'); return; }
+      setCurrentStatus('active');
+      toast.success('Listing reactivated');
+      return;
+    }
+    if (flag.isFree) {
+      // Free promotion: activate + log + set new period
+      await completeReactivationPayment();
+      return;
+    }
+    setReactivatePayOpen(true);
+  };
+
+  const completeReactivationPayment = async () => {
+    if (!editId || !user) return;
+    const now = new Date();
+    const expiration = new Date(now);
+    expiration.setMonth(expiration.getMonth() + 1);
+    const { error } = await supabase
+      .from('user_properties')
+      .update({
+        status: 'active' as const,
+        payment_date: now.toISOString(),
+        expiration_date: expiration.toISOString(),
+      } as any)
+      .eq('id', editId);
+    if (error) { toast.error('Failed to activate listing'); return; }
+    const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+    const { logPayment } = await import('@/lib/paymentHistory');
+    await logPayment({
+      user_id: user.id,
+      service_key: form.listing_type === 'rent' ? FEATURE_KEYS.PROPERTY_RENT : FEATURE_KEYS.PROPERTY_SALE,
+      service_label: form.listing_type === 'rent' ? 'Property Listing — For Rent' : 'Property Listing — For Sale',
+      related_type: 'property',
+      related_id: editId,
+      related_label: form.title,
+      amount: flag.isFree ? 0 : flag.fee,
+      status: flag.isFree ? 'promotion' : 'paid',
+      promo_label: flag.isFree ? flag.promoLabel : null,
+      expiration_date: expiration.toISOString(),
+    });
+    setCurrentStatus('active');
+    setPaymentDate(format(now, 'yyyy-MM-dd'));
+    setExpirationDate(format(expiration, 'yyyy-MM-dd'));
+    setReactivatePayOpen(false);
+    toast.success('Payment successful! Your listing is now active for 1 month 🎉');
+  };
 
   const updateForm = (field: string, value: string) => {
     setForm(prev => {
