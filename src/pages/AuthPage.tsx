@@ -67,6 +67,10 @@ const AuthPage = () => {
     else if (!validEmail(email)) errs.email = 'Enter a valid email address';
     if (!password) errs.password = 'Password is required';
     else if (password.length < 6) errs.password = 'Password must be at least 6 characters';
+    if (isSignUp) {
+      if (!confirmPassword) errs.confirmPassword = 'Please confirm your password';
+      else if (password && password !== confirmPassword) errs.confirmPassword = 'Passwords do not match';
+    }
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
 
