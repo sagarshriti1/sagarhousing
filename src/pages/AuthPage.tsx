@@ -90,6 +90,12 @@ const AuthPage = () => {
           },
         });
         if (error) throw error;
+        // Detect duplicate signup: Supabase returns a user with empty identities array
+        if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          setErrors({ email: 'An account with this email already exists. Try signing in instead.' });
+          setLoading(false);
+          return;
+        }
         // Log the realtor signup payment for transparency
         if (selectedRole === 'realtor' && data.user) {
           const { logPayment } = await import('@/lib/paymentHistory');

@@ -1,35 +1,38 @@
-## Goal
-In Admin → Feature Flags & Pricing, the "Save" button should be disabled (greyed out) when the form values match what's saved in the database, and become active as soon as the admin changes anything — including toggling the "Free Promotion (Bypass Payment)" switch on or off.
+## Problem
 
-## Change
-Single-file update to `src/components/admin/FeaturesTab.tsx`:
+When a user signs up with an email that's already registered, Supabase returns a 200 success (no error) for security reasons. Our `AuthPage` treats that as success and shows "Account created! Check your email to verify." — so the user has no idea the email is already in use.
 
-1. Add an `isDirty(flag, draft)` helper that compares all four editable fields:
-   - `fee` (numeric equality)
-   - `bypass_payment` (boolean — covers the toggle on/off case)
-   - `promo_label` (normalize: trim + treat `""` as `null` so empty vs null doesn't falsely register as dirty)
-   - `promo_ends_at` (compare ISO strings, both nullable)
+This is confirmed in the auth logs: `action: "user_repeated_signup"` returns `status: 200`.
 
-2. In the render loop, compute `const dirty = isDirty(flag, draft);` per card.
+## Fix
 
-3. Update the Save button:
-   ```tsx
-   <Button
-     onClick={() => save(flag.id)}
-     disabled={saving === flag.id || !dirty}
-     ...
-   >
-   ```
+In `src/pages/AuthPage.tsx`, detect the repeated-signup case after `supabase.auth.signUp(...)` and surface an inline error on the email field (matching the existing inline-red-error pattern from the previous validation pass).
 
-4. After a successful save, `load()` already refreshes both `flags` and `drafts` from the DB, so the button naturally returns to disabled until the next edit.
+### Detection
 
-## Behavior summary
-- Page load → Save disabled.
-- Change fee, edit promo label, pick/clear promo end date, OR flip the bypass toggle → Save enabled.
-- Revert manually to original values → Save disabled again.
-- After successful save → Save disabled until next change.
+Supabase signals a repeated signup by returning a `user` object whose `identities` array is empty:
+
+```ts
+if (data.user && data.user.identities && data.user.identities.length === 0) {
+  setErrors({ email: 'An account with this email already exists. Try signing in instead.' });
+  return; // do not log payment, do not show success toast
+}
+```
+
+### Sign-in side
+
+For sign-in, Supabase already returns a clear `Invalid login credentials` error, which we currently surface via `toast.error`. Optionally we'll also mirror it as an inline error under the password field for consistency with the rest of the form.
+
+## Scope
+
+- File: `src/pages/AuthPage.tsx` only
+- Inline red error under the email field on repeated signup
+- Skip the realtor payment-history log when signup is rejected as duplicate
+- No DB, schema, RLS, or business-logic changes
+- No changes to other forms
 
 ## Out of scope
-- No DB, schema, or business-logic changes.
-- No styling changes beyond shadcn's built-in `disabled` greyed-out state.
-- Other admin tabs/forms unchanged.
+
+- Changing Supabase's "confirm email" security behavior
+- Rate-limit / brute-force handling
+- Password reset flow (already works)
