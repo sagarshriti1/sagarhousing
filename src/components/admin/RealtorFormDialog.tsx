@@ -463,10 +463,12 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                       <Label className="text-sm">Reason for bypass <span className="text-destructive">*</span></Label>
                       <Textarea
                         value={form.featured_bypass_reason ?? ""}
-                        onChange={(e) => setForm({ ...form, featured_bypass_reason: e.target.value })}
+                        onChange={(e) => { setForm({ ...form, featured_bypass_reason: e.target.value }); clearError('featured_bypass_reason'); }}
                         placeholder="Explain why featured payment is being bypassed…"
                         rows={2}
+                        aria-invalid={!!errors.featured_bypass_reason}
                       />
+                      {errors.featured_bypass_reason && <p className="text-xs text-destructive">{errors.featured_bypass_reason}</p>}
                     </div>
                   )}
 
