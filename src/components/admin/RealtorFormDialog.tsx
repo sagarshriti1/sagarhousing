@@ -129,6 +129,8 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [bypassPayment, setBypassPayment] = useState(realtor?.payment_bypassed ?? false);
   const [bypassFeatured, setBypassFeatured] = useState(realtor?.featured_payment_bypassed ?? false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const clearError = (k: string) => setErrors(prev => { if (!prev[k]) return prev; const { [k]: _, ...rest } = prev; return rest; });
 
   // Reset form when realtor changes
   const currentId = realtor?.id ?? null;
