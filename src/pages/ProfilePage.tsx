@@ -59,6 +59,7 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
   const [profile, setProfileState] = useState<ProfileData>({
     display_name: "",
     email: "",
