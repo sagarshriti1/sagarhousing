@@ -35,6 +35,7 @@ import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const COMMON_FEATURES = [
   'Central AC','Hardwood Floors','Smart Home','Pool','Garage','Fireplace','Walk-in Closets',
