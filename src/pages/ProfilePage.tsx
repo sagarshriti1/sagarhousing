@@ -233,6 +233,10 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     if (!user) return;
+    const errs: Record<string, string> = {};
+    if (!profile.display_name || !profile.display_name.trim()) errs.display_name = 'Display name is required';
+    if (Object.keys(errs).length) { setProfileErrors(errs); return; }
+    setProfileErrors({});
     setSaving(true);
     const payload = {
       user_id: user.id,
