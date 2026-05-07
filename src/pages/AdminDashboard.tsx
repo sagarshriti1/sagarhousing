@@ -309,8 +309,8 @@ const AdminDashboard = () => {
 
   const deleteUser = (profile: UserProfile) => {
     confirm({
-      title: "Delete User Account",
-      description: `Permanently delete "${profile.display_name || profile.email || "this user"}"? This cannot be undone.`,
+      title: "Delete user account?",
+      description: `This will permanently delete "${profile.display_name || profile.email || "this user"}". This action cannot be undone.`,
       onConfirm: async () => {
         const ok = await callAdminAction({ action: "delete_user", userId: profile.user_id });
         if (ok) {
