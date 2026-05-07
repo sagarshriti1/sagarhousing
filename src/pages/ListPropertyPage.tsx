@@ -517,7 +517,7 @@ const ListPropertyPage = () => {
                   className="w-full"
                 />
               </div>
-              <div className='space-y-2'>
+              <div className='space-y-2' data-field='district'>
                 <Label>District *</Label>
                 <SearchableCombobox
                   value={form.district}
@@ -527,6 +527,7 @@ const ListPropertyPage = () => {
                   searchPlaceholder="Search districts..."
                   className="w-full"
                 />
+                {errors.district && <p className='text-xs text-destructive'>{errors.district}</p>}
               </div>
             </div>
           </section>
