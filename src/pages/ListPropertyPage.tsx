@@ -682,27 +682,35 @@ const ListPropertyPage = () => {
                   </div>
 
                   {bypassPayment && (
-                    <div className='space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5'>
+                    <div className='space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5' data-field='bypassReason'>
                       <Label>Reason for bypass <span className='text-destructive'>*</span></Label>
                       <Textarea
                         value={bypassReason}
-                        onChange={(e) => setBypassReason(e.target.value)}
+                        onChange={(e) => { setBypassReason(e.target.value); clearError('bypassReason'); }}
                         placeholder='Explain why payment is being bypassed (e.g. complimentary listing, partner agreement, manual offline payment)…'
                         rows={2}
+                        aria-invalid={!!errors.bypassReason}
                       />
-                      <p className='text-xs text-muted-foreground'>
-                        Mandatory. This reason will appear in the payment history for both the admin and the listing owner.
-                      </p>
+                      {errors.bypassReason ? (
+                        <p className='text-xs text-destructive'>{errors.bypassReason}</p>
+                      ) : (
+                        <p className='text-xs text-muted-foreground'>
+                          Mandatory. This reason will appear in the payment history for both the admin and the listing owner.
+                        </p>
+                      )}
                     </div>
                   )}
 
                   {!bypassPayment && (
-                    <SimulatedPaymentForm
-                      paid={paymentStatus === 'paid'}
-                      onPaymentComplete={() => setPaymentStatus('paid')}
-                      amount={flag.fee}
-                      label={form.listing_type === 'rent' ? 'Rent listing fee' : 'Sale listing fee'}
-                    />
+                    <div data-field='payment' className='space-y-2'>
+                      <SimulatedPaymentForm
+                        paid={paymentStatus === 'paid'}
+                        onPaymentComplete={() => { setPaymentStatus('paid'); clearError('payment'); }}
+                        amount={flag.fee}
+                        label={form.listing_type === 'rent' ? 'Rent listing fee' : 'Sale listing fee'}
+                      />
+                      {errors.payment && <p className='text-xs text-destructive'>{errors.payment}</p>}
+                    </div>
                   )}
                 </div>
               )}
