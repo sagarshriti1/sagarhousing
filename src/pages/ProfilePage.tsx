@@ -323,8 +323,9 @@ const ProfilePage = () => {
 
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label>Display Name</Label>
-                        <Input value={profile.display_name ?? ""} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} maxLength={100} />
+                        <Label>Display Name *</Label>
+                        <Input value={profile.display_name ?? ""} onChange={(e) => { setProfile({ ...profile, display_name: e.target.value }); if (profileErrors.display_name) setProfileErrors(({ display_name, ...r }) => r); }} maxLength={100} aria-invalid={!!profileErrors.display_name} />
+                        {profileErrors.display_name && <p className="text-xs text-destructive">{profileErrors.display_name}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label>Email</Label>
