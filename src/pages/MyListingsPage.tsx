@@ -35,7 +35,8 @@ const MyListingsPage = () => {
   const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
   const [paymentsListing, setPaymentsListing] = useState<Tables<"user_properties"> | null>(null);
   const [search, setSearch] = useState("");
-  
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!user) return;
