@@ -71,8 +71,14 @@ const MyListingsPage = () => {
     return () => { cancelled = true; };
   }, [user, isRealtor]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this listing?")) return;
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await supabase.from("user_properties").delete().eq("id", id);
     if (error) toast.error(error.message);
     else {
