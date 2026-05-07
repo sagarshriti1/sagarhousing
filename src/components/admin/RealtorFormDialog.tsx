@@ -260,15 +260,18 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Name *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Input value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); clearError('name'); }} aria-invalid={!!errors.name} />
+              {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
             </div>
             <div>
               <Label>Email *</Label>
-              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Input type="email" value={form.email} onChange={(e) => { setForm({ ...form, email: e.target.value }); clearError('email'); }} aria-invalid={!!errors.email} />
+              {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
             </div>
             <div>
               <Label>Phone *</Label>
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <Input value={form.phone} onChange={(e) => { setForm({ ...form, phone: e.target.value }); clearError('phone'); }} aria-invalid={!!errors.phone} />
+              {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
             </div>
             <div>
               <Label>Years Experience</Label>
