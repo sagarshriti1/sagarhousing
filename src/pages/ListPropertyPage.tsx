@@ -528,6 +528,34 @@ const ListPropertyPage = () => {
           </Alert>
         )}
 
+        {isEdit && (
+          <div className='mb-6 rounded-lg border border-border bg-card p-4 flex items-center justify-between gap-4'>
+            <div className='flex items-center gap-3 flex-wrap'>
+              <Badge className={`border-0 capitalize ${currentStatus === 'active' ? 'bg-badge-new text-badge-new-foreground' : 'bg-yellow-500 text-foreground'}`}>
+                {currentStatus === 'active' ? 'Active' : 'Inactive'}
+              </Badge>
+              {currentStatus === 'active' && expirationDate && (
+                <span className='text-sm text-muted-foreground'>Active until {format(new Date(expirationDate), 'MMM d, yyyy')}</span>
+              )}
+              {currentStatus !== 'active' && expirationDate && new Date(expirationDate) > new Date() && (
+                <span className='text-sm text-muted-foreground'>Paid period until {format(new Date(expirationDate), 'MMM d, yyyy')} — reactivation is free</span>
+              )}
+            </div>
+            <div className='flex items-center gap-2'>
+              <Label htmlFor='status-toggle' className='text-sm'>{currentStatus === 'active' ? 'Active' : 'Inactive'}</Label>
+              <Switch
+                id='status-toggle'
+                checked={currentStatus === 'active'}
+                disabled={statusBusy}
+                onCheckedChange={(checked) => {
+                  if (checked) handleReactivateClick();
+                  else setConfirmDeactivateOpen(true);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className='space-y-8'>
           {/* Basic Info */}
           <section className='space-y-4'>
