@@ -510,12 +510,14 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                         if (!date) { setForm({ ...form, start_date: null }); return; }
                         const s = format(date, "yyyy-MM-dd");
                         setForm({ ...form, start_date: s, expiration_date: addMonths(s, 1) });
+                        clearError('start_date'); clearError('expiration_date');
                       }}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.start_date && <p className="text-xs text-destructive">{errors.start_date}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Expiration Date *</Label>
@@ -530,18 +532,16 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
                     <Calendar
                       mode="single"
                       selected={form.expiration_date ? new Date(form.expiration_date) : undefined}
-                      onSelect={(date) => setForm({ ...form, expiration_date: date ? format(date, "yyyy-MM-dd") : null })}
+                      onSelect={(date) => { setForm({ ...form, expiration_date: date ? format(date, "yyyy-MM-dd") : null }); clearError('expiration_date'); }}
                       disabled={form.start_date ? { from: new Date(-8640000000000000), to: new Date(form.start_date) } : undefined}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.expiration_date && <p className="text-xs text-destructive">{errors.expiration_date}</p>}
               </div>
             </div>
-            {form.start_date && form.expiration_date && new Date(form.start_date) >= new Date(form.expiration_date) && (
-              <p className="text-xs text-destructive">Start date must be earlier than expiration date.</p>
-            )}
           </div>
 
           {/* Subscription & Payment Section */}
