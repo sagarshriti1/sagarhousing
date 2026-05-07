@@ -538,7 +538,8 @@ const ListPropertyPage = () => {
             <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
               <div className='space-y-2'>
                 <Label htmlFor='price'>Price (Rs.) *</Label>
-                <Input id='price' type='number' value={form.price} onChange={e => updateForm('price', e.target.value)} placeholder='450000' required min='0' />
+                <Input id='price' type='number' value={form.price} onChange={e => updateForm('price', e.target.value)} placeholder='450000' min='0' aria-invalid={!!errors.price} />
+                {errors.price && <p className='text-xs text-destructive'>{errors.price}</p>}
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='bedrooms'>Bedrooms</Label>
