@@ -12,6 +12,8 @@ const ResetPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const clearError = (k: string) => setErrors(prev => { if (!prev[k]) return prev; const { [k]: _, ...rest } = prev; return rest; });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,14 +33,13 @@ const ResetPasswordPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
+    const errs: Record<string, string> = {};
+    if (!password) errs.password = 'New password is required';
+    else if (password.length < 6) errs.password = 'Password must be at least 6 characters';
+    if (!confirmPassword) errs.confirmPassword = 'Please confirm your password';
+    else if (password && password !== confirmPassword) errs.confirmPassword = 'Passwords do not match';
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
 
     setLoading(true);
     try {
