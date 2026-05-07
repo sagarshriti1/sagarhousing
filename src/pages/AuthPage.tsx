@@ -211,10 +211,11 @@ const AuthPage = () => {
                     <Input
                       id='displayName'
                       value={displayName}
-                      onChange={e => setDisplayName(e.target.value)}
+                      onChange={e => { setDisplayName(e.target.value); clearError('displayName'); }}
                       placeholder='John Doe'
-                      required={isSignUp}
+                      aria-invalid={!!errors.displayName}
                     />
+                    {errors.displayName && <p className='text-xs text-destructive'>{errors.displayName}</p>}
                   </div>
                 </>
               )}
