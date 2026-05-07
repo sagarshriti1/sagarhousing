@@ -309,8 +309,8 @@ const AdminDashboard = () => {
 
   const deleteUser = (profile: UserProfile) => {
     confirm({
-      title: "Delete User Account",
-      description: `Permanently delete "${profile.display_name || profile.email || "this user"}"? This cannot be undone.`,
+      title: "Delete user account?",
+      description: `This will permanently delete "${profile.display_name || profile.email || "this user"}". This action cannot be undone.`,
       onConfirm: async () => {
         const ok = await callAdminAction({ action: "delete_user", userId: profile.user_id });
         if (ok) {
@@ -370,8 +370,8 @@ const AdminDashboard = () => {
   const deleteRealtor = (id: string) => {
     const realtor = realtors.find((r) => r.id === id);
     confirm({
-      title: "Delete Realtor",
-      description: `Are you sure you want to delete "${realtor?.name ?? "this realtor"}"? This action cannot be undone.`,
+      title: "Delete realtor?",
+      description: `This will permanently delete "${realtor?.name ?? "this realtor"}". This action cannot be undone.`,
       onConfirm: async () => {
         const { error } = await supabase.from("realtors").delete().eq("id", id);
         if (error) toast.error("Failed to delete realtor");
@@ -387,8 +387,8 @@ const AdminDashboard = () => {
   const bulkDeleteRealtors = () => {
     if (selectedRealtorIds.size === 0) return;
     confirm({
-      title: "Delete Selected Realtors",
-      description: `Are you sure you want to delete ${selectedRealtorIds.size} realtor(s)? This action cannot be undone.`,
+      title: "Delete selected realtors?",
+      description: `This will permanently delete ${selectedRealtorIds.size} realtor(s). This action cannot be undone.`,
       onConfirm: async () => {
         const ids = Array.from(selectedRealtorIds);
         const { error } = await supabase.from("realtors").delete().in("id", ids);
@@ -589,8 +589,8 @@ const AdminDashboard = () => {
   const deleteProperty = (id: string) => {
     const prop = properties.find((p) => p.id === id);
     confirm({
-      title: "Delete Property",
-      description: `Are you sure you want to delete "${prop?.title ?? "this property"}"? This action cannot be undone.`,
+      title: "Delete property?",
+      description: `This will permanently delete "${prop?.title ?? "this property"}". This action cannot be undone.`,
       onConfirm: async () => {
         const { error } = await supabase.from("user_properties").delete().eq("id", id);
         if (error) toast.error("Failed to delete property");
@@ -606,8 +606,8 @@ const AdminDashboard = () => {
   const bulkDeleteProperties = () => {
     if (selectedPropertyIds.size === 0) return;
     confirm({
-      title: "Delete Selected Properties",
-      description: `Are you sure you want to delete ${selectedPropertyIds.size} property(ies)? This action cannot be undone.`,
+      title: "Delete selected properties?",
+      description: `This will permanently delete ${selectedPropertyIds.size} propert${selectedPropertyIds.size === 1 ? 'y' : 'ies'}. This action cannot be undone.`,
       onConfirm: async () => {
         const ids = Array.from(selectedPropertyIds);
         const { error } = await supabase.from("user_properties").delete().in("id", ids);

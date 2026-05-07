@@ -60,8 +60,8 @@ const AdminPropertyDetailPage = () => {
 
   const handleDelete = () => {
     setConfirm({
-      title: "Delete Property",
-      description: `Are you sure you want to delete "${property?.title}"? This cannot be undone.`,
+      title: "Delete property?",
+      description: `This will permanently delete "${property?.title}". This action cannot be undone.`,
       onConfirm: async () => {
         const { error } = await supabase.from("user_properties").delete().eq("id", id!);
         if (error) toast.error("Failed to delete property");

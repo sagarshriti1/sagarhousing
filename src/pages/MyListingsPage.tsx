@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Bed, Bath, Maximize, Trash2, CreditCard, Pencil, Receipt, Search } from "lucide-react";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
 import { toast } from "sonner";
@@ -34,7 +35,8 @@ const MyListingsPage = () => {
   const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
   const [paymentsListing, setPaymentsListing] = useState<Tables<"user_properties"> | null>(null);
   const [search, setSearch] = useState("");
-  
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!user) return;
@@ -69,8 +71,14 @@ const MyListingsPage = () => {
     return () => { cancelled = true; };
   }, [user, isRealtor]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this listing?")) return;
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await supabase.from("user_properties").delete().eq("id", id);
     if (error) toast.error(error.message);
     else {
@@ -358,6 +366,21 @@ const MyListingsPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete listing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this listing. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

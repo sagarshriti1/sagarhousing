@@ -119,8 +119,8 @@ const AdminUserDetailPage = () => {
   const handleDelete = () => {
     if (!profile) return;
     setConfirm({
-      title: "Delete User Account",
-      description: `Permanently delete "${profile.display_name || profile.email}"? This cannot be undone.`,
+      title: "Delete user account?",
+      description: `This will permanently delete "${profile.display_name || profile.email}". This action cannot be undone.`,
       onConfirm: async () => {
         const ok = await callAdminAction({ action: "delete_user", userId: profile.user_id });
         if (ok) {
