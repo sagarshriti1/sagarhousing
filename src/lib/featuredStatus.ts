@@ -13,9 +13,13 @@ export const isFeaturedActive = (
 ): boolean => {
   if (!r || !r.is_featured) return false;
   if (!r.featured_expiration_date) return true;
-  return (
-    new Date(r.featured_expiration_date) >= new Date(new Date().toDateString())
+  // FIX: Force local midnight parsing for correct evaluation
+  const expDate = new Date(
+    r.featured_expiration_date.includes('T')
+      ? r.featured_expiration_date
+      : `${r.featured_expiration_date}T00:00:00`,
   );
+  return expDate >= new Date(new Date().toDateString());
 };
 
 /** If row is flagged featured but expired, lazy-update DB. */
@@ -24,10 +28,16 @@ export const markFeaturedExpiredIfNeeded = async (
   fields: FeaturedFields,
 ): Promise<boolean> => {
   if (!fields.is_featured || !fields.featured_expiration_date) return false;
-  const expired =
-    new Date(fields.featured_expiration_date) <
-    new Date(new Date().toDateString());
+  // FIX: Force local midnight parsing
+  const expDate = new Date(
+    fields.featured_expiration_date.includes('T')
+      ? fields.featured_expiration_date
+      : `${fields.featured_expiration_date}T00:00:00`,
+  );
+  const expired = expDate < new Date(new Date().toDateString());
+
   if (!expired) return false;
+
   await supabase
     .from('realtors')
     .update({ is_featured: false, featured_payment_status: 'expired' })
@@ -35,10 +45,17 @@ export const markFeaturedExpiredIfNeeded = async (
   return true;
 };
 
+// FIX: Generate the date using strictly local time parsing to prevent UTC "yesterday" shift
 export const addOneMonthISO = (fromDateStr?: string | null): string => {
-  const d = fromDateStr ? new Date(fromDateStr) : new Date();
+  let d: Date;
+  if (fromDateStr) {
+    d = new Date(
+      fromDateStr.includes('T') ? fromDateStr : `${fromDateStr}T00:00:00`,
+    );
+  } else {
+    d = new Date();
+  }
   d.setMonth(d.getMonth() + 1);
-  // Ensure we use local format to avoid timezone shifting
   return format(d, 'yyyy-MM-dd');
 };
 

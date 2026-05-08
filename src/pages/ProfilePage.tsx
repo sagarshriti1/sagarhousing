@@ -3,7 +3,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -16,7 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Camera, CreditCard, Loader2, User as UserIcon } from 'lucide-react';
+import {
+  Camera,
+  CreditCard,
+  Loader2,
+  User as UserIcon,
+  Star,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
   NEPAL_CITIES,
@@ -25,13 +37,12 @@ import {
 } from '@/data/nepalLocations';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ConfirmSaveButton from '@/components/ConfirmSaveButton';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 
 import SimulatedPaymentForm from '@/components/SimulatedPaymentForm';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 import { logPayment } from '@/lib/paymentHistory';
 import { Badge } from '@/components/ui/badge';
-import { CardDescription } from '@/components/ui/card';
 import {
   isFeaturedActive,
   addOneMonthISO,
@@ -49,10 +60,9 @@ const parseLocation = (
 const joinLocation = (city: string, district: string) =>
   [city, district].filter(Boolean).join(', ');
 
-// Utility to safely display YYYY-MM-DD strings in local time
+// LOCAL DATE FIX
 const formatLocalDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return '—';
-  // Appending T00:00:00 forces the browser to treat it as local midnight, not UTC
   const date = new Date(
     dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
   );
@@ -101,6 +111,7 @@ const ProfilePage = () => {
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>(
     {},
   );
+
   const [profile, setProfileState] = useState<ProfileData>({
     display_name: '',
     email: '',
@@ -258,7 +269,7 @@ const ProfilePage = () => {
       amount: featuredFree ? 0 : FEATURED_FEE,
       status: featuredFree ? 'promotion' : 'paid',
       promo_label: featuredFree ? featuredPromoLabel : null,
-      expiration_date: new Date(expiration).toISOString(),
+      expiration_date: new Date(expiration + 'T00:00:00').toISOString(),
     });
 
     toast.success("You're now featured! ⭐", {
@@ -357,6 +368,8 @@ const ProfilePage = () => {
       </div>
     );
   }
+
+  const loc = parseLocation(profile.location);
 
   return (
     <div className='min-h-screen flex flex-col bg-background'>
@@ -469,14 +482,77 @@ const ProfilePage = () => {
                           maxLength={100}
                         />
                       </div>
+                      <div className='col-span-2'>
+                        <Label>Street Address</Label>
+                        <Input
+                          value={profile.street_address ?? ''}
+                          onChange={e =>
+                            setProfile({
+                              ...profile,
+                              street_address: e.target.value,
+                            })
+                          }
+                          placeholder='e.g. Thamel, Ward No. 26'
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label>City</Label>
+                        <Select
+                          value={loc.city}
+                          onValueChange={city => {
+                            const district =
+                              getDistrictForCity(city) || loc.district;
+                            setProfile({
+                              ...profile,
+                              location: joinLocation(city, district),
+                            });
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select City' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {NEPAL_CITIES.map(c => (
+                              <SelectItem key={c} value={c}>
+                                {c}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className='space-y-2'>
+                        <Label>District</Label>
+                        <Select
+                          value={loc.district}
+                          onValueChange={district => {
+                            const cityDist = getDistrictForCity(loc.city);
+                            const nextCity =
+                              cityDist && cityDist !== district ? '' : loc.city;
+                            setProfile({
+                              ...profile,
+                              location: joinLocation(nextCity, district),
+                            });
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select District' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {NEPAL_DISTRICTS.map(d => (
+                              <SelectItem key={d} value={d}>
+                                {d}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
-                    <div className='grid gap-4 sm:grid-cols-2 p-4 bg-muted/30 rounded-lg border'>
+                    <div className='grid gap-4 sm:grid-cols-2 p-4 bg-muted/30 rounded-lg border border-border'>
                       <div className='space-y-1'>
                         <Label className='text-muted-foreground'>
                           Profile Created
                         </Label>
-                        {/* ISO Timestamp works with standard Date parsing */}
                         <p className='text-sm font-medium'>
                           {profile.created_at
                             ? format(
@@ -555,6 +631,7 @@ const ProfilePage = () => {
             </Card>
           </TabsContent>
 
+          {/* THE MISSING FEATURED TAB RESTORED */}
           {role === 'realtor' && (
             <TabsContent value='promote'>
               <Card>
@@ -563,31 +640,95 @@ const ProfilePage = () => {
                     <CreditCard className='h-5 w-5 text-primary' />
                     Promote Your Profile
                   </CardTitle>
+                  <CardDescription>
+                    Stand out in the Realtor Directory by becoming a Featured
+                    Agent.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className='space-y-4'>
+                <CardContent className='space-y-6'>
                   {realtor &&
                     (() => {
                       const featuredActive = isFeaturedActive(realtor);
                       const expiration = realtor.featured_expiration_date;
                       return (
                         <>
-                          <div className='flex items-center justify-between rounded-md border p-3'>
-                            <div className='space-y-0.5'>
+                          <div className='flex items-center justify-between rounded-md border p-4 bg-muted/30'>
+                            <div className='space-y-1'>
                               <p className='text-sm font-medium'>
                                 {realtor.name}
                               </p>
                               <p className='text-xs text-muted-foreground'>
                                 {featuredActive
-                                  ? `Boosted in the directory · until ${formatLocalDate(expiration)}`
-                                  : 'Standard listing'}
+                                  ? `Boosted in the directory · active until ${formatLocalDate(expiration)}`
+                                  : 'Standard listing · not boosted'}
                               </p>
                             </div>
                             <Badge
                               variant={featuredActive ? 'default' : 'secondary'}
+                              className={
+                                featuredActive
+                                  ? 'bg-badge-new text-badge-new-foreground'
+                                  : ''
+                              }
                             >
                               {featuredActive ? 'Featured ⭐' : 'Not Featured'}
                             </Badge>
                           </div>
+
+                          {!featuredActive && (
+                            <div className='space-y-4'>
+                              <div className='rounded-lg border border-accent/40 bg-accent/5 p-4 text-sm'>
+                                <h4 className='font-semibold text-accent mb-2 flex items-center gap-2'>
+                                  <Star className='h-4 w-4 fill-accent' /> Why
+                                  become featured?
+                                </h4>
+                                <ul className='list-disc list-inside space-y-1 text-muted-foreground'>
+                                  <li>
+                                    Appear at the top of the Realtor Directory
+                                  </li>
+                                  <li>
+                                    Highlighted profile card to attract more
+                                    buyers
+                                  </li>
+                                  <li>Build trust and authority instantly</li>
+                                </ul>
+                              </div>
+
+                              <SimulatedPaymentForm
+                                paid={false}
+                                onPaymentComplete={handleBecomeFeatured}
+                                amount={featuredFree ? 0 : FEATURED_FEE}
+                                label='Featured Realtor Status (1 Month)'
+                                buttonText={
+                                  featuredFree
+                                    ? 'Activate Free Promotion'
+                                    : undefined
+                                }
+                                isProcessing={activating}
+                              />
+                              {featuredFree && (
+                                <p className='text-xs text-center text-muted-foreground'>
+                                  🎉{' '}
+                                  {featuredPromoLabel ||
+                                    'Special promotion: Featured status is free!'}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {featuredActive && (
+                            <div className='rounded-lg border p-6 text-center space-y-3'>
+                              <Star className='h-10 w-10 text-yellow-500 fill-yellow-500 mx-auto' />
+                              <h3 className='font-semibold text-lg'>
+                                You are currently featured!
+                              </h3>
+                              <p className='text-muted-foreground text-sm max-w-sm mx-auto'>
+                                Your profile is being actively promoted to
+                                buyers across the platform. You can renew this
+                                status once it expires.
+                              </p>
+                            </div>
+                          )}
                         </>
                       );
                     })()}
