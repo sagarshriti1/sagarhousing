@@ -302,8 +302,9 @@ const RealtorFormDialog = ({ open, onOpenChange, realtor, onSave, mode }: Realto
             </div>
           </div>
           <div>
-            <Label>Bio</Label>
-            <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
+            <Label>About Me</Label>
+            <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} maxLength={1000} />
+            <p className="text-xs text-muted-foreground mt-1">Max 1000 characters.</p>
           </div>
           <div>
             <Label>Profile Photo</Label>
