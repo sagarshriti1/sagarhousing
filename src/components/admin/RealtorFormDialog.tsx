@@ -189,6 +189,8 @@ const RealtorFormDialog = ({
         ...prev,
         payment_status: 'promotion',
         payment_bypassed: true,
+        start_date: todayStr(),
+        expiration_date: addMonths(todayStr(), 1),
       }));
     }
   }, [realtorPromoFree]);
@@ -214,19 +216,23 @@ const RealtorFormDialog = ({
 
   const handleBypassToggle = (checked: boolean) => {
     setBypassPayment(checked);
+    const now = todayStr();
     setForm(prev => ({
       ...prev,
       payment_bypassed: checked,
       payment_status: checked ? 'bypassed' : 'pending',
       bypass_reason: checked ? (prev.bypass_reason ?? '') : null,
+      // Update start date on bypass
+      start_date: checked ? now : prev.start_date,
+      expiration_date: checked ? addMonths(now, 1) : prev.expiration_date,
     }));
   };
 
   const handleBypassFeaturedToggle = (checked: boolean) => {
     setBypassFeatured(checked);
     setForm(prev => {
-      const start = prev.featured_start_date || todayStr();
-      const end = prev.featured_expiration_date || addMonths(start, 1);
+      const start = todayStr();
+      const end = addMonths(start, 1);
       return {
         ...prev,
         featured_payment_bypassed: checked,
@@ -248,8 +254,8 @@ const RealtorFormDialog = ({
   const handleFeaturedToggle = (checked: boolean) => {
     setForm(prev => {
       if (checked) {
-        const start = prev.featured_start_date || todayStr();
-        const end = prev.featured_expiration_date || addMonths(start, 1);
+        const start = todayStr();
+        const end = addMonths(start, 1);
         return {
           ...prev,
           is_featured: true,
@@ -1064,9 +1070,15 @@ const RealtorFormDialog = ({
                   {!bypassPayment && !realtorPromoFree && (
                     <SimulatedPaymentForm
                       paid={form.payment_status === 'paid'}
-                      onPaymentComplete={() =>
-                        setForm(prev => ({ ...prev, payment_status: 'paid' }))
-                      }
+                      onPaymentComplete={() => {
+                        const now = todayStr();
+                        setForm(prev => ({
+                          ...prev,
+                          payment_status: 'paid',
+                          start_date: now,
+                          expiration_date: addMonths(now, 1),
+                        }));
+                      }}
                       amount={realtorFee}
                       label={
                         isCreate ? 'Realtor signup fee' : 'Realtor renewal fee'

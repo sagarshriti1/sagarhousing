@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
 
 export interface FeaturedFields {
   is_featured?: boolean | null;
@@ -7,31 +8,39 @@ export interface FeaturedFields {
 }
 
 /** True only if marked featured AND not past the featured expiration date. */
-export const isFeaturedActive = (r: FeaturedFields | null | undefined): boolean => {
+export const isFeaturedActive = (
+  r: FeaturedFields | null | undefined,
+): boolean => {
   if (!r || !r.is_featured) return false;
-  if (!r.featured_expiration_date) return true; // legacy rows w/o term: still considered active
-  return new Date(r.featured_expiration_date) >= new Date(new Date().toDateString());
+  if (!r.featured_expiration_date) return true;
+  return (
+    new Date(r.featured_expiration_date) >= new Date(new Date().toDateString())
+  );
 };
 
-/** If row is flagged featured but expired, lazy-update DB (fire-and-forget). */
+/** If row is flagged featured but expired, lazy-update DB. */
 export const markFeaturedExpiredIfNeeded = async (
   realtorId: string,
   fields: FeaturedFields,
 ): Promise<boolean> => {
   if (!fields.is_featured || !fields.featured_expiration_date) return false;
-  const expired = new Date(fields.featured_expiration_date) < new Date(new Date().toDateString());
+  const expired =
+    new Date(fields.featured_expiration_date) <
+    new Date(new Date().toDateString());
   if (!expired) return false;
   await supabase
-    .from("realtors")
-    .update({ is_featured: false, featured_payment_status: "expired" })
-    .eq("id", realtorId);
+    .from('realtors')
+    .update({ is_featured: false, featured_payment_status: 'expired' })
+    .eq('id', realtorId);
   return true;
 };
 
 export const addOneMonthISO = (fromDateStr?: string | null): string => {
   const d = fromDateStr ? new Date(fromDateStr) : new Date();
   d.setMonth(d.getMonth() + 1);
-  return d.toISOString().split("T")[0];
+  // Ensure we use local format to avoid timezone shifting
+  return format(d, 'yyyy-MM-dd');
 };
 
-export const todayISO = (): string => new Date().toISOString().split("T")[0];
+/** Returns today's date in YYYY-MM-DD format based on local time. */
+export const todayISO = (): string => format(new Date(), 'yyyy-MM-dd');

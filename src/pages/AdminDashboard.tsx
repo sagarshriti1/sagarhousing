@@ -62,7 +62,7 @@ import FeaturesTab from '@/components/admin/FeaturesTab';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
 import ConfirmSaveButton from '@/components/ConfirmSaveButton';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, addMonths } from 'date-fns';
 import RealtorFormDialog, {
   type RealtorFormData,
 } from '@/components/admin/RealtorFormDialog';
@@ -114,7 +114,6 @@ interface Realtor {
   featured_expiration_date: string | null;
   featured_payment_status: string | null;
   featured_payment_bypassed: boolean;
-  created_at: string;
 }
 
 interface UserProfile {
@@ -129,7 +128,6 @@ interface UserProfile {
   street_address: string | null;
   is_active: boolean;
   updated_by?: string | null;
-  created_at: string;
 }
 
 interface UserRole {
@@ -151,7 +149,6 @@ interface Property {
   user_id: string;
   expiration_date?: string | null;
   updated_by?: string | null;
-  created_at: string;
 }
 
 interface ConfirmAction {
@@ -184,34 +181,26 @@ const AdminDashboard = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  // Show inactive toggle (per-tab)
   const [showInactive, setShowInactive] = useState(false);
-
-  // Realtor form dialog state
   const [realtorDialogOpen, setRealtorDialogOpen] = useState(false);
   const [realtorDialogMode, setRealtorDialogMode] = useState<'create' | 'edit'>(
     'create',
   );
   const [selectedRealtor, setSelectedRealtor] =
     useState<RealtorFormData | null>(null);
-
-  // Confirmation dialog
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
-
-  // Multi-select
   const [selectedRealtorIds, setSelectedRealtorIds] = useState<Set<string>>(
     new Set(),
   );
   const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(
     new Set(),
   );
-
-  // Per-tab sorting
   const [sortConfig, setSortConfig] = useState<
     Record<string, { key: string; dir: 'asc' | 'desc' } | null>
   >({});
+
   const getSort = (tab: string) => sortConfig[tab] ?? null;
   const toggleSort = (tab: string, key: string) => {
     setSortConfig(prev => {
@@ -223,6 +212,7 @@ const AdminDashboard = () => {
       return { ...prev, [tab]: next };
     });
   };
+
   const SortHeader = ({
     tab,
     sortKey,
@@ -246,7 +236,7 @@ const AdminDashboard = () => {
         <button
           type='button'
           onClick={() => toggleSort(tab, sortKey)}
-          className='inline-flex items-center gap-1 hover:text-foreground transition-colors whitespace-nowrap'
+          className='inline-flex items-center gap-1 hover:text-foreground transition-colors'
         >
           {children}
           <Icon
@@ -256,6 +246,7 @@ const AdminDashboard = () => {
       </TableHead>
     );
   };
+
   const sortList = <T,>(
     list: T[],
     tab: string,
@@ -282,7 +273,6 @@ const AdminDashboard = () => {
     });
   };
 
-  // Create User dialog
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [createUserRole, setCreateUserRole] = useState<
     'admin' | 'realtor' | 'user'
@@ -309,7 +299,7 @@ const AdminDashboard = () => {
       supabase
         .from('user_properties')
         .select(
-          'id, property_code, title, city, district, state, price, status, listing_type, user_id, updated_by, expiration_date, created_at',
+          'id, property_code, title, city, district, state, price, status, listing_type, user_id, updated_by, expiration_date',
         ),
     ]);
     setRealtors(r.data ?? []);
@@ -332,7 +322,6 @@ const AdminDashboard = () => {
 
   const confirm = (action: ConfirmAction) => setConfirmAction(action);
 
-  // Resolve a user_id to a display name/email for the "Updated By" column
   const updatedByLabel = (uid?: string | null) => {
     if (!uid) return '—';
     const p = profiles.find(pr => pr.user_id === uid);
@@ -343,6 +332,17 @@ const AdminDashboard = () => {
     if (!uid) return '—';
     const p = profiles.find(pr => pr.user_id === uid);
     return p?.email || '—';
+  };
+
+  const callAdminAction = async (body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke('admin-actions', {
+      body,
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || 'Action failed');
+      return false;
+    }
+    return true;
   };
 
   const handleCreateUser = async () => {
@@ -387,18 +387,6 @@ const AdminDashboard = () => {
       });
       fetchAll();
     }
-  };
-
-  // ===== Account actions (via admin-actions edge function) =====
-  const callAdminAction = async (body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke('admin-actions', {
-      body,
-    });
-    if (error || (data as any)?.error) {
-      toast.error((data as any)?.error || error?.message || 'Action failed');
-      return false;
-    }
-    return true;
   };
 
   const resetPassword = (profile: UserProfile) => {
@@ -458,7 +446,6 @@ const AdminDashboard = () => {
     });
   };
 
-  // ===== Realtor table actions =====
   const toggleFeatured = (realtor: Realtor) => {
     const turningOn = !realtor.is_featured;
     const action = turningOn ? 'feature' : 'unfeature';
@@ -466,10 +453,9 @@ const AdminDashboard = () => {
       title: `${turningOn ? 'Feature' : 'Unfeature'} Realtor`,
       description: `Are you sure you want to ${action} "${realtor.name}"?`,
       onConfirm: async () => {
-        const today = new Date().toISOString().split('T')[0];
-        const exp = new Date();
-        exp.setMonth(exp.getMonth() + 1);
-        const expStr = exp.toISOString().split('T')[0];
+        const now = new Date();
+        const today = format(now, 'yyyy-MM-dd');
+        const expStr = format(addMonths(now, 1), 'yyyy-MM-dd');
         const updates: any = turningOn
           ? {
               is_featured: true,
@@ -506,7 +492,7 @@ const AdminDashboard = () => {
             related_label: realtor.name,
             amount: 0,
             status: 'bypassed',
-            expiration_date: new Date(expStr).toISOString(),
+            expiration_date: expStr,
             notes: 'Featured toggled on by admin (no payment).',
           });
         }
@@ -643,7 +629,6 @@ const AdminDashboard = () => {
           : 'bypassed';
     const amount = status === 'paid' ? flagFee : 0;
 
-    // Determine if a featured payment log is needed (newly activated or renewed)
     const original = realtors.find(r => r.id === data.id);
     const featuredChanged =
       data.is_featured &&
@@ -667,6 +652,7 @@ const AdminDashboard = () => {
           ? 'promotion'
           : 'bypassed';
     const featAmount = featStatus === 'paid' ? featFee : 0;
+
     const logFeatured = async (
       relatedId: string,
       relatedLabel: string,
@@ -795,13 +781,36 @@ const AdminDashboard = () => {
     }
     const { id, ...rest } = editingProfile;
     const { error } = await supabase.from('profiles').update(rest).eq('id', id);
-    if (error) toast.error('Failed to save profile');
-    else {
-      toast.success('Profile updated');
-      setProfiles(prev => prev.map(p => (p.id === id ? editingProfile : p)));
-      setProfileDirty(false);
-      setEditingProfileState(null);
+    if (error) {
+      toast.error('Failed to save profile');
+      return;
     }
+
+    const { data: realtorRow } = await supabase
+      .from('realtors')
+      .select('id')
+      .eq('user_id', editingProfile.user_id)
+      .maybeSingle();
+    if (realtorRow) {
+      const loc = parseLocation(editingProfile.location);
+      await supabase
+        .from('realtors')
+        .update({
+          photo_url: editingProfile.avatar_url,
+          name: editingProfile.display_name,
+          email: editingProfile.email,
+          phone: editingProfile.phone,
+          city: loc.city,
+          district: loc.district,
+          street_address: editingProfile.street_address,
+        })
+        .eq('id', realtorRow.id);
+    }
+
+    toast.success('Profile updated');
+    setProfiles(prev => prev.map(p => (p.id === id ? editingProfile : p)));
+    setProfileDirty(false);
+    setEditingProfileState(null);
   };
 
   const deleteProperty = (id: string) => {
@@ -849,7 +858,6 @@ const AdminDashboard = () => {
     });
   };
 
-  // Unified list: realtor listings + realtor-role accounts without a listing
   const unifiedRealtors = (() => {
     const q = search.toLowerCase();
     const realtorRoleProfiles = profiles.filter(p => {
@@ -878,7 +886,6 @@ const AdminDashboard = () => {
         is_featured: false,
         updated_by: p.updated_by,
         user_id: p.user_id,
-        created_at: p.created_at,
       }));
     const realtorRows = realtors.map(r => ({
       ...r,
@@ -951,37 +958,6 @@ const AdminDashboard = () => {
     return <Badge variant='destructive'>Pending</Badge>;
   };
 
-  const toggleRealtorSelection = (id: string) => {
-    setSelectedRealtorIds(prev => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
-  };
-
-  const toggleAllRealtors = () => {
-    if (selectedRealtorIds.size === filteredRealtors.length)
-      setSelectedRealtorIds(new Set());
-    else setSelectedRealtorIds(new Set(filteredRealtors.map(r => r.id)));
-  };
-
-  const togglePropertySelection = (id: string) => {
-    setSelectedPropertyIds(prev => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
-  };
-
-  const toggleAllProperties = () => {
-    if (selectedPropertyIds.size === properties.length)
-      setSelectedPropertyIds(new Set());
-    else setSelectedPropertyIds(new Set(properties.map(p => p.id)));
-  };
-
-  // Reusable user-account table
   const renderAccountsTable = (
     target: 'admin' | 'realtor' | 'user',
     title: string,
@@ -1080,9 +1056,7 @@ const AdminDashboard = () => {
                 <SortHeader tab={target} sortKey='updated_by'>
                   Updated By
                 </SortHeader>
-                <TableHead className='text-right whitespace-nowrap'>
-                  Actions
-                </TableHead>
+                <TableHead className='text-right'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1134,7 +1108,7 @@ const AdminDashboard = () => {
                       {profile.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell className='text-xs text-muted-foreground whitespace-nowrap'>
+                  <TableCell className='text-xs text-muted-foreground'>
                     {updatedByLabel(profile.updated_by)}
                   </TableCell>
                   <TableCell
@@ -1209,12 +1183,10 @@ const AdminDashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* ADMINS TAB */}
           <TabsContent value='admins'>
             {renderAccountsTable('admin', 'Admins')}
           </TabsContent>
 
-          {/* REALTORS TAB - unified listings */}
           <TabsContent value='realtors' className='space-y-4'>
             <div className='flex items-center gap-4 flex-wrap'>
               <div className='relative flex-1 max-w-sm'>
@@ -1275,9 +1247,7 @@ const AdminDashboard = () => {
                     <SortHeader tab='realtors' sortKey='updated_by'>
                       Updated By
                     </SortHeader>
-                    <TableHead className='text-right whitespace-nowrap'>
-                      Actions
-                    </TableHead>
+                    <TableHead className='text-right'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1297,7 +1267,6 @@ const AdminDashboard = () => {
                       ? `/admin/user/${realtor.user_id}`
                       : `/admin/realtor/${realtor.id}`;
 
-                    // FALLBACK FOR EXISTING REALTORS
                     const displayPhoto =
                       realtor.photo_url || linkedProfile?.avatar_url;
 
@@ -1333,11 +1302,12 @@ const AdminDashboard = () => {
                           {realtor.city}
                           {realtor.district ? `, ${realtor.district}` : ''}
                         </TableCell>
+
                         <TableCell>
                           {getPaymentBadge(realtor.payment_status)}
                         </TableCell>
                         <TableCell>
-                          <div className='text-xs space-y-0.5 whitespace-nowrap'>
+                          <div className='text-xs space-y-0.5'>
                             <p>
                               {realtor.start_date
                                 ? format(
@@ -1380,7 +1350,7 @@ const AdminDashboard = () => {
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className='text-xs text-muted-foreground whitespace-nowrap'>
+                        <TableCell className='text-xs text-muted-foreground'>
                           {updatedByLabel(realtor.updated_by)}
                         </TableCell>
                         <TableCell
@@ -1416,12 +1386,10 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* NON-REALTORS TAB */}
           <TabsContent value='non-realtors'>
             {renderAccountsTable('user', 'Non-Realtors')}
           </TabsContent>
 
-          {/* PROPERTIES TAB */}
           <TabsContent value='properties' className='space-y-4'>
             {(() => {
               const q = search.trim().toLowerCase().replace(/^#/, '');
@@ -1443,8 +1411,6 @@ const AdminDashboard = () => {
                 location: p =>
                   `${p.city || ''} ${p.district || ''}`.toLowerCase(),
                 price: p => Number(p.price) || 0,
-                created_at: p =>
-                  p.created_at ? new Date(p.created_at).getTime() : 0,
                 status: p => {
                   const expired =
                     p.expiration_date &&
@@ -1535,9 +1501,6 @@ const AdminDashboard = () => {
                           <SortHeader tab='properties' sortKey='price'>
                             Price
                           </SortHeader>
-                          <SortHeader tab='properties' sortKey='created_at'>
-                            Created
-                          </SortHeader>
                           <SortHeader tab='properties' sortKey='status'>
                             Status
                           </SortHeader>
@@ -1550,9 +1513,7 @@ const AdminDashboard = () => {
                           <SortHeader tab='properties' sortKey='updated_by'>
                             Updated By
                           </SortHeader>
-                          <TableHead className='text-right whitespace-nowrap'>
-                            Actions
-                          </TableHead>
+                          <TableHead className='text-right'>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1589,16 +1550,8 @@ const AdminDashboard = () => {
                                   .filter(Boolean)
                                   .join(', ') || '—'}
                               </TableCell>
-                              <TableCell className='whitespace-nowrap'>
+                              <TableCell>
                                 Rs. {prop.price.toLocaleString()}
-                              </TableCell>
-                              <TableCell className='text-muted-foreground whitespace-nowrap'>
-                                {prop.created_at
-                                  ? format(
-                                      new Date(prop.created_at),
-                                      'MMM d, yyyy',
-                                    )
-                                  : '—'}
                               </TableCell>
                               <TableCell>
                                 <Badge
@@ -1613,7 +1566,7 @@ const AdminDashboard = () => {
                               <TableCell className='text-xs text-muted-foreground'>
                                 {creatorEmail(prop.user_id)}
                               </TableCell>
-                              <TableCell className='text-xs text-muted-foreground whitespace-nowrap'>
+                              <TableCell className='text-xs text-muted-foreground'>
                                 {updatedByLabel(prop.updated_by)}
                               </TableCell>
                               <TableCell
@@ -1635,7 +1588,7 @@ const AdminDashboard = () => {
                         {filteredProperties.length === 0 && (
                           <TableRow>
                             <TableCell
-                              colSpan={11}
+                              colSpan={10}
                               className='text-center py-8 text-muted-foreground'
                             >
                               No properties found
@@ -1650,7 +1603,6 @@ const AdminDashboard = () => {
             })()}
           </TabsContent>
 
-          {/* FEATURES TAB */}
           <TabsContent value='features'>
             <FeaturesTab />
           </TabsContent>
@@ -1658,7 +1610,6 @@ const AdminDashboard = () => {
       </main>
       <Footer />
 
-      {/* Realtor Create/Edit Dialog */}
       <RealtorFormDialog
         open={realtorDialogOpen}
         onOpenChange={setRealtorDialogOpen}
@@ -1667,7 +1618,6 @@ const AdminDashboard = () => {
         mode={realtorDialogMode}
       />
 
-      {/* Edit Profile Dialog */}
       <Dialog
         open={!!editingProfile}
         onOpenChange={open => !open && setEditingProfile(null)}
@@ -1678,7 +1628,6 @@ const AdminDashboard = () => {
           </DialogHeader>
           {editingProfile && (
             <div className='space-y-4'>
-              {/* Avatar Upload */}
               <div>
                 <Label>Profile Photo</Label>
                 <div className='flex items-center gap-4 mt-1'>
@@ -1935,7 +1884,6 @@ const AdminDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Create User Dialog */}
       <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
         <DialogContent className='max-w-md'>
           <DialogHeader>
