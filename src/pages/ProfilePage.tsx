@@ -382,6 +382,12 @@ const ProfilePage = () => {
                                   {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                                 </SelectContent>
                               </Select>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+
                     <div className="space-y-2">
                       <Label>Contact Details for Viewers</Label>
                       <Textarea
@@ -397,12 +403,6 @@ const ProfilePage = () => {
                         className="resize-none"
                       />
                       <p className="text-xs text-muted-foreground">Shown publicly on your property listings. Max 6 lines.</p>
-                    </div>
-
-                    </div>
-                          </>
-                        );
-                      })()}
                     </div>
 
                     <ConfirmSaveButton onConfirm={handleSave} disabled={saving || !dirty}>
