@@ -41,6 +41,7 @@ const AdminRealtorDetailPage = () => {
   const { user, role, loading } = useAuth();
   const [realtor, setRealtor] = useState<any>(null);
   const [linkedEmail, setLinkedEmail] = useState<string | null>(null);
+  const [linkedAvatar, setLinkedAvatar] = useState<string | null>(null);
   const [properties, setProperties] = useState<any[]>([]);
   const [propertiesMatchedByEmail, setPropertiesMatchedByEmail] =
     useState(false);
@@ -67,21 +68,23 @@ const AdminRealtorDetailPage = () => {
     if (effectiveUserId) {
       const { data: p } = await supabase
         .from('profiles')
-        .select('email')
+        .select('email, avatar_url')
         .eq('user_id', effectiveUserId)
         .maybeSingle();
       setLinkedEmail(p?.email ?? null);
+      setLinkedAvatar(p?.avatar_url ?? null);
     } else if (data.email) {
       // Fallback: try to resolve a profile by the realtor's email
       const { data: p } = await supabase
         .from('profiles')
-        .select('user_id, email')
+        .select('user_id, email, avatar_url')
         .ilike('email', data.email)
         .maybeSingle();
       if (p?.user_id) {
         effectiveUserId = p.user_id;
         matchedByEmail = true;
         setLinkedEmail(p.email);
+        setLinkedAvatar(p.avatar_url ?? null);
         // Self-heal: persist the link so the trigger-style relationship is maintained
         await supabase
           .from('realtors')
@@ -89,9 +92,11 @@ const AdminRealtorDetailPage = () => {
           .eq('id', data.id);
       } else {
         setLinkedEmail(null);
+        setLinkedAvatar(null);
       }
     } else {
       setLinkedEmail(null);
+      setLinkedAvatar(null);
     }
 
     setPropertiesMatchedByEmail(matchedByEmail);
@@ -328,6 +333,7 @@ const AdminRealtorDetailPage = () => {
   const notExpired =
     !realtor.expiration_date ||
     new Date(realtor.expiration_date) >= new Date(new Date().toDateString());
+  const displayPhoto = realtor.photo_url || linkedAvatar;
 
   return (
     <div className='min-h-screen flex flex-col'>
@@ -345,9 +351,9 @@ const AdminRealtorDetailPage = () => {
             <div className='flex items-start justify-between gap-4 flex-wrap'>
               <div className='flex items-center gap-4'>
                 <div className='h-16 w-16 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xl font-bold text-muted-foreground'>
-                  {realtor.photo_url ? (
+                  {displayPhoto ? (
                     <img
-                      src={realtor.photo_url}
+                      src={displayPhoto}
                       alt=''
                       className='h-full w-full object-cover'
                     />
@@ -429,7 +435,6 @@ const AdminRealtorDetailPage = () => {
               </span>
             </div>
 
-            {/* Added Profile Created, Subscription, and Featured in chronological view */}
             <div>
               <span className='text-muted-foreground'>Profile Created:</span>{' '}
               <span className='text-foreground'>

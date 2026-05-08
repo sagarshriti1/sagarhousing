@@ -1296,6 +1296,11 @@ const AdminDashboard = () => {
                     const targetUrl = realtor.isProfileOnly
                       ? `/admin/user/${realtor.user_id}`
                       : `/admin/realtor/${realtor.id}`;
+
+                    // FALLBACK FOR EXISTING REALTORS
+                    const displayPhoto =
+                      realtor.photo_url || linkedProfile?.avatar_url;
+
                     return (
                       <TableRow
                         key={realtor.id}
@@ -1305,9 +1310,9 @@ const AdminDashboard = () => {
                         <TableCell>
                           <div className='flex items-center gap-3'>
                             <div className='h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground'>
-                              {realtor.photo_url ? (
+                              {displayPhoto ? (
                                 <img
-                                  src={realtor.photo_url}
+                                  src={displayPhoto}
                                   alt=''
                                   className='h-full w-full object-cover'
                                 />
