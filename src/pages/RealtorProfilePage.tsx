@@ -130,7 +130,7 @@ const RealtorProfilePage = () => {
           <div className="p-8 space-y-6">
             {realtor.bio && (
               <div>
-                <h2 className="font-display text-lg font-semibold text-foreground mb-2">About</h2>
+                <h2 className="font-display text-lg font-semibold text-foreground mb-2">About Me</h2>
                 <p className="text-muted-foreground whitespace-pre-line">{realtor.bio}</p>
               </div>
             )}

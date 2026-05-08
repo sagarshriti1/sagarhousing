@@ -40,6 +40,7 @@ interface ProfileData {
   street_address: string | null;
   avatar_url: string | null;
   contact_details: string | null;
+  bio: string | null;
 }
 
 interface RealtorRow {
@@ -71,6 +72,7 @@ const ProfilePage = () => {
     street_address: "",
     avatar_url: "",
     contact_details: "",
+    bio: "",
   });
   const setProfile = (next: ProfileData | ((p: ProfileData) => ProfileData)) => {
     setDirty(true);
@@ -98,6 +100,7 @@ const ProfilePage = () => {
           street_address: (data as any).street_address ?? "",
           avatar_url: data.avatar_url ?? "",
           contact_details: (data as any).contact_details ?? "",
+          bio: (data as any).bio ?? "",
         });
       } else {
         setProfileState((p) => ({ ...p, email: user.email ?? "" }));
@@ -253,6 +256,7 @@ const ProfilePage = () => {
       avatar_url: profile.avatar_url,
       email: profile.email,
       contact_details: profile.contact_details,
+      bio: profile.bio,
     };
     const { error } = profile.id
       ? await supabase.from("profiles").update(payload).eq("id", profile.id)
@@ -403,6 +407,18 @@ const ProfilePage = () => {
                         className="resize-none"
                       />
                       <p className="text-xs text-muted-foreground">Shown publicly on your property listings. Max 6 lines.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>About Me</Label>
+                      <Textarea
+                        rows={5}
+                        maxLength={1000}
+                        placeholder="Tell others a bit about yourself..."
+                        value={profile.bio ?? ""}
+                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                      />
+                      <p className="text-xs text-muted-foreground">Max 1000 characters.</p>
                     </div>
 
                     <ConfirmSaveButton onConfirm={handleSave} disabled={saving || !dirty}>
