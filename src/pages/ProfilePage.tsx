@@ -25,7 +25,7 @@ import {
 } from '@/data/nepalLocations';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ConfirmSaveButton from '@/components/ConfirmSaveButton';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 import SimulatedPaymentForm from '@/components/SimulatedPaymentForm';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
@@ -48,6 +48,16 @@ const parseLocation = (
 };
 const joinLocation = (city: string, district: string) =>
   [city, district].filter(Boolean).join(', ');
+
+// Utility to safely display YYYY-MM-DD strings in local time
+const formatLocalDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return '—';
+  // Appending T00:00:00 forces the browser to treat it as local midnight, not UTC
+  const date = new Date(
+    dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
+  );
+  return format(date, 'MMM d, yyyy');
+};
 
 interface ProfileData {
   id?: string;
@@ -436,6 +446,29 @@ const ProfilePage = () => {
                         <Label>Email</Label>
                         <Input value={profile.email ?? ''} disabled />
                       </div>
+                      <div className='space-y-2'>
+                        <Label>Phone</Label>
+                        <Input
+                          value={profile.phone ?? ''}
+                          onChange={e =>
+                            setProfile({ ...profile, phone: e.target.value })
+                          }
+                          maxLength={30}
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label>Job Title</Label>
+                        <Input
+                          value={profile.job_title ?? ''}
+                          onChange={e =>
+                            setProfile({
+                              ...profile,
+                              job_title: e.target.value,
+                            })
+                          }
+                          maxLength={100}
+                        />
+                      </div>
                     </div>
 
                     <div className='grid gap-4 sm:grid-cols-2 p-4 bg-muted/30 rounded-lg border'>
@@ -443,6 +476,7 @@ const ProfilePage = () => {
                         <Label className='text-muted-foreground'>
                           Profile Created
                         </Label>
+                        {/* ISO Timestamp works with standard Date parsing */}
                         <p className='text-sm font-medium'>
                           {profile.created_at
                             ? format(
@@ -459,12 +493,7 @@ const ProfilePage = () => {
                               Subscription Start
                             </Label>
                             <p className='text-sm font-medium'>
-                              {realtor.start_date
-                                ? format(
-                                    new Date(realtor.start_date),
-                                    'MMM d, yyyy',
-                                  )
-                                : '—'}
+                              {formatLocalDate(realtor.start_date)}
                             </p>
                           </div>
                           <div className='space-y-1'>
@@ -472,16 +501,43 @@ const ProfilePage = () => {
                               Subscription End
                             </Label>
                             <p className='text-sm font-medium'>
-                              {realtor.expiration_date
-                                ? format(
-                                    new Date(realtor.expiration_date),
-                                    'MMM d, yyyy',
-                                  )
-                                : '—'}
+                              {formatLocalDate(realtor.expiration_date)}
                             </p>
                           </div>
                         </>
                       )}
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label>Contact Details for Viewers</Label>
+                      <Textarea
+                        rows={6}
+                        maxLength={600}
+                        placeholder='Phone, WhatsApp, office address, etc.'
+                        value={profile.contact_details ?? ''}
+                        onChange={e => {
+                          const lines = e.target.value.split('\n');
+                          const trimmed =
+                            lines.length > 6
+                              ? lines.slice(0, 6).join('\n')
+                              : e.target.value;
+                          setProfile({ ...profile, contact_details: trimmed });
+                        }}
+                        className='resize-none'
+                      />
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label>About Me</Label>
+                      <Textarea
+                        rows={5}
+                        maxLength={1000}
+                        placeholder='Tell others a bit about yourself...'
+                        value={profile.bio ?? ''}
+                        onChange={e =>
+                          setProfile({ ...profile, bio: e.target.value })
+                        }
+                      />
                     </div>
 
                     <ConfirmSaveButton
@@ -498,7 +554,47 @@ const ProfilePage = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Featured tab content omitted for brevity... */}
+
+          {role === 'realtor' && (
+            <TabsContent value='promote'>
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2'>
+                    <CreditCard className='h-5 w-5 text-primary' />
+                    Promote Your Profile
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  {realtor &&
+                    (() => {
+                      const featuredActive = isFeaturedActive(realtor);
+                      const expiration = realtor.featured_expiration_date;
+                      return (
+                        <>
+                          <div className='flex items-center justify-between rounded-md border p-3'>
+                            <div className='space-y-0.5'>
+                              <p className='text-sm font-medium'>
+                                {realtor.name}
+                              </p>
+                              <p className='text-xs text-muted-foreground'>
+                                {featuredActive
+                                  ? `Boosted in the directory · until ${formatLocalDate(expiration)}`
+                                  : 'Standard listing'}
+                              </p>
+                            </div>
+                            <Badge
+                              variant={featuredActive ? 'default' : 'secondary'}
+                            >
+                              {featuredActive ? 'Featured ⭐' : 'Not Featured'}
+                            </Badge>
+                          </div>
+                        </>
+                      );
+                    })()}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </main>
       <Footer />
