@@ -1,36 +1,45 @@
 ## Plan
 
-### 1. Activate / Deactivate toggle on the edit page
+### 1. Database: add `contact_details` to profiles
 
-In `src/pages/ListPropertyPage.tsx`, when `isEdit` is true, show a status control near the top of the form (under the page header, above the main fields).
+Migration: add column `contact_details TEXT` to `public.profiles` (nullable). No RLS change needed — existing "Profiles are viewable by everyone" SELECT policy already exposes it for the public Property Detail page.
 
-- Fetch the current `status` and `expiration_date` from `user_properties` in the existing edit-load effect and store in local state (`currentStatus`, `expirationDate`).
-- Render a compact card with:
-  - A status badge ("Active" / "Inactive") and, if active, "Active until {date}".
-  - A `Switch` labeled "Active" / "Inactive".
-- Behavior on toggle:
-  - **Active → Inactive (Deactivate):** open a small confirm dialog ("Deactivate this listing? It will be hidden from buyers."). On confirm, `update({ status: 'pending' })` on `user_properties`, toast success, update local state. `expiration_date` is preserved.
-  - **Inactive → Active (Reactivate):**
-    - If `expiration_date` exists AND `> now()` → free reactivation: `update({ status: 'active' })`, toast "Listing reactivated".
-    - Else (no expiration or expired) → open the existing `SimulatedPaymentForm` dialog (mirrors `MyListingsPage` pay-to-activate flow), and on payment complete set status active, set `payment_date`/`expiration_date` (+1 month), and `logPayment(...)`. If the relevant feature flag is free, skip charge and just activate.
-- Admins keep the ability to toggle freely (no payment required); reuse the existing admin-bypass behavior already present in this page.
+### 2. ProfilePage (`src/pages/ProfilePage.tsx`) — applies to both Realtors and Non-Realtors
 
-The toggle is **only** shown in edit mode (not on create), and only to the listing owner or an admin.
+In the Personal Information card, add a new section **"Contact Details for Viewers"** below the existing fields:
 
-### 2. Make the delete-blocked message a centered modal
+- A `Textarea` (rows=6) bound to `profile.contact_details`.
+- Helper text: "Shown publicly on your property listings. Add phone, WhatsApp, office address, etc."
+- 6-line limit enforced in `onChange`: if `value.split("\n").length > 6`, ignore the change (or trim to first 6 lines). Also a `maxLength` (e.g. 600) for safety.
+- Include `contact_details` in the `ProfileData` interface, in load (`setProfileState`), and in the `handleSave` payload.
 
-Currently in `src/pages/MyListingsPage.tsx`, clicking Delete on an active listing shows a sonner toast in the corner. Replace it with a centered `AlertDialog`:
+### 3. Admin user detail (`src/pages/admin/AdminUserDetailPage.tsx`)
 
-- Add state `blockedDeleteOpen: boolean`.
-- In `handleDelete`, if `listing.status === "active"`, set `blockedDeleteOpen = true` instead of calling `toast.error(...)`.
-- Render a new `AlertDialog`:
-  - Title: **"Cannot delete active listing"**
-  - Description: **"Active listings cannot be deleted. Please change the status to Inactive before deleting."**
-  - Single action button: **"Got it"** (closes the dialog). No destructive action button.
-- The existing confirm-delete `AlertDialog` for inactive/sold/rented listings remains unchanged.
+- Extend the `Profile` interface with `contact_details: string | null`.
+- In the read-only details grid, add a `sm:col-span-2` row showing **"Contact Details for Viewers"** with `whitespace-pre-line` rendering of `profile.contact_details || "—"`.
+- In the Edit dialog, add a `Textarea` (rows=6) for `contact_details` with the same 6-line cap, save it via existing `update` flow.
+
+### 4. Property Detail (`src/pages/PropertyDetail.tsx`) — public "Contact Seller" box
+
+After fetching the property, also fetch the lister's profile:
+
+```ts
+supabase.from("profiles")
+  .select("display_name, contact_details, avatar_url")
+  .eq("user_id", property.user_id)
+  .maybeSingle();
+```
+
+Render a new prominent **"Contact Seller"** card in the right sidebar (above the existing "Inquire About This Property" form). It shows:
+
+- Lister's `display_name` (with avatar if available).
+- If `contact_details` is set → render it inside a styled box using `<p className="whitespace-pre-line text-sm text-foreground">`.
+- If `contact_details` is empty → hide the details block (still show name) or show muted "No contact info provided".
+
+Card uses semantic tokens (`bg-card`, `border-border`, accent heading) to make it visually prominent.
 
 ### Out of scope
 
-- No DB schema or RLS changes.
-- No changes to admin pages (`AdminPropertyDetailPage`, etc.) — they already have status controls.
-- No changes to the existing pending-listing "Reactivate" / "Pay to Activate" buttons on the My Listings cards; the toggle on the edit page is an additional entry point.
+- No changes to the `realtors` table — realtor public profile page (`RealtorProfilePage`) is separate and not requested.
+- No changes to the listing creation/edit flow.
+- No notifications or messaging — purely displayed text.
