@@ -86,7 +86,7 @@ const PropertyDetail = () => {
       if (data?.user_id) {
         const { data: prof } = await supabase
           .from("profiles")
-          .select("display_name, contact_details, avatar_url")
+          .select("display_name, contact_details, avatar_url, email")
           .eq("user_id", data.user_id)
           .maybeSingle();
         setSeller(prof as any);
