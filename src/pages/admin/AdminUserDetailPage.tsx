@@ -33,6 +33,7 @@ interface Profile {
   location: string | null;
   street_address: string | null;
   is_active: boolean;
+  contact_details: string | null;
 }
 
 const parseLocation = (loc: string | null | undefined) => {
@@ -211,6 +212,10 @@ const AdminUserDetailPage = () => {
             {userRole === "admin" && <div><span className="text-muted-foreground">Job Title:</span> <span className="text-foreground">{profile.job_title || "—"}</span></div>}
             <div><span className="text-muted-foreground">Location:</span> <span className="text-foreground">{[loc.city, loc.district].filter(Boolean).join(", ") || "—"}</span></div>
             <div className="sm:col-span-2"><span className="text-muted-foreground">Street Address:</span> <span className="text-foreground">{profile.street_address || "—"}</span></div>
+            <div className="sm:col-span-2">
+              <span className="text-muted-foreground">Contact Details for Viewers:</span>
+              <p className="text-foreground whitespace-pre-line mt-1">{profile.contact_details || "—"}</p>
+            </div>
           </CardContent>
         </Card>
 
@@ -279,6 +284,22 @@ const AdminUserDetailPage = () => {
                 <div><Label>Job Title</Label><Input value={draft.job_title ?? ""} onChange={(e) => setDraft({ ...draft, job_title: e.target.value })} /></div>
               )}
               <div><Label>Street Address</Label><Input value={draft.street_address ?? ""} onChange={(e) => setDraft({ ...draft, street_address: e.target.value })} /></div>
+              <div>
+                <Label>Contact Details for Viewers</Label>
+                <Textarea
+                  rows={6}
+                  maxLength={600}
+                  placeholder="Phone, WhatsApp, office address, etc."
+                  value={draft.contact_details ?? ""}
+                  onChange={(e) => {
+                    const lines = e.target.value.split("\n");
+                    const trimmed = lines.length > 6 ? lines.slice(0, 6).join("\n") : e.target.value;
+                    setDraft({ ...draft, contact_details: trimmed });
+                  }}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Shown publicly on the user's property listings. Max 6 lines.</p>
+              </div>
               {userRole !== "realtor" && (() => {
                 const l = parseLocation(draft.location);
                 return (

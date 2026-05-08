@@ -19,6 +19,7 @@ const PropertyDetail = () => {
   const navigate = useNavigate();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [property, setProperty] = useState<Tables<"user_properties"> | null>(null);
+  const [seller, setSeller] = useState<{ display_name: string | null; contact_details: string | null; avatar_url: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const favoriteId = id ? (id.startsWith("db-") ? id : `db-${id}`) : "";
@@ -33,6 +34,14 @@ const PropertyDetail = () => {
         .eq("id", dbId)
         .single();
       setProperty(data);
+      if (data?.user_id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("display_name, contact_details, avatar_url")
+          .eq("user_id", data.user_id)
+          .maybeSingle();
+        setSeller(prof as any);
+      }
       setLoading(false);
     };
     fetchProperty();
@@ -191,8 +200,32 @@ const PropertyDetail = () => {
               </div>
             </div>
 
-            <div>
-              <div className="bg-card rounded-lg border border-border p-6 shadow-card sticky top-24">
+            <div className="space-y-6">
+              <div className="bg-card rounded-lg border-2 border-accent/40 p-6 shadow-card sticky top-24">
+                <h3 className="font-display text-lg font-bold text-foreground mb-4">Contact Seller</h3>
+                <div className="flex items-center gap-3 mb-4">
+                  {seller?.avatar_url ? (
+                    <img src={seller.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground">
+                      {(seller?.display_name || "?").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium text-foreground">{seller?.display_name || "Seller"}</p>
+                    <p className="text-xs text-muted-foreground">Listed by</p>
+                  </div>
+                </div>
+                {seller?.contact_details ? (
+                  <div className="rounded-md bg-secondary p-3">
+                    <p className="text-sm text-foreground whitespace-pre-line">{seller.contact_details}</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">No contact info provided. Use the form below to reach out.</p>
+                )}
+              </div>
+
+              <div className="bg-card rounded-lg border border-border p-6 shadow-card">
                 <h3 className="font-display text-lg font-bold text-foreground mb-4">Inquire About This Property</h3>
                 <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
                   <Input placeholder="Your Name" />
