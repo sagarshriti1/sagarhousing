@@ -59,11 +59,13 @@ const PropertyDetail = () => {
         },
       });
       if (error) throw error;
+      setInquiry({ name: "", email: "", phone: "", message: "" });
       setInquirySent(true);
       toast.success("Your message was sent to the seller");
     } catch (err: any) {
       // Email not yet configured — still acknowledge to user
       console.warn("Inquiry send failed:", err?.message);
+      setInquiry({ name: "", email: "", phone: "", message: "" });
       setInquirySent(true);
       toast.success("Message saved. Email delivery will be enabled shortly.");
     } finally {
