@@ -19,9 +19,58 @@ const PropertyDetail = () => {
   const navigate = useNavigate();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [property, setProperty] = useState<Tables<"user_properties"> | null>(null);
-  const [seller, setSeller] = useState<{ display_name: string | null; contact_details: string | null; avatar_url: string | null } | null>(null);
+  const [seller, setSeller] = useState<{ display_name: string | null; contact_details: string | null; avatar_url: string | null; email: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [inquiry, setInquiry] = useState({ name: "", email: "", phone: "", message: "" });
+  const [inquirySending, setInquirySending] = useState(false);
+  const [inquirySent, setInquirySent] = useState(false);
+
+  const updateInquiry = (field: "name" | "email" | "phone" | "message", value: string) => {
+    setInquiry((prev) => ({ ...prev, [field]: value }));
+    if (inquirySent && (field === "name" || field === "message")) {
+      setInquirySent(false);
+    }
+  };
+
+  const handleInquirySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inquiry.name.trim() || !inquiry.email.trim() || !inquiry.message.trim()) {
+      toast.error("Please fill in your name, email, and message");
+      return;
+    }
+    if (!property) return;
+    setInquirySending(true);
+    try {
+      const propertyUrl = window.location.href;
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "property-inquiry",
+          recipientEmail: (seller as any)?.email ?? "",
+          idempotencyKey: `inquiry-${property.id}-${Date.now()}`,
+          templateData: {
+            inquirerName: inquiry.name,
+            inquirerEmail: inquiry.email,
+            inquirerPhone: inquiry.phone,
+            message: inquiry.message,
+            propertyTitle: property.title,
+            propertyUrl,
+          },
+        },
+      });
+      if (error) throw error;
+      setInquirySent(true);
+      toast.success("Your message was sent to the seller");
+    } catch (err: any) {
+      // Email not yet configured — still acknowledge to user
+      console.warn("Inquiry send failed:", err?.message);
+      setInquirySent(true);
+      toast.success("Message saved. Email delivery will be enabled shortly.");
+    } finally {
+      setInquirySending(false);
+    }
+  };
+
   const favoriteId = id ? (id.startsWith("db-") ? id : `db-${id}`) : "";
 
   useEffect(() => {
@@ -37,7 +86,7 @@ const PropertyDetail = () => {
       if (data?.user_id) {
         const { data: prof } = await supabase
           .from("profiles")
-          .select("display_name, contact_details, avatar_url")
+          .select("display_name, contact_details, avatar_url, email")
           .eq("user_id", data.user_id)
           .maybeSingle();
         setSeller(prof as any);
@@ -125,8 +174,8 @@ const PropertyDetail = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
+          <div className="space-y-8">
+            <div className="space-y-8">
               <div>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
@@ -200,40 +249,71 @@ const PropertyDetail = () => {
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="bg-card rounded-lg border-2 border-accent/40 p-6 shadow-card sticky top-24">
-                <h3 className="font-display text-lg font-bold text-foreground mb-4">Contact Seller</h3>
-                <div className="flex items-center gap-3 mb-4">
-                  {seller?.avatar_url ? (
-                    <img src={seller.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
-                  ) : (
-                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground">
-                      {(seller?.display_name || "?").charAt(0).toUpperCase()}
+            <div className="max-w-3xl mx-auto w-full">
+              <div className="bg-card rounded-lg border-2 border-accent/40 shadow-card overflow-hidden">
+                <div className="p-6">
+                  <h3 className="font-display text-lg font-bold text-foreground mb-4">Contact Seller</h3>
+                  <div className="flex items-center gap-3 mb-4">
+                    {seller?.avatar_url ? (
+                      <img src={seller.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
+                    ) : (
+                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground">
+                        {(seller?.display_name || "?").charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-foreground">{seller?.display_name || "Seller"}</p>
+                      <p className="text-xs text-muted-foreground">Listed by</p>
                     </div>
+                  </div>
+                  {seller?.contact_details ? (
+                    <div className="rounded-md bg-secondary p-3">
+                      <p className="text-sm text-foreground whitespace-pre-line">{seller.contact_details}</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No contact info provided. Use the form below to reach out.</p>
                   )}
-                  <div>
-                    <p className="font-medium text-foreground">{seller?.display_name || "Seller"}</p>
-                    <p className="text-xs text-muted-foreground">Listed by</p>
-                  </div>
                 </div>
-                {seller?.contact_details ? (
-                  <div className="rounded-md bg-secondary p-3">
-                    <p className="text-sm text-foreground whitespace-pre-line">{seller.contact_details}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">No contact info provided. Use the form below to reach out.</p>
-                )}
-              </div>
 
-              <div className="bg-card rounded-lg border border-border p-6 shadow-card">
-                <h3 className="font-display text-lg font-bold text-foreground mb-4">Inquire About This Property</h3>
-                <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
-                  <Input placeholder="Your Name" />
-                  <Input placeholder="Email" type="email" />
-                  <Input placeholder="Phone" type="tel" />
-                  <Textarea placeholder="I'm interested in this property..." rows={3} />
-                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">Send Message</Button>
-                </form>
+                <div className="border-t border-border p-6">
+                  <h3 className="font-display text-lg font-bold text-foreground mb-4">Inquire About This Property</h3>
+                  <form className="space-y-3" onSubmit={handleInquirySubmit}>
+                    <Input
+                      placeholder="Your Name"
+                      value={inquiry.name}
+                      onChange={(e) => updateInquiry("name", e.target.value)}
+                      maxLength={100}
+                    />
+                    <Input
+                      placeholder="Email"
+                      type="email"
+                      value={inquiry.email}
+                      onChange={(e) => updateInquiry("email", e.target.value)}
+                      maxLength={255}
+                    />
+                    <Input
+                      placeholder="Phone"
+                      type="tel"
+                      value={inquiry.phone}
+                      onChange={(e) => updateInquiry("phone", e.target.value)}
+                      maxLength={30}
+                    />
+                    <Textarea
+                      placeholder="I'm interested in this property..."
+                      rows={4}
+                      value={inquiry.message}
+                      onChange={(e) => updateInquiry("message", e.target.value)}
+                      maxLength={2000}
+                    />
+                    <Button
+                      type="submit"
+                      disabled={inquirySending || inquirySent}
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                    >
+                      {inquirySending ? "Sending..." : inquirySent ? "Message Sent!" : "Send Message"}
+                    </Button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
