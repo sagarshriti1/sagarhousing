@@ -9,13 +9,14 @@ import Footer from "@/components/Footer";
 const Index = () => {
   const [searchParams] = useSearchParams();
   const typeParam = searchParams.get("type");
-  const [activeTab, setActiveTab] = useState<"buy" | "rent">(
-    typeParam === "rent" ? "rent" : "buy"
+  const [activeTab, setActiveTab] = useState<"all" | "buy" | "rent">(
+    typeParam === "rent" ? "rent" : typeParam === "buy" ? "buy" : "all"
   );
 
   useEffect(() => {
     if (typeParam === "rent") setActiveTab("rent");
     else if (typeParam === "buy") setActiveTab("buy");
+    else setActiveTab("all");
   }, [typeParam]);
 
   return (
