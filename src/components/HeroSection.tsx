@@ -2,8 +2,8 @@ import { Home, Building2 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface HeroSectionProps {
-  activeTab: "buy" | "rent";
-  setActiveTab: (tab: "buy" | "rent") => void;
+  activeTab: "all" | "buy" | "rent";
+  setActiveTab: (tab: "all" | "buy" | "rent") => void;
 }
 
 const HeroSection = ({ activeTab, setActiveTab }: HeroSectionProps) => {
