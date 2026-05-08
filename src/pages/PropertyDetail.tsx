@@ -19,7 +19,7 @@ const PropertyDetail = () => {
   const navigate = useNavigate();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [property, setProperty] = useState<Tables<"user_properties"> | null>(null);
-  const [seller, setSeller] = useState<{ display_name: string | null; contact_details: string | null; avatar_url: string | null } | null>(null);
+  const [seller, setSeller] = useState<{ display_name: string | null; contact_details: string | null; avatar_url: string | null; email: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [inquiry, setInquiry] = useState({ name: "", email: "", phone: "", message: "" });
