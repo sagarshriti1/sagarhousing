@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,6 +39,7 @@ interface ProfileData {
   location: string | null;
   street_address: string | null;
   avatar_url: string | null;
+  contact_details: string | null;
 }
 
 interface RealtorRow {
@@ -68,6 +70,7 @@ const ProfilePage = () => {
     location: "",
     street_address: "",
     avatar_url: "",
+    contact_details: "",
   });
   const setProfile = (next: ProfileData | ((p: ProfileData) => ProfileData)) => {
     setDirty(true);
@@ -94,6 +97,7 @@ const ProfilePage = () => {
           location: data.location ?? "",
           street_address: (data as any).street_address ?? "",
           avatar_url: data.avatar_url ?? "",
+          contact_details: (data as any).contact_details ?? "",
         });
       } else {
         setProfileState((p) => ({ ...p, email: user.email ?? "" }));
@@ -248,6 +252,7 @@ const ProfilePage = () => {
       street_address: profile.street_address,
       avatar_url: profile.avatar_url,
       email: profile.email,
+      contact_details: profile.contact_details,
     };
     const { error } = profile.id
       ? await supabase.from("profiles").update(payload).eq("id", profile.id)
