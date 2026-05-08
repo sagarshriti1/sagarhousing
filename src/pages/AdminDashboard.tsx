@@ -55,8 +55,6 @@ import {
   ArrowUp,
   ArrowDown,
   Sliders,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react';
 import FeaturesTab from '@/components/admin/FeaturesTab';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
@@ -89,7 +87,6 @@ const parseLocation = (
 const joinLocation = (city: string, district: string) =>
   [city, district].filter(Boolean).join(', ');
 
-// Utility to safely display YYYY-MM-DD strings in local time
 const formatLocalDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return '—';
   const date = new Date(
@@ -182,16 +179,6 @@ const AdminDashboard = () => {
   const [editingProfile, setEditingProfileState] = useState<UserProfile | null>(
     null,
   );
-  const [profileDirty, setProfileDirty] = useState(false);
-  const setEditingProfile = (next: UserProfile | null) => {
-    setEditingProfileState(prev => {
-      if (next === null || prev === null) setProfileDirty(false);
-      else setProfileDirty(true);
-      return next;
-    });
-  };
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [showInactive, setShowInactive] = useState(false);
   const [realtorDialogOpen, setRealtorDialogOpen] = useState(false);
@@ -203,15 +190,60 @@ const AdminDashboard = () => {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
-  const [selectedRealtorIds, setSelectedRealtorIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(
-    new Set(),
-  );
   const [sortConfig, setSortConfig] = useState<
     Record<string, { key: string; dir: 'asc' | 'desc' } | null>
   >({});
+
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [createUserRole, setCreateUserRole] = useState<
+    'admin' | 'realtor' | 'user'
+  >('user');
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    displayName: '',
+    role: 'user',
+  });
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  const fetchAll = async () => {
+    const [r, p, ro, pr] = await Promise.all([
+      supabase.from('realtors').select('*'),
+      supabase.from('profiles').select('*'),
+      supabase.from('user_roles').select('*'),
+      supabase.from('user_properties').select('*'),
+    ]);
+    setRealtors(r.data ?? []);
+    setProfiles((p.data ?? []) as UserProfile[]);
+    setRoles(ro.data ?? []);
+    setProperties(pr.data ?? []);
+  };
+
+  useEffect(() => {
+    if (role === 'admin') fetchAll();
+  }, [role]);
+
+  // STICKY AUTH GATE:
+  // If loading is true OR if we have a user but role query hasn't finished, WAIT.
+  if (loading || (user && !role)) {
+    return (
+      <div className='min-h-screen flex flex-col'>
+        <Header />
+        <main className='flex-1 flex items-center justify-center'>
+          <div className='flex flex-col items-center gap-3'>
+            <Loader2 className='h-10 w-10 animate-spin text-accent' />
+            <p className='text-muted-foreground animate-pulse'>
+              Verifying administration access...
+            </p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Only redirect if loading is finished and they definitely aren't an admin
+  if (!user || role !== 'admin') return <Navigate to='/' replace />;
 
   const getSort = (tab: string) => sortConfig[tab] ?? null;
   const toggleSort = (tab: string, key: string) => {
@@ -285,72 +317,16 @@ const AdminDashboard = () => {
     });
   };
 
-  const [createUserOpen, setCreateUserOpen] = useState(false);
-  const [createUserRole, setCreateUserRole] = useState<
-    'admin' | 'realtor' | 'user'
-  >('user');
-  const [newUser, setNewUser] = useState({
-    email: '',
-    password: '',
-    displayName: '',
-    phone: '',
-    jobTitle: '',
-    streetAddress: '',
-    location: '',
-    avatarUrl: '',
-  });
-  const [uploadingNewUserAvatar, setUploadingNewUserAvatar] = useState(false);
-  const newUserAvatarInputRef = useRef<HTMLInputElement>(null);
-  const [creatingUser, setCreatingUser] = useState(false);
-
-  const fetchAll = async () => {
-    const [r, p, ro, pr] = await Promise.all([
-      supabase.from('realtors').select('*'),
-      supabase.from('profiles').select('*'),
-      supabase.from('user_roles').select('*'),
-      supabase.from('user_properties').select('*'),
-    ]);
-    setRealtors(r.data ?? []);
-    setProfiles((p.data ?? []) as UserProfile[]);
-    setRoles(ro.data ?? []);
-    setProperties(pr.data ?? []);
-  };
-
-  useEffect(() => {
-    if (role === 'admin') fetchAll();
-  }, [role]);
-
-  if (loading)
-    return (
-      <div className='min-h-screen flex items-center justify-center text-muted-foreground'>
-        Loading...
-      </div>
-    );
-  if (!user || role !== 'admin') return <Navigate to='/' replace />;
-
-  const confirm = (action: ConfirmAction) => setConfirmAction(action);
-
-  const updatedByLabel = (uid?: string | null) => {
-    if (!uid) return '—';
-    const p = profiles.find(pr => pr.user_id === uid);
-    return p?.display_name || p?.email || uid.slice(0, 8);
-  };
-
   const creatorEmail = (uid?: string | null) => {
     if (!uid) return '—';
     const p = profiles.find(pr => pr.user_id === uid);
     return p?.email || '—';
   };
 
-  const callAdminAction = async (body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke('admin-actions', {
-      body,
-    });
-    if (error || (data as any)?.error) {
-      toast.error((data as any)?.error || error?.message || 'Action failed');
-      return false;
-    }
-    return true;
+  const updatedByLabel = (uid?: string | null) => {
+    if (!uid) return '—';
+    const p = profiles.find(pr => pr.user_id === uid);
+    return p?.display_name || p?.email || uid.slice(0, 8);
   };
 
   const handleCreateUser = async () => {
@@ -363,52 +339,38 @@ const AdminDashboard = () => {
       return;
     }
     setCreatingUser(true);
-    const ok = await callAdminAction({
-      action: 'create_user',
-      email: newUser.email,
-      password: newUser.password,
-      displayName: newUser.displayName,
-      role: createUserRole,
+    const { data, error } = await supabase.functions.invoke('admin-actions', {
+      body: {
+        action: 'create_user',
+        email: newUser.email,
+        password: newUser.password,
+        displayName: newUser.displayName,
+        role: createUserRole,
+      },
     });
     setCreatingUser(false);
-    if (ok) {
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || 'Action failed');
+    } else {
       toast.success(`${createUserRole} account created`);
       setCreateUserOpen(false);
       fetchAll();
     }
   };
 
-  const toggleActive = (profile: UserProfile) => {
-    const action = profile.is_active ? 'deactivate' : 'activate';
-    confirm({
-      title: profile.is_active ? 'Deactivate Account' : 'Activate Account',
-      description: `Are you sure?`,
-      onConfirm: async () => {
-        const ok = await callAdminAction({ action, userId: profile.user_id });
-        if (ok) {
-          toast.success(`Account ${action}d`);
-          setProfiles(prev =>
-            prev.map(p =>
-              p.user_id === profile.user_id
-                ? { ...p, is_active: !profile.is_active }
-                : p,
-            ),
-          );
-        }
-      },
-    });
-  };
-
   const deleteUser = (profile: UserProfile) => {
-    confirm({
+    setConfirmAction({
       title: 'Delete user account?',
-      description: `Permanent action.`,
+      description: `Permanent action. This cannot be undone.`,
       onConfirm: async () => {
-        const ok = await callAdminAction({
-          action: 'delete_user',
-          userId: profile.user_id,
-        });
-        if (ok) {
+        const { data, error } = await supabase.functions.invoke(
+          'admin-actions',
+          {
+            body: { action: 'delete_user', userId: profile.user_id },
+          },
+        );
+        if (error || (data as any)?.error) toast.error('Failed to delete');
+        else {
           toast.success('User deleted');
           setProfiles(prev => prev.filter(p => p.user_id !== profile.user_id));
         }
@@ -418,7 +380,7 @@ const AdminDashboard = () => {
 
   const toggleFeatured = (realtor: Realtor) => {
     const turningOn = !realtor.is_featured;
-    confirm({
+    setConfirmAction({
       title: `${turningOn ? 'Feature' : 'Unfeature'} Realtor`,
       description: `Are you sure?`,
       onConfirm: async () => {
@@ -436,84 +398,12 @@ const AdminDashboard = () => {
           .from('realtors')
           .update(updates)
           .eq('id', realtor.id);
-        if (error) {
-          toast.error('Failed');
-          return;
-        }
-        setRealtors(prev =>
-          prev.map(r => (r.id === realtor.id ? { ...r, ...updates } : r)),
-        );
-      },
-    });
-  };
-
-  const deleteRealtor = (id: string) => {
-    confirm({
-      title: 'Delete realtor?',
-      description: `Permanent action.`,
-      onConfirm: async () => {
-        const { error } = await supabase.from('realtors').delete().eq('id', id);
-        if (error) toast.error('Failed');
+        if (error) toast.error('Failed to update');
         else {
-          toast.success('Deleted');
-          setRealtors(prev => prev.filter(r => r.id !== id));
-        }
-      },
-    });
-  };
-
-  const handleSaveRealtor = async (data: RealtorFormData) => {
-    const payload = { ...data };
-    delete (payload as any).bypass_reason;
-    delete (payload as any).featured_bypass_reason;
-
-    if (realtorDialogMode === 'edit' && data.id) {
-      const { error } = await supabase
-        .from('realtors')
-        .update(payload)
-        .eq('id', data.id);
-      if (error) toast.error('Failed to save');
-      else {
-        toast.success('Updated');
-        fetchAll();
-        setRealtorDialogOpen(false);
-      }
-    } else {
-      const { error } = await supabase.from('realtors').insert(payload);
-      if (error) toast.error('Failed to create');
-      else {
-        toast.success('Created');
-        fetchAll();
-        setRealtorDialogOpen(false);
-      }
-    }
-  };
-
-  const saveProfile = async () => {
-    if (!editingProfile) return;
-    const { id, ...rest } = editingProfile;
-    const { error } = await supabase.from('profiles').update(rest).eq('id', id);
-    if (error) toast.error('Failed to save');
-    else {
-      toast.success('Updated');
-      fetchAll();
-      setEditingProfileState(null);
-    }
-  };
-
-  const deleteProperty = (id: string) => {
-    confirm({
-      title: 'Delete property?',
-      description: `Permanent action.`,
-      onConfirm: async () => {
-        const { error } = await supabase
-          .from('user_properties')
-          .delete()
-          .eq('id', id);
-        if (error) toast.error('Failed');
-        else {
-          toast.success('Deleted');
-          setProperties(prev => prev.filter(p => p.id !== id));
+          setRealtors(prev =>
+            prev.map(r => (r.id === realtor.id ? { ...r, ...updates } : r)),
+          );
+          toast.success('Updated');
         }
       },
     });
@@ -543,6 +433,7 @@ const AdminDashboard = () => {
         is_featured: false,
         user_id: p.user_id,
         updated_by: p.updated_by,
+        created_at: p.created_at,
       }));
     const realtorRows = realtors.map(r => ({
       ...r,
@@ -551,14 +442,16 @@ const AdminDashboard = () => {
     }));
     const all = [...realtorRows, ...orphanProfiles];
     return all.filter((r: any) => {
-      const match =
+      const matchSearch =
         !q ||
         r.name?.toLowerCase().includes(q) ||
-        r.email?.toLowerCase().includes(q);
-      if (!match) return false;
+        r.email?.toLowerCase().includes(q) ||
+        r.city?.toLowerCase().includes(q);
+      if (!matchSearch) return false;
       const isActive =
         r.profile?.is_active &&
-        (!r.expiration_date || new Date(r.expiration_date) >= new Date());
+        (!r.expiration_date ||
+          new Date(r.expiration_date) >= new Date(new Date().toDateString()));
       return showInactive ? !isActive : isActive;
     });
   })();
@@ -570,8 +463,11 @@ const AdminDashboard = () => {
     status: r => (r.profile?.is_active ? 1 : 0),
   });
 
-  const getProfilesByRole = (target: 'admin' | 'realtor' | 'user') => {
-    return profiles.filter(p => {
+  const renderAccountsTable = (
+    target: 'admin' | 'realtor' | 'user',
+    title: string,
+  ) => {
+    const list = profiles.filter(p => {
       const ur = roles.find(r => r.user_id === p.user_id);
       const matchRole =
         target === 'user' ? !ur || ur.role === 'user' : ur?.role === target;
@@ -584,20 +480,13 @@ const AdminDashboard = () => {
         p.email?.toLowerCase().includes(search.toLowerCase())
       );
     });
-  };
 
-  const getPaymentBadge = (status: string) => {
-    if (status === 'paid') return <Badge variant='default'>Paid</Badge>;
-    if (status === 'bypassed')
-      return <Badge variant='secondary'>Bypassed</Badge>;
-    return <Badge variant='destructive'>Pending</Badge>;
-  };
+    const sorted = sortList(list, target, {
+      name: p => p.display_name?.toLowerCase(),
+      email: p => p.email?.toLowerCase(),
+      created_at: p => new Date(p.created_at).getTime(),
+    });
 
-  const renderAccountsTable = (
-    target: 'admin' | 'realtor' | 'user',
-    title: string,
-  ) => {
-    const list = getProfilesByRole(target);
     return (
       <div className='space-y-4'>
         <div className='flex items-center gap-4 flex-wrap'>
@@ -614,8 +503,14 @@ const AdminDashboard = () => {
             <Label>Show Inactive</Label>
             <Switch checked={showInactive} onCheckedChange={setShowInactive} />
           </div>
-          <Button onClick={() => setCreateUserOpen(true)} className='gap-2'>
-            <Plus className='h-4 w-4' /> Create {title}
+          <Button
+            onClick={() => {
+              setCreateUserRole(target);
+              setCreateUserOpen(true);
+            }}
+            className='gap-2'
+          >
+            <Plus className='h-4 w-4' /> Create Account
           </Button>
         </div>
         <div className='rounded-lg border border-border overflow-auto'>
@@ -626,13 +521,15 @@ const AdminDashboard = () => {
                   Name
                 </SortHeader>
                 <TableHead>Email</TableHead>
+                <SortHeader tab={target} sortKey='created_at'>
+                  Created
+                </SortHeader>
                 <TableHead>Status</TableHead>
-                <TableHead>Updated By</TableHead>
                 <TableHead className='text-right'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {list.map(p => (
+              {sorted.map(p => (
                 <TableRow
                   key={p.id}
                   className='cursor-pointer hover:bg-muted/40'
@@ -640,13 +537,13 @@ const AdminDashboard = () => {
                 >
                   <TableCell>{p.display_name || 'Unnamed'}</TableCell>
                   <TableCell>{p.email}</TableCell>
+                  <TableCell className='text-xs'>
+                    {formatLocalDate(p.created_at)}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={p.is_active ? 'default' : 'secondary'}>
                       {p.is_active ? 'Active' : 'Inactive'}
                     </Badge>
-                  </TableCell>
-                  <TableCell className='text-xs'>
-                    {updatedByLabel(p.updated_by)}
                   </TableCell>
                   <TableCell
                     className='text-right'
@@ -656,6 +553,7 @@ const AdminDashboard = () => {
                       variant='ghost'
                       size='icon'
                       className='text-destructive'
+                      title='Delete'
                       onClick={() => deleteUser(p)}
                     >
                       <Trash2 className='h-4 w-4' />
@@ -671,12 +569,14 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className='min-h-screen flex flex-col'>
+    <div className='min-h-screen flex flex-col bg-background'>
       <Header />
       <main className='flex-1 container py-8'>
         <div className='flex items-center gap-3 mb-6'>
           <Shield className='h-7 w-7 text-accent' />
-          <h1 className='font-display text-3xl font-bold'>Admin Dashboard</h1>
+          <h1 className='font-display text-3xl font-bold text-foreground'>
+            Admin Dashboard
+          </h1>
         </div>
 
         <Tabs
@@ -737,7 +637,7 @@ const AdminDashboard = () => {
                       Name
                     </SortHeader>
                     <TableHead>Email</TableHead>
-                    <TableHead>Payment</TableHead>
+                    <TableHead>Location</TableHead>
                     <SortHeader tab='realtors' sortKey='expiration_date'>
                       Dates
                     </SortHeader>
@@ -761,7 +661,7 @@ const AdminDashboard = () => {
                     >
                       <TableCell>
                         <div className='flex items-center gap-3'>
-                          <div className='h-8 w-8 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xs font-bold'>
+                          <div className='h-8 w-8 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xs font-bold text-muted-foreground'>
                             {r.photo_url || r.profile?.avatar_url ? (
                               <img
                                 src={r.photo_url || r.profile?.avatar_url}
@@ -774,8 +674,13 @@ const AdminDashboard = () => {
                           {r.name}
                         </div>
                       </TableCell>
-                      <TableCell>{r.email}</TableCell>
-                      <TableCell>{getPaymentBadge(r.payment_status)}</TableCell>
+                      <TableCell className='text-muted-foreground'>
+                        {r.email}
+                      </TableCell>
+                      <TableCell className='text-xs'>
+                        {r.city}
+                        {r.district ? `, ${r.district}` : ''}
+                      </TableCell>
                       <TableCell className='text-xs'>
                         <p>{formatLocalDate(r.start_date)}</p>
                         <p className='text-muted-foreground'>
@@ -787,14 +692,16 @@ const AdminDashboard = () => {
                           variant={
                             r.profile?.is_active &&
                             (!r.expiration_date ||
-                              new Date(r.expiration_date) >= new Date())
+                              new Date(r.expiration_date) >=
+                                new Date(new Date().toDateString()))
                               ? 'default'
                               : 'secondary'
                           }
                         >
                           {r.profile?.is_active &&
                           (!r.expiration_date ||
-                            new Date(r.expiration_date) >= new Date())
+                            new Date(r.expiration_date) >=
+                              new Date(new Date().toDateString()))
                             ? 'Active'
                             : 'Inactive'}
                         </Badge>
@@ -814,7 +721,20 @@ const AdminDashboard = () => {
                             variant='ghost'
                             size='icon'
                             className='text-destructive'
-                            onClick={() => deleteRealtor(r.id)}
+                            onClick={() => {
+                              setConfirmAction({
+                                title: 'Delete realtor?',
+                                description:
+                                  'Directory listing will be removed.',
+                                onConfirm: async () => {
+                                  const { error } = await supabase
+                                    .from('realtors')
+                                    .delete()
+                                    .eq('id', r.id);
+                                  if (!error) fetchAll();
+                                },
+                              });
+                            }}
                           >
                             <Trash2 className='h-4 w-4' />
                           </Button>
@@ -832,11 +752,142 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value='properties' className='space-y-4'>
-            {/* Simple property list placeholder */}
-            <div className='rounded-lg border border-border p-8 text-center text-muted-foreground'>
-              Restoring full property management... Overwrite with complete file
-              to see all features.
-            </div>
+            {(() => {
+              const q = search.trim().toLowerCase().replace(/^#/, '');
+              const filteredProperties = properties.filter(p => {
+                const creator = creatorEmail(p.user_id).toLowerCase();
+                const match =
+                  !q ||
+                  p.title.toLowerCase().includes(q) ||
+                  String(p.property_code).includes(q) ||
+                  creator.includes(q);
+                if (!match) return false;
+                const isActive =
+                  p.status === 'active' &&
+                  (!p.expiration_date ||
+                    new Date(p.expiration_date) >=
+                      new Date(new Date().toDateString()));
+                return showInactive ? !isActive : isActive;
+              });
+
+              const sortedProps = sortList(filteredProperties, 'properties', {
+                title: p => p.title.toLowerCase(),
+                price: p => p.price,
+                id: p => p.property_code,
+              });
+
+              return (
+                <div className='space-y-4'>
+                  <div className='flex items-center gap-4 flex-wrap'>
+                    <div className='relative flex-1 max-w-sm'>
+                      <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                      <Input
+                        placeholder='Search ID, title, or email...'
+                        className='pl-10'
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                      />
+                    </div>
+                    <div className='flex items-center gap-2 ml-auto'>
+                      <Label>Show Inactive</Label>
+                      <Switch
+                        checked={showInactive}
+                        onCheckedChange={setShowInactive}
+                      />
+                    </div>
+                  </div>
+                  <div className='rounded-lg border border-border overflow-auto'>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <SortHeader tab='properties' sortKey='id'>
+                            ID
+                          </SortHeader>
+                          <SortHeader tab='properties' sortKey='title'>
+                            Title
+                          </SortHeader>
+                          <TableHead>City</TableHead>
+                          <SortHeader tab='properties' sortKey='price'>
+                            Price
+                          </SortHeader>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Created By</TableHead>
+                          <TableHead className='text-right'>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sortedProps.map(p => (
+                          <TableRow
+                            key={p.id}
+                            className='cursor-pointer hover:bg-muted/40'
+                            onClick={() => navigate(`/admin/property/${p.id}`)}
+                          >
+                            <TableCell className='font-mono text-xs text-muted-foreground'>
+                              #{p.property_code}
+                            </TableCell>
+                            <TableCell className='font-medium'>
+                              {p.title}
+                            </TableCell>
+                            <TableCell>{p.city}</TableCell>
+                            <TableCell>
+                              Rs. {p.price.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  p.status === 'active'
+                                    ? 'default'
+                                    : 'secondary'
+                                }
+                              >
+                                {p.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className='text-xs text-muted-foreground'>
+                              {creatorEmail(p.user_id)}
+                            </TableCell>
+                            <TableCell
+                              className='text-right'
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Button
+                                variant='ghost'
+                                size='icon'
+                                className='text-destructive'
+                                onClick={() => {
+                                  confirm({
+                                    title: 'Delete property?',
+                                    description: `Permanent action. The listing will be removed.`,
+                                    onConfirm: async () => {
+                                      const { error } = await supabase
+                                        .from('user_properties')
+                                        .delete()
+                                        .eq('id', p.id);
+                                      if (error)
+                                        toast.error(
+                                          'Failed to delete property',
+                                        );
+                                      else {
+                                        toast.success('Property deleted');
+                                        setProperties(prev =>
+                                          prev.filter(prop => prop.id !== p.id),
+                                        );
+                                      }
+                                    },
+                                  });
+                                }}
+                              >
+                                <Trash2 className='h-4 w-4' />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value='features'>
@@ -850,35 +901,12 @@ const AdminDashboard = () => {
         open={realtorDialogOpen}
         onOpenChange={setRealtorDialogOpen}
         realtor={selectedRealtor}
-        onSave={handleSaveRealtor}
+        onSave={d => {
+          handleSaveRealtor(d);
+          fetchAll();
+        }}
         mode={realtorDialogMode}
       />
-
-      <Dialog
-        open={!!editingProfile}
-        onOpenChange={o => !o && setEditingProfileState(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Profile</DialogTitle>
-          </DialogHeader>
-          {editingProfile && (
-            <div className='space-y-4'>
-              <Input
-                value={editingProfile.display_name || ''}
-                onChange={e =>
-                  setEditingProfile({
-                    ...editingProfile,
-                    display_name: e.target.value,
-                  })
-                }
-                placeholder='Name'
-              />
-              <Button onClick={saveProfile}>Save</Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       <AlertDialog
         open={!!confirmAction}
@@ -895,7 +923,7 @@ const AdminDashboard = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
-                await confirmAction?.onConfirm();
+                if (confirmAction?.onConfirm) await confirmAction.onConfirm();
                 setConfirmAction(null);
               }}
             >
