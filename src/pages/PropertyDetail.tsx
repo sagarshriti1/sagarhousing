@@ -19,6 +19,7 @@ const PropertyDetail = () => {
   const navigate = useNavigate();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [property, setProperty] = useState<Tables<"user_properties"> | null>(null);
+  const [seller, setSeller] = useState<{ display_name: string | null; contact_details: string | null; avatar_url: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const favoriteId = id ? (id.startsWith("db-") ? id : `db-${id}`) : "";
@@ -33,6 +34,14 @@ const PropertyDetail = () => {
         .eq("id", dbId)
         .single();
       setProperty(data);
+      if (data?.user_id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("display_name, contact_details, avatar_url")
+          .eq("user_id", data.user_id)
+          .maybeSingle();
+        setSeller(prof as any);
+      }
       setLoading(false);
     };
     fetchProperty();
