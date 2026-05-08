@@ -382,7 +382,24 @@ const ProfilePage = () => {
                                   {NEPAL_DISTRICTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                                 </SelectContent>
                               </Select>
-                            </div>
+                    <div className="space-y-2">
+                      <Label>Contact Details for Viewers</Label>
+                      <Textarea
+                        rows={6}
+                        maxLength={600}
+                        placeholder="Phone, WhatsApp, office address, etc."
+                        value={profile.contact_details ?? ""}
+                        onChange={(e) => {
+                          const lines = e.target.value.split("\n");
+                          const trimmed = lines.length > 6 ? lines.slice(0, 6).join("\n") : e.target.value;
+                          setProfile({ ...profile, contact_details: trimmed });
+                        }}
+                        className="resize-none"
+                      />
+                      <p className="text-xs text-muted-foreground">Shown publicly on your property listings. Max 6 lines.</p>
+                    </div>
+
+                    </div>
                           </>
                         );
                       })()}
