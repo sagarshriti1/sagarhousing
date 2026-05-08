@@ -23,7 +23,6 @@ import {
   Loader2,
   CalendarIcon,
   ArrowLeft,
-  CreditCard,
   ShieldCheck,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,7 +39,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { format } from 'date-fns';
+import { format, addMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -85,8 +84,16 @@ const COMMON_FEATURES = [
   'Security System',
 ];
 
+// LOCAL DATE HELPERS (Fixes the May 8 -> May 7 timezone shift)
+const getLocalTodayStr = () => format(new Date(), 'yyyy-MM-dd');
+const addMonthsLocal = (dateStr: string, months: number) => {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return format(addMonths(date, months), 'yyyy-MM-dd');
+};
+
 const ListPropertyPage = () => {
-  const { user, role } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const isAdmin = role === 'admin';
   const saleFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_SALE);
   const rentFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_RENT);
@@ -123,18 +130,11 @@ const ListPropertyPage = () => {
     stories: '0',
   });
 
-  const addMonthsStr = (s: string, m: number) => {
-    const d = new Date(s);
-    d.setMonth(d.getMonth() + m);
-    return format(d, 'yyyy-MM-dd');
-  };
-
-  const todayDateStr = format(new Date(), 'yyyy-MM-dd');
   const [paymentDate, setPaymentDate] = useState<string | null>(
-    isAdmin && !isEdit ? todayDateStr : null,
+    isAdmin && !isEdit ? getLocalTodayStr() : null,
   );
   const [expirationDate, setExpirationDate] = useState<string | null>(
-    isAdmin && !isEdit ? addMonthsStr(todayDateStr, 1) : null,
+    isAdmin && !isEdit ? addMonthsLocal(getLocalTodayStr(), 1) : null,
   );
   const [propertyCode, setPropertyCode] = useState<number | null>(null);
   const [bypassReason, setBypassReason] = useState<string>('');
@@ -149,6 +149,12 @@ const ListPropertyPage = () => {
   const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false);
   const [reactivatePayOpen, setReactivatePayOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const clearError = (k: string) =>
+    setErrors(prev => {
+      if (!prev[k]) return prev;
+      const { [k]: _, ...rest } = prev;
+      return rest;
+    });
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
@@ -166,18 +172,13 @@ const ListPropertyPage = () => {
   const limitMessage = `You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit for standard accounts. Delete an existing listing or upgrade to a Realtor account to post more.`;
 
   const [realtorInactive, setRealtorInactive] = useState(false);
+
+  // EXACT MESSAGE AS REQUESTED
   const realtorInactiveMessage =
     'Your Realtor profile is inactive or expired. Please renew your Realtor subscription before posting new listings.';
 
-  const clearError = (k: string) =>
-    setErrors(prev => {
-      if (!prev[k]) return prev;
-      const { [k]: _, ...rest } = prev;
-      return rest;
-    });
-
   useEffect(() => {
-    if (!user || isEdit || !isStandardUser) return;
+    if (authLoading || !user || isEdit || !isStandardUser) return;
     let cancelled = false;
     (async () => {
       const { count } = await supabase
@@ -189,10 +190,10 @@ const ListPropertyPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [user, isEdit, isStandardUser]);
+  }, [user, isEdit, isStandardUser, authLoading]);
 
   useEffect(() => {
-    if (!user || !isRealtor || isEdit) return;
+    if (authLoading || !user || !isRealtor || isEdit) return;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
@@ -212,7 +213,7 @@ const ListPropertyPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [user, isRealtor, isEdit]);
+  }, [user, isRealtor, isEdit, authLoading]);
 
   useEffect(() => {
     if (!fetching) setIsDirty(true);
@@ -239,7 +240,7 @@ const ListPropertyPage = () => {
   const backTarget = isAdmin ? '/admin?tab=properties' : (-1 as const);
   const goBack = () => {
     if (typeof backTarget === 'string') navigate(backTarget);
-    else navigate(-1);
+    else navigate(backTarget);
   };
   const handleBack = () => {
     if (isDirty) setConfirmBackOpen(true);
@@ -247,7 +248,7 @@ const ListPropertyPage = () => {
   };
 
   useEffect(() => {
-    if (!editId || !user) return;
+    if (authLoading || !editId || !user) return;
     const fetchProperty = async () => {
       let query = supabase.from('user_properties').select('*').eq('id', editId);
 
@@ -283,6 +284,7 @@ const ListPropertyPage = () => {
         year_built: data.year_built != null ? String(data.year_built) : '',
         lot_size: data.lot_size != null ? String(data.lot_size) : '0',
         lot_unit: ((data as any).lot_unit as string) || 'Aana',
+
         maintenance_fee: String((data as any).maintenance_fee ?? 0),
         bike_parking: String((data as any).bike_parking ?? 0),
         car_parking: String((data as any).car_parking ?? 0),
@@ -290,16 +292,19 @@ const ListPropertyPage = () => {
       });
       setSelectedFeatures(data.features ?? []);
       setExistingImages(data.images ?? []);
+
       const pd = (data as any).payment_date;
       const ed = (data as any).expiration_date;
-      setPaymentDate(pd ? format(new Date(pd), 'yyyy-MM-dd') : null);
-      setExpirationDate(ed ? format(new Date(ed), 'yyyy-MM-dd') : null);
+      setPaymentDate(pd ? pd.split('T')[0] : null);
+      setExpirationDate(ed ? ed.split('T')[0] : null);
+
       setPropertyCode((data as any).property_code ?? null);
       setCurrentStatus(((data as any).status ?? 'pending') as any);
       setFetching(false);
+      setIsDirty(false); // Reset dirty state after load
     };
     fetchProperty();
-  }, [editId, user, navigate, isAdmin]);
+  }, [editId, user, navigate, isAdmin, authLoading]);
 
   const handleDeactivateNow = async () => {
     if (!editId) return;
@@ -347,13 +352,9 @@ const ListPropertyPage = () => {
 
   const completeReactivationPayment = async () => {
     if (!editId || !user) return;
-    const now = new Date();
-    const expiration = new Date(now);
-    expiration.setMonth(expiration.getMonth() + 1);
 
-    // Standardize dates to local YYYY-MM-DD strings for consistent logic
-    const startDate = format(now, 'yyyy-MM-dd');
-    const expiryDate = format(expiration, 'yyyy-MM-dd');
+    const startDate = getLocalTodayStr();
+    const expiryDate = addMonthsLocal(startDate, 1);
 
     const { error } = await supabase
       .from('user_properties')
@@ -363,7 +364,6 @@ const ListPropertyPage = () => {
         expiration_date: expiryDate,
       } as any)
       .eq('id', editId);
-
     if (error) {
       toast.error('Failed to activate listing');
       return;
@@ -524,6 +524,11 @@ const ListPropertyPage = () => {
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      const firstKey = Object.keys(newErrors)[0];
+      const el =
+        document.getElementById(firstKey) ||
+        document.querySelector(`[data-field="${firstKey}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
     setErrors({});
@@ -627,7 +632,9 @@ const ListPropertyPage = () => {
           });
         }
         toast.success(
-          isAdmin ? 'Property created and activated!' : 'Property saved!',
+          isAdmin
+            ? 'Property created and activated!'
+            : 'Property saved! Pay the listing fee from My Listings to activate it.',
         );
       }
       setIsDirty(false);
@@ -639,12 +646,13 @@ const ListPropertyPage = () => {
     }
   };
 
-  if (fetching) {
+  // REFRESH PROTECTION
+  if (authLoading || fetching) {
     return (
       <div className='min-h-screen flex flex-col'>
         <Header />
-        <main className='flex-1 flex items-center justify-center text-muted-foreground'>
-          Loading...
+        <main className='flex-1 flex items-center justify-center'>
+          <Loader2 className='h-8 w-8 animate-spin text-accent' />
         </main>
         <Footer />
       </div>
@@ -696,9 +704,25 @@ const ListPropertyPage = () => {
               </Badge>
               {currentStatus === 'active' && expirationDate && (
                 <span className='text-sm text-muted-foreground'>
-                  Active until {format(new Date(expirationDate), 'MMM d, yyyy')}
+                  Active until{' '}
+                  {format(
+                    new Date(expirationDate + 'T00:00:00'),
+                    'MMM d, yyyy',
+                  )}
                 </span>
               )}
+              {currentStatus !== 'active' &&
+                expirationDate &&
+                new Date(expirationDate) > new Date() && (
+                  <span className='text-sm text-muted-foreground'>
+                    Paid period until{' '}
+                    {format(
+                      new Date(expirationDate + 'T00:00:00'),
+                      'MMM d, yyyy',
+                    )}{' '}
+                    — reactivation is free
+                  </span>
+                )}
             </div>
             <div className='flex items-center gap-2'>
               <Label htmlFor='status-toggle' className='text-sm'>
@@ -718,6 +742,7 @@ const ListPropertyPage = () => {
         )}
 
         <form onSubmit={handleSubmit} className='space-y-8'>
+          {/* Basic Info */}
           <section className='space-y-4'>
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>
               Basic Information
@@ -793,6 +818,7 @@ const ListPropertyPage = () => {
             </div>
           </section>
 
+          {/* Location */}
           <section className='space-y-4'>
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>
               Location
@@ -826,7 +852,7 @@ const ListPropertyPage = () => {
                   className='w-full'
                 />
               </div>
-              <div className='space-y-2'>
+              <div className='space-y-2' data-field='district'>
                 <Label>District *</Label>
                 <SearchableCombobox
                   value={form.district}
@@ -843,6 +869,7 @@ const ListPropertyPage = () => {
             </div>
           </section>
 
+          {/* Details */}
           <section className='space-y-4'>
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>
               Property Details
@@ -854,7 +881,9 @@ const ListPropertyPage = () => {
                   id='price'
                   type='number'
                   value={form.price}
+                  onFocus={e => e.currentTarget.select()}
                   onChange={e => updateForm('price', e.target.value)}
+                  placeholder='450000'
                   min='0'
                   aria-invalid={!!errors.price}
                 />
@@ -868,6 +897,7 @@ const ListPropertyPage = () => {
                   id='bedrooms'
                   type='number'
                   value={form.bedrooms}
+                  onFocus={e => e.currentTarget.select()}
                   onChange={e => updateForm('bedrooms', e.target.value)}
                   min='0'
                 />
@@ -878,14 +908,188 @@ const ListPropertyPage = () => {
                   id='bathrooms'
                   type='number'
                   value={form.bathrooms}
+                  onFocus={e => e.currentTarget.select()}
                   onChange={e => updateForm('bathrooms', e.target.value)}
                   min='0'
                   step='0.5'
                 />
               </div>
+              <div className='space-y-2'>
+                <Label htmlFor='sqft'>Square Meter</Label>
+                <Input
+                  id='sqft'
+                  type='number'
+                  value={form.sqft}
+                  onFocus={e => e.currentTarget.select()}
+                  onChange={e => updateForm('sqft', e.target.value)}
+                  placeholder='200'
+                  min='0'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='yearBuilt'>Year Built</Label>
+                <Input
+                  id='yearBuilt'
+                  type='number'
+                  value={form.year_built}
+                  onFocus={e => e.currentTarget.select()}
+                  onChange={e => updateForm('year_built', e.target.value)}
+                  placeholder='2020'
+                  min='1800'
+                  max={new Date().getFullYear()}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='lotSize'>Lot Size</Label>
+                <div className='flex gap-2'>
+                  <Input
+                    id='lotSize'
+                    type='number'
+                    value={form.lot_size}
+                    onFocus={e => e.currentTarget.select()}
+                    onChange={e => updateForm('lot_size', e.target.value)}
+                    placeholder='4'
+                    min='0'
+                    step='0.01'
+                    className='flex-1'
+                  />
+                  <Select
+                    value={form.lot_unit}
+                    onValueChange={v => updateForm('lot_unit', v)}
+                  >
+                    <SelectTrigger className='w-[110px]'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[
+                        'Aana',
+                        'Bigha',
+                        'Daam',
+                        'Dhur',
+                        'Katha',
+                        'Paisa',
+                        'Ropani',
+                        'Sq. Ft.',
+                      ].map(u => (
+                        <SelectItem key={u} value={u}>
+                          {u}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='maintenance_fee'>Maintenance Fee (Rs.)</Label>
+                <Input
+                  id='maintenance_fee'
+                  type='number'
+                  value={form.maintenance_fee}
+                  onFocus={e => e.currentTarget.select()}
+                  onChange={e => updateForm('maintenance_fee', e.target.value)}
+                  placeholder='0'
+                  min='0'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='bike_parking'>Motor Bike Parking</Label>
+                <Input
+                  id='bike_parking'
+                  type='number'
+                  value={form.bike_parking}
+                  onFocus={e => e.currentTarget.select()}
+                  onChange={e => updateForm('bike_parking', e.target.value)}
+                  placeholder='0'
+                  min='0'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='car_parking'>Car Parking</Label>
+                <Input
+                  id='car_parking'
+                  type='number'
+                  value={form.car_parking}
+                  onFocus={e => e.currentTarget.select()}
+                  onChange={e => updateForm('car_parking', e.target.value)}
+                  placeholder='0'
+                  min='0'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='stories'>Stories</Label>
+                <Input
+                  id='stories'
+                  type='number'
+                  value={form.stories}
+                  onFocus={e => e.currentTarget.select()}
+                  onChange={e => updateForm('stories', e.target.value)}
+                  placeholder='0'
+                  min='0'
+                />
+              </div>
             </div>
           </section>
 
+          {/* Features */}
+          <section className='space-y-4'>
+            <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>
+              Features & Amenities
+            </h2>
+            <div className='flex flex-wrap gap-2'>
+              {COMMON_FEATURES.map(f => (
+                <button
+                  key={f}
+                  type='button'
+                  onClick={() => toggleFeature(f)}
+                  className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                    selectedFeatures.includes(f)
+                      ? 'bg-accent text-accent-foreground'
+                      : 'bg-secondary text-secondary-foreground hover:bg-muted'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <div className='flex gap-2'>
+              <Input
+                value={customFeature}
+                onChange={e => setCustomFeature(e.target.value)}
+                placeholder='Add custom feature...'
+                onKeyDown={e =>
+                  e.key === 'Enter' && (e.preventDefault(), addCustomFeature())
+                }
+              />
+              <Button
+                type='button'
+                variant='outline'
+                onClick={addCustomFeature}
+                size='icon'
+              >
+                <Plus className='h-4 w-4' />
+              </Button>
+            </div>
+            {selectedFeatures.filter(f => !COMMON_FEATURES.includes(f)).length >
+              0 && (
+              <div className='flex flex-wrap gap-2'>
+                {selectedFeatures
+                  .filter(f => !COMMON_FEATURES.includes(f))
+                  .map(f => (
+                    <span
+                      key={f}
+                      className='px-3 py-1.5 rounded-full text-sm bg-accent text-accent-foreground flex items-center gap-1'
+                    >
+                      {f}
+                      <button type='button' onClick={() => toggleFeature(f)}>
+                        <X className='h-3 w-3' />
+                      </button>
+                    </span>
+                  ))}
+              </div>
+            )}
+          </section>
+
+          {/* Images */}
           <section className='space-y-4'>
             <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>
               Property Photos
@@ -945,85 +1149,290 @@ const ListPropertyPage = () => {
                 </label>
               )}
             </div>
+            <p className='text-xs text-muted-foreground'>
+              Upload up to 10 photos. First photo will be the cover image.
+            </p>
           </section>
 
-          {isAdmin && (
-            <section className='space-y-4'>
-              <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>
-                Subscription & Payment
-              </h2>
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label>Start Date *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        className={cn(
-                          'w-full justify-start text-left font-normal',
-                          !paymentDate && 'text-muted-foreground',
-                        )}
-                      >
-                        <CalendarIcon className='mr-2 h-4 w-4' />
-                        {paymentDate
-                          ? format(new Date(paymentDate), 'PPP')
-                          : 'Pick start date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className='w-auto p-0' align='start'>
-                      <Calendar
-                        mode='single'
-                        selected={
-                          paymentDate ? new Date(paymentDate) : undefined
-                        }
-                        onSelect={d => {
-                          if (!d) {
-                            setPaymentDate(null);
-                            return;
+          {isAdmin &&
+            (() => {
+              const flag = form.listing_type === 'rent' ? rentFlag : saleFlag;
+              const showPaymentUI = !isEdit && !flag.isFree;
+              return (
+                <section className='space-y-4'>
+                  <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>
+                    Subscription & Payment
+                  </h2>
+
+                  {showPaymentUI && (
+                    <div className='rounded-lg border border-border p-4 space-y-4 bg-muted/30'>
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <p className='text-sm font-medium text-foreground'>
+                            Payment Status
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            Payment is required to activate this listing
+                          </p>
+                        </div>
+                        <Badge
+                          variant={
+                            paymentStatus === 'paid'
+                              ? 'default'
+                              : paymentStatus === 'bypassed'
+                                ? 'secondary'
+                                : 'destructive'
                           }
-                          const s = format(d, 'yyyy-MM-dd');
-                          setPaymentDate(s);
-                          setExpirationDate(addMonthsStr(s, 1));
-                        }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className='space-y-2'>
-                  <Label>Expiration Date *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        className={cn(
-                          'w-full justify-start text-left font-normal',
-                          !expirationDate && 'text-muted-foreground',
+                        >
+                          {paymentStatus === 'paid'
+                            ? 'Paid'
+                            : paymentStatus === 'bypassed'
+                              ? 'Bypassed'
+                              : 'Pending'}
+                        </Badge>
+                      </div>
+
+                      <div className='flex items-center gap-3 p-3 rounded-md border border-dashed border-border bg-background'>
+                        <ShieldCheck className='h-5 w-5 text-accent shrink-0' />
+                        <div className='flex-1'>
+                          <p className='text-sm font-medium text-foreground'>
+                            Bypass Payment
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            Skip payment verification for this listing
+                          </p>
+                        </div>
+                        <Checkbox
+                          checked={bypassPayment}
+                          onCheckedChange={checked => {
+                            const c = !!checked;
+                            setBypassPayment(c);
+                            setPaymentStatus(
+                              c
+                                ? 'bypassed'
+                                : paymentStatus === 'paid'
+                                  ? 'paid'
+                                  : 'pending',
+                            );
+                            if (!c) setBypassReason('');
+                          }}
+                        />
+                      </div>
+
+                      {bypassPayment && (
+                        <div
+                          className='space-y-2 p-3 rounded-md border border-amber-500/40 bg-amber-500/5'
+                          data-field='bypassReason'
+                        >
+                          <Label>
+                            Reason for bypass{' '}
+                            <span className='text-destructive'>*</span>
+                          </Label>
+                          <Textarea
+                            value={bypassReason}
+                            onChange={e => {
+                              setBypassReason(e.target.value);
+                              clearError('bypassReason');
+                            }}
+                            placeholder='Explain why payment is being bypassed (e.g. complimentary listing, partner agreement, manual offline payment)…'
+                            rows={2}
+                            aria-invalid={!!errors.bypassReason}
+                          />
+                          {errors.bypassReason ? (
+                            <p className='text-xs text-destructive'>
+                              {errors.bypassReason}
+                            </p>
+                          ) : (
+                            <p className='text-xs text-muted-foreground'>
+                              Mandatory. This reason will appear in the payment
+                              history for both the admin and the listing owner.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {!bypassPayment && (
+                        <div data-field='payment' className='space-y-2'>
+                          <SimulatedPaymentForm
+                            paid={paymentStatus === 'paid'}
+                            onPaymentComplete={() => {
+                              setPaymentStatus('paid');
+                              clearError('payment');
+                            }}
+                            amount={flag.fee}
+                            label={
+                              form.listing_type === 'rent'
+                                ? 'Rent listing fee'
+                                : 'Sale listing fee'
+                            }
+                          />
+                          {errors.payment && (
+                            <p className='text-xs text-destructive'>
+                              {errors.payment}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {showPaymentUI && <Separator />}
+
+                  <div>
+                    <h3 className='font-medium text-foreground mb-3 flex items-center gap-2'>
+                      <CalendarIcon className='h-4 w-4 text-muted-foreground' />{' '}
+                      Listing Period
+                    </h3>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div className='space-y-2' data-field='paymentDate'>
+                        <Label>Start Date *</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type='button'
+                              variant='outline'
+                              className={cn(
+                                'w-full justify-start text-left font-normal',
+                                !paymentDate && 'text-muted-foreground',
+                              )}
+                            >
+                              <CalendarIcon className='mr-2 h-4 w-4' />
+                              {paymentDate
+                                ? format(
+                                    new Date(paymentDate + 'T00:00:00'),
+                                    'PPP',
+                                  )
+                                : 'Pick start date'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className='w-auto p-0' align='start'>
+                            <Calendar
+                              mode='single'
+                              selected={
+                                paymentDate
+                                  ? new Date(paymentDate + 'T00:00:00')
+                                  : undefined
+                              }
+                              onSelect={d => {
+                                if (!d) {
+                                  setPaymentDate(null);
+                                  return;
+                                }
+                                const s = format(d, 'yyyy-MM-dd');
+                                setPaymentDate(s);
+                                setExpirationDate(addMonthsLocal(s, 1));
+                                clearError('paymentDate');
+                                clearError('expirationDate');
+                              }}
+                              initialFocus
+                              className={cn('p-3 pointer-events-auto')}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        {errors.paymentDate && (
+                          <p className='text-xs text-destructive'>
+                            {errors.paymentDate}
+                          </p>
                         )}
-                      >
-                        <CalendarIcon className='mr-2 h-4 w-4' />
-                        {expirationDate
-                          ? format(new Date(expirationDate), 'PPP')
-                          : 'Pick expiration date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className='w-auto p-0' align='start'>
-                      <Calendar
-                        mode='single'
-                        selected={
-                          expirationDate ? new Date(expirationDate) : undefined
-                        }
-                        onSelect={d => {
-                          setExpirationDate(d ? format(d, 'yyyy-MM-dd') : null);
-                        }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
+                      </div>
+                      <div className='space-y-2' data-field='expirationDate'>
+                        <Label>Expiration Date *</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type='button'
+                              variant='outline'
+                              className={cn(
+                                'w-full justify-start text-left font-normal',
+                                !expirationDate && 'text-muted-foreground',
+                              )}
+                            >
+                              <CalendarIcon className='mr-2 h-4 w-4' />
+                              {expirationDate
+                                ? format(
+                                    new Date(expirationDate + 'T00:00:00'),
+                                    'PPP',
+                                  )
+                                : 'Pick expiration date'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className='w-auto p-0' align='start'>
+                            <Calendar
+                              mode='single'
+                              selected={
+                                expirationDate
+                                  ? new Date(expirationDate + 'T00:00:00')
+                                  : undefined
+                              }
+                              onSelect={d => {
+                                setExpirationDate(
+                                  d ? format(d, 'yyyy-MM-dd') : null,
+                                );
+                                clearError('expirationDate');
+                              }}
+                              initialFocus
+                              className={cn('p-3 pointer-events-auto')}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        {errors.expirationDate && (
+                          <p className='text-xs text-destructive'>
+                            {errors.expirationDate}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              );
+            })()}
+
+          {!isEdit && !isAdmin && (
+            <div className='rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground'>
+              <p className='font-medium text-foreground mb-1'>Listing Fee</p>
+              <p>
+                Your property will be saved as <strong>inactive</strong>. To
+                activate and publish it, pay the listing fee from your My
+                Listings page:
+              </p>
+              <ul className='list-disc list-inside mt-1'>
+                <li>
+                  For Rent:{' '}
+                  <strong>
+                    {rentFlag.isFree
+                      ? 'Free 🎉'
+                      : `Rs. ${rentFlag.fee.toLocaleString()}`}
+                  </strong>
+                  {rentFlag.isFree && rentFlag.promoLabel
+                    ? ` — ${rentFlag.promoLabel}`
+                    : ''}
+                </li>
+                <li>
+                  For Sale:{' '}
+                  <strong>
+                    {saleFlag.isFree
+                      ? 'Free 🎉'
+                      : `Rs. ${saleFlag.fee.toLocaleString()}`}
+                  </strong>
+                  {saleFlag.isFree && saleFlag.promoLabel
+                    ? ` — ${saleFlag.promoLabel}`
+                    : ''}
+                </li>
+              </ul>
+            </div>
+          )}
+
+          {isEdit && isAdmin && editId && (
+            <section className='space-y-3'>
+              <h2 className='font-display text-xl font-semibold text-foreground border-b border-border pb-2'>
+                Payment History
+              </h2>
+              <PaymentHistoryList
+                relatedType='property'
+                relatedId={editId}
+                canEditNotes
+                compact
+              />
             </section>
           )}
 
@@ -1091,7 +1500,11 @@ const ListPropertyPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Deactivate this listing?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your listing will be hidden from buyers.
+              Your listing will be hidden from buyers. You can reactivate it any
+              time
+              {expirationDate && new Date(expirationDate) > new Date()
+                ? ' for free while your paid period is still valid.'
+                : '.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1108,8 +1521,8 @@ const ListPropertyPage = () => {
           <DialogHeader>
             <DialogTitle>Reactivate Listing</DialogTitle>
             <DialogDescription>
-              Pay the listing fee to reactivate <strong>{form.title}</strong>{' '}
-              for another month.
+              Your active period has expired. Pay the listing fee to reactivate{' '}
+              <strong>{form.title}</strong> for another month.
             </DialogDescription>
           </DialogHeader>
           <SimulatedPaymentForm
