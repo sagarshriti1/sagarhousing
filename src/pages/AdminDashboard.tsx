@@ -190,6 +190,9 @@ const AdminDashboard = () => {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
+  const [selectedPropertyIds, setSelectedPropertyIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [sortConfig, setSortConfig] = useState<
     Record<string, { key: string; dir: 'asc' | 'desc' } | null>
   >({});
@@ -223,8 +226,7 @@ const AdminDashboard = () => {
     if (role === 'admin') fetchAll();
   }, [role]);
 
-  // STICKY AUTH GATE:
-  // If loading is true OR if we have a user but role query hasn't finished, WAIT.
+  // FIX: STICKY AUTH GATE FOR REFRESH ISSUE
   if (loading || (user && !role)) {
     return (
       <div className='min-h-screen flex flex-col'>
@@ -233,7 +235,7 @@ const AdminDashboard = () => {
           <div className='flex flex-col items-center gap-3'>
             <Loader2 className='h-10 w-10 animate-spin text-accent' />
             <p className='text-muted-foreground animate-pulse'>
-              Verifying administration access...
+              Verifying administrative access...
             </p>
           </div>
         </main>
@@ -242,10 +244,8 @@ const AdminDashboard = () => {
     );
   }
 
-  // Only redirect if loading is finished and they definitely aren't an admin
   if (!user || role !== 'admin') return <Navigate to='/' replace />;
 
-  const getSort = (tab: string) => sortConfig[tab] ?? null;
   const toggleSort = (tab: string, key: string) => {
     setSortConfig(prev => {
       const cur = prev[tab];
@@ -256,6 +256,8 @@ const AdminDashboard = () => {
       return { ...prev, [tab]: next };
     });
   };
+
+  const getSort = (tab: string) => sortConfig[tab] ?? null;
 
   const SortHeader = ({
     tab,
@@ -378,35 +380,31 @@ const AdminDashboard = () => {
     });
   };
 
-  const toggleFeatured = (realtor: Realtor) => {
-    const turningOn = !realtor.is_featured;
-    setConfirmAction({
-      title: `${turningOn ? 'Feature' : 'Unfeature'} Realtor`,
-      description: `Are you sure?`,
-      onConfirm: async () => {
-        const now = new Date();
-        const today = format(now, 'yyyy-MM-dd');
-        const expStr = format(addMonths(now, 1), 'yyyy-MM-dd');
-        const updates: any = turningOn
-          ? {
-              is_featured: true,
-              featured_start_date: today,
-              featured_expiration_date: expStr,
-            }
-          : { is_featured: false };
-        const { error } = await supabase
-          .from('realtors')
-          .update(updates)
-          .eq('id', realtor.id);
-        if (error) toast.error('Failed to update');
-        else {
-          setRealtors(prev =>
-            prev.map(r => (r.id === realtor.id ? { ...r, ...updates } : r)),
-          );
-          toast.success('Updated');
-        }
-      },
-    });
+  const handleSaveRealtor = async (data: RealtorFormData) => {
+    const payload = { ...data };
+    delete (payload as any).bypass_reason;
+    delete (payload as any).featured_bypass_reason;
+
+    if (realtorDialogMode === 'edit' && data.id) {
+      const { error } = await supabase
+        .from('realtors')
+        .update(payload)
+        .eq('id', data.id);
+      if (error) toast.error('Failed to save');
+      else {
+        toast.success('Updated successfully');
+        fetchAll();
+        setRealtorDialogOpen(false);
+      }
+    } else {
+      const { error } = await supabase.from('realtors').insert(payload);
+      if (error) toast.error('Failed to create');
+      else {
+        toast.success('Realtor created');
+        fetchAll();
+        setRealtorDialogOpen(false);
+      }
+    }
   };
 
   const unifiedRealtors = (() => {
@@ -459,6 +457,7 @@ const AdminDashboard = () => {
   const filteredRealtors = sortList(unifiedRealtors as any[], 'realtors', {
     name: r => r.name?.toLowerCase(),
     email: r => r.email?.toLowerCase(),
+    location: r => `${r.city} ${r.district}`.toLowerCase(),
     expiration_date: r => r.expiration_date,
     status: r => (r.profile?.is_active ? 1 : 0),
   });
@@ -561,6 +560,16 @@ const AdminDashboard = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              {sorted.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className='text-center py-8 text-muted-foreground'
+                  >
+                    No accounts found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
@@ -637,7 +646,9 @@ const AdminDashboard = () => {
                       Name
                     </SortHeader>
                     <TableHead>Email</TableHead>
-                    <TableHead>Location</TableHead>
+                    <SortHeader tab='realtors' sortKey='location'>
+                      Location
+                    </SortHeader>
                     <SortHeader tab='realtors' sortKey='expiration_date'>
                       Dates
                     </SortHeader>
@@ -647,101 +658,106 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRealtors.map(r => (
-                    <TableRow
-                      key={r.id}
-                      className='cursor-pointer hover:bg-muted/40'
-                      onClick={() =>
-                        navigate(
-                          r.isProfileOnly
-                            ? `/admin/user/${r.user_id}`
-                            : `/admin/realtor/${r.id}`,
-                        )
-                      }
-                    >
-                      <TableCell>
-                        <div className='flex items-center gap-3'>
-                          <div className='h-8 w-8 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xs font-bold text-muted-foreground'>
-                            {r.photo_url || r.profile?.avatar_url ? (
-                              <img
-                                src={r.photo_url || r.profile?.avatar_url}
-                                className='h-full w-full object-cover'
-                              />
-                            ) : (
-                              r.name[0]
-                            )}
-                          </div>
-                          {r.name}
-                        </div>
-                      </TableCell>
-                      <TableCell className='text-muted-foreground'>
-                        {r.email}
-                      </TableCell>
-                      <TableCell className='text-xs'>
-                        {r.city}
-                        {r.district ? `, ${r.district}` : ''}
-                      </TableCell>
-                      <TableCell className='text-xs'>
-                        <p>{formatLocalDate(r.start_date)}</p>
-                        <p className='text-muted-foreground'>
-                          {formatLocalDate(r.expiration_date)}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            r.profile?.is_active &&
-                            (!r.expiration_date ||
-                              new Date(r.expiration_date) >=
-                                new Date(new Date().toDateString()))
-                              ? 'default'
-                              : 'secondary'
-                          }
-                        >
-                          {r.profile?.is_active &&
-                          (!r.expiration_date ||
-                            new Date(r.expiration_date) >=
-                              new Date(new Date().toDateString()))
-                            ? 'Active'
-                            : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell onClick={e => e.stopPropagation()}>
-                        <Switch
-                          checked={r.is_featured}
-                          onCheckedChange={() => toggleFeatured(r as Realtor)}
-                        />
-                      </TableCell>
-                      <TableCell
-                        className='text-right'
-                        onClick={e => e.stopPropagation()}
+                  {filteredRealtors.map(r => {
+                    const isActive =
+                      r.profile?.is_active &&
+                      (!r.expiration_date ||
+                        new Date(r.expiration_date) >=
+                          new Date(new Date().toDateString()));
+                    return (
+                      <TableRow
+                        key={r.id}
+                        className='cursor-pointer hover:bg-muted/40'
+                        onClick={() =>
+                          navigate(
+                            r.isProfileOnly
+                              ? `/admin/user/${r.user_id}`
+                              : `/admin/realtor/${r.id}`,
+                          )
+                        }
                       >
-                        {!r.isProfileOnly && (
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='text-destructive'
-                            onClick={() => {
-                              setConfirmAction({
-                                title: 'Delete realtor?',
-                                description:
-                                  'Directory listing will be removed.',
-                                onConfirm: async () => {
-                                  const { error } = await supabase
-                                    .from('realtors')
-                                    .delete()
-                                    .eq('id', r.id);
-                                  if (!error) fetchAll();
-                                },
-                              });
-                            }}
+                        <TableCell>
+                          <div className='flex items-center gap-3'>
+                            <div className='h-8 w-8 rounded-full bg-muted overflow-hidden flex items-center justify-center text-xs font-bold text-muted-foreground'>
+                              {r.photo_url || r.profile?.avatar_url ? (
+                                <img
+                                  src={r.photo_url || r.profile?.avatar_url}
+                                  className='h-full w-full object-cover'
+                                />
+                              ) : (
+                                r.name[0]
+                              )}
+                            </div>
+                            {r.name}
+                          </div>
+                        </TableCell>
+                        <TableCell className='text-muted-foreground'>
+                          {r.email}
+                        </TableCell>
+                        <TableCell className='text-xs'>
+                          {r.city}
+                          {r.district ? `, ${r.district}` : ''}
+                        </TableCell>
+                        <TableCell className='text-xs'>
+                          <p>{formatLocalDate(r.start_date)}</p>
+                          <p className='text-muted-foreground'>
+                            {formatLocalDate(r.expiration_date)}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={isActive ? 'default' : 'secondary'}>
+                            {isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+
+                        {/* UPDATED FEATURED COLUMN TO YES/NO */}
+                        <TableCell>
+                          <Badge
+                            variant={r.is_featured ? 'default' : 'secondary'}
+                            className={
+                              r.is_featured
+                                ? 'bg-badge-new text-badge-new-foreground border-0'
+                                : ''
+                            }
                           >
-                            <Trash2 className='h-4 w-4' />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            {r.is_featured ? 'Yes' : 'No'}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell
+                          className='text-right'
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {!r.isProfileOnly && (
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='text-destructive'
+                              onClick={() => {
+                                setConfirmAction({
+                                  title: 'Delete realtor?',
+                                  description:
+                                    'Directory listing will be removed.',
+                                  onConfirm: async () => {
+                                    const { error } = await supabase
+                                      .from('realtors')
+                                      .delete()
+                                      .eq('id', r.id);
+                                    if (!error) {
+                                      toast.success('Realtor deleted');
+                                      fetchAll();
+                                    }
+                                  },
+                                });
+                              }}
+                            >
+                              <Trash2 className='h-4 w-4' />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -855,7 +871,7 @@ const AdminDashboard = () => {
                                 size='icon'
                                 className='text-destructive'
                                 onClick={() => {
-                                  confirm({
+                                  setConfirmAction({
                                     title: 'Delete property?',
                                     description: `Permanent action. The listing will be removed.`,
                                     onConfirm: async () => {
@@ -901,12 +917,54 @@ const AdminDashboard = () => {
         open={realtorDialogOpen}
         onOpenChange={setRealtorDialogOpen}
         realtor={selectedRealtor}
-        onSave={d => {
-          handleSaveRealtor(d);
-          fetchAll();
-        }}
+        onSave={handleSaveRealtor}
         mode={realtorDialogMode}
       />
+
+      <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
+        <DialogContent className='max-w-md'>
+          <DialogHeader>
+            <DialogTitle>
+              Create{' '}
+              {createUserRole === 'user' ? 'Non-Realtor' : createUserRole}{' '}
+              Account
+            </DialogTitle>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <Input
+              value={newUser.displayName}
+              onChange={e =>
+                setNewUser({ ...newUser, displayName: e.target.value })
+              }
+              placeholder='Full name'
+            />
+            <Input
+              value={newUser.email}
+              onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+              placeholder='email@example.com'
+            />
+            <Input
+              type='password'
+              value={newUser.password}
+              onChange={e =>
+                setNewUser({ ...newUser, password: e.target.value })
+              }
+              placeholder='Temporary password'
+            />
+            <Button
+              onClick={handleCreateUser}
+              disabled={creatingUser}
+              className='w-full'
+            >
+              {creatingUser ? (
+                <Loader2 className='animate-spin' />
+              ) : (
+                'Create Account'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={!!confirmAction}
