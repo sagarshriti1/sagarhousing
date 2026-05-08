@@ -1,45 +1,45 @@
 ## Plan
 
-### 1. Database: add `contact_details` to profiles
+### 1. Layout: move "Contact Seller" + "Inquire" to the bottom of `PropertyDetail.tsx`
 
-Migration: add column `contact_details TEXT` to `public.profiles` (nullable). No RLS change needed — existing "Profiles are viewable by everyone" SELECT policy already exposes it for the public Property Detail page.
+Currently both cards live in the right sidebar. Restructure:
 
-### 2. ProfilePage (`src/pages/ProfilePage.tsx`) — applies to both Realtors and Non-Realtors
+- Remove the right sidebar column. Put all property content (gallery, title, description, features) in a single full-width column.
+- Below all that, add a new full-width section `Contact Seller` with consistent padding (`max-w-3xl mx-auto`, same card styling).
+  - Top half: lister avatar + display name + the 6-line `contact_details` (whitespace-pre-line). Fallback message if empty.
+  - Divider.
+  - Bottom half: `Inquire About This Property` form (Name, Email, Phone, Message + Send button).
+- Both halves share the same outer card so they line up vertically with identical padding.
 
-In the Personal Information card, add a new section **"Contact Details for Viewers"** below the existing fields:
+### 2. Email sending
 
-- A `Textarea` (rows=6) bound to `profile.contact_details`.
-- Helper text: "Shown publicly on your property listings. Add phone, WhatsApp, office address, etc."
-- 6-line limit enforced in `onChange`: if `value.split("\n").length > 6`, ignore the change (or trim to first 6 lines). Also a `maxLength` (e.g. 600) for safety.
-- Include `contact_details` in the `ProfileData` interface, in load (`setProfileState`), and in the `handleSave` payload.
+Set up Lovable's built-in email infrastructure (no third-party). Steps:
+- Set up email domain (one-click dialog).
+- Run `setup_email_infra` then `scaffold_transactional_email`.
+- Create a new template `property-inquiry.tsx` in `_shared/transactional-email-templates/` with props: `inquirerName`, `inquirerEmail`, `inquirerPhone`, `message`, `propertyTitle`, `propertyUrl`. Subject: `New inquiry about "{propertyTitle}"`.
+- Register in `registry.ts`.
 
-### 3. Admin user detail (`src/pages/admin/AdminUserDetailPage.tsx`)
+### 3. Wire up the form
 
-- Extend the `Profile` interface with `contact_details: string | null`.
-- In the read-only details grid, add a `sm:col-span-2` row showing **"Contact Details for Viewers"** with `whitespace-pre-line` rendering of `profile.contact_details || "—"`.
-- In the Edit dialog, add a `Textarea` (rows=6) for `contact_details` with the same 6-line cap, save it via existing `update` flow.
+In `PropertyDetail.tsx`:
+- Convert the form to controlled inputs with `name`, `email`, `phone`, `message` state.
+- Add `sending` and `sent` state plus a `dirtySinceSent` flag.
+- On submit:
+  1. Fetch the lister's signup email via `profiles.email` (already on profiles table).
+  2. Build property URL from `window.location.href`.
+  3. Call `supabase.functions.invoke('send-transactional-email', { body: { templateName: 'property-inquiry', recipientEmail: ownerEmail, idempotencyKey: \`inquiry-${property.id}-${Date.now()}\`, templateData: {...} } })`.
+  4. On success: `setSent(true)`, button becomes disabled with label "Message Sent!".
+- Button disabled when `sending || (sent && !dirtySinceSent)`.
+- `onChange` of Name or Message inputs sets `dirtySinceSent = true`, which re-enables the button and resets the label back to "Send Message".
 
-### 4. Property Detail (`src/pages/PropertyDetail.tsx`) — public "Contact Seller" box
+### 4. Validation
 
-After fetching the property, also fetch the lister's profile:
-
-```ts
-supabase.from("profiles")
-  .select("display_name, contact_details, avatar_url")
-  .eq("user_id", property.user_id)
-  .maybeSingle();
-```
-
-Render a new prominent **"Contact Seller"** card in the right sidebar (above the existing "Inquire About This Property" form). It shows:
-
-- Lister's `display_name` (with avatar if available).
-- If `contact_details` is set → render it inside a styled box using `<p className="whitespace-pre-line text-sm text-foreground">`.
-- If `contact_details` is empty → hide the details block (still show name) or show muted "No contact info provided".
-
-Card uses semantic tokens (`bg-card`, `border-border`, accent heading) to make it visually prominent.
+- Required: name, email, message. Show inline toast on missing fields before sending.
 
 ### Out of scope
+- No changes to admin/profile pages.
+- No new DB tables — `profiles.email` already exists.
 
-- No changes to the `realtors` table — realtor public profile page (`RealtorProfilePage`) is separate and not requested.
-- No changes to the listing creation/edit flow.
-- No notifications or messaging — purely displayed text.
+### Email domain
+
+You'll need to set up a sender domain first (one-click). After that, I'll wire up the rest automatically.
