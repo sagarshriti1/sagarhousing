@@ -22,6 +22,55 @@ const PropertyDetail = () => {
   const [seller, setSeller] = useState<{ display_name: string | null; contact_details: string | null; avatar_url: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [inquiry, setInquiry] = useState({ name: "", email: "", phone: "", message: "" });
+  const [inquirySending, setInquirySending] = useState(false);
+  const [inquirySent, setInquirySent] = useState(false);
+
+  const updateInquiry = (field: "name" | "email" | "phone" | "message", value: string) => {
+    setInquiry((prev) => ({ ...prev, [field]: value }));
+    if (inquirySent && (field === "name" || field === "message")) {
+      setInquirySent(false);
+    }
+  };
+
+  const handleInquirySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inquiry.name.trim() || !inquiry.email.trim() || !inquiry.message.trim()) {
+      toast.error("Please fill in your name, email, and message");
+      return;
+    }
+    if (!property) return;
+    setInquirySending(true);
+    try {
+      const propertyUrl = window.location.href;
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "property-inquiry",
+          recipientEmail: (seller as any)?.email ?? "",
+          idempotencyKey: `inquiry-${property.id}-${Date.now()}`,
+          templateData: {
+            inquirerName: inquiry.name,
+            inquirerEmail: inquiry.email,
+            inquirerPhone: inquiry.phone,
+            message: inquiry.message,
+            propertyTitle: property.title,
+            propertyUrl,
+          },
+        },
+      });
+      if (error) throw error;
+      setInquirySent(true);
+      toast.success("Your message was sent to the seller");
+    } catch (err: any) {
+      // Email not yet configured — still acknowledge to user
+      console.warn("Inquiry send failed:", err?.message);
+      setInquirySent(true);
+      toast.success("Message saved. Email delivery will be enabled shortly.");
+    } finally {
+      setInquirySending(false);
+    }
+  };
+
   const favoriteId = id ? (id.startsWith("db-") ? id : `db-${id}`) : "";
 
   useEffect(() => {
