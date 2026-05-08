@@ -47,6 +47,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 import {
   NEPAL_CITIES,
   NEPAL_DISTRICTS,
@@ -66,6 +67,7 @@ interface Profile {
   is_active: boolean;
   contact_details: string | null;
   bio: string | null;
+  created_at: string;
 }
 
 const parseLocation = (loc: string | null | undefined) => {
@@ -377,6 +379,17 @@ const AdminUserDetailPage = () => {
                 {[loc.city, loc.district].filter(Boolean).join(', ') || '—'}
               </span>
             </div>
+
+            {/* Added Profile Created, explicitly read-only and uneditable */}
+            <div>
+              <span className='text-muted-foreground'>Profile Created:</span>{' '}
+              <span className='text-foreground'>
+                {profile.created_at
+                  ? format(new Date(profile.created_at), 'MMM d, yyyy')
+                  : '—'}
+              </span>
+            </div>
+
             <div className='sm:col-span-2'>
               <span className='text-muted-foreground'>Street Address:</span>{' '}
               <span className='text-foreground'>
