@@ -409,6 +409,18 @@ const ProfilePage = () => {
                       <p className="text-xs text-muted-foreground">Shown publicly on your property listings. Max 6 lines.</p>
                     </div>
 
+                    <div className="space-y-2">
+                      <Label>About Me</Label>
+                      <Textarea
+                        rows={5}
+                        maxLength={1000}
+                        placeholder="Tell others a bit about yourself..."
+                        value={profile.bio ?? ""}
+                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                      />
+                      <p className="text-xs text-muted-foreground">Max 1000 characters.</p>
+                    </div>
+
                     <ConfirmSaveButton onConfirm={handleSave} disabled={saving || !dirty}>
                       {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                       Save Changes
