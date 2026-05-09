@@ -103,8 +103,9 @@ const FindRealtors = () => {
             <h2 className='text-3xl md:text-4xl font-bold text-foreground'>
               Find Local <span className='text-[#FF6B00]'>Realtors</span>
             </h2>
-            <p className='text-muted-foreground text-sm md:text-base'>
-              Search professionals by Name or Location
+            {/* Restored original verbiage */}
+            <p className='text-muted-foreground mt-1'>
+              Connect with experienced agents in your area
             </p>
           </div>
 
@@ -174,8 +175,7 @@ const FindRealtors = () => {
                 </div>
 
                 <p className='text-sm text-slate-600 line-clamp-2 mb-4 h-10'>
-                  {realtor.bio ||
-                    'Experience realtor helping you find your dream home in Nepal.'}
+                  {realtor.bio || 'Helping you find your dream home in Nepal.'}
                 </p>
 
                 <div className='flex items-center justify-between pt-4 border-t border-slate-100'>
