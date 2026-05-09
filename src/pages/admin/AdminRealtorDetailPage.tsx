@@ -29,6 +29,7 @@ import {
   Star,
   Home,
   ChevronRight,
+  Loader2, // Added Loader2 import for the loading state
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -119,13 +120,29 @@ const AdminRealtorDetailPage = () => {
     if (role === 'admin') fetchRealtor(); /* eslint-disable-next-line */
   }, [id, role]);
 
-  if (loading)
+  // ---------------------------------------------------------
+  // 🚨 STICKY AUTH GATE: FIXES THE REFRESH BUG
+  // ---------------------------------------------------------
+  if (loading || (user && !role)) {
     return (
-      <div className='min-h-screen flex items-center justify-center text-muted-foreground'>
-        Loading...
+      <div className='min-h-screen flex flex-col'>
+        <Header />
+        <main className='flex-1 flex items-center justify-center'>
+          <div className='flex flex-col items-center gap-3'>
+            <Loader2 className='h-10 w-10 animate-spin text-accent' />
+            <p className='text-muted-foreground animate-pulse'>
+              Verifying access...
+            </p>
+          </div>
+        </main>
+        <Footer />
       </div>
     );
+  }
+
+  // Only redirect if we are absolutely certain they are not an admin
   if (!user || role !== 'admin') return <Navigate to='/' replace />;
+  // ---------------------------------------------------------
 
   const callAdminAction = async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke('admin-actions', {
@@ -297,7 +314,12 @@ const AdminRealtorDetailPage = () => {
     return (
       <div className='min-h-screen flex flex-col'>
         <Header />
-        <main className='flex-1 container py-8'>Loading…</main>
+        <main className='flex-1 flex items-center justify-center text-muted-foreground'>
+          <div className='flex flex-col items-center gap-3'>
+            <Loader2 className='h-10 w-10 animate-spin text-accent' />
+            <p>Loading Realtor Data...</p>
+          </div>
+        </main>
         <Footer />
       </div>
     );
@@ -330,9 +352,14 @@ const AdminRealtorDetailPage = () => {
     featured_bypass_reason: null,
   };
 
+  // UPDATED LOCAL DATE FORMATTING
   const notExpired =
     !realtor.expiration_date ||
-    new Date(realtor.expiration_date) >= new Date(new Date().toDateString());
+    new Date(
+      realtor.expiration_date.includes('T')
+        ? realtor.expiration_date
+        : `${realtor.expiration_date}T00:00:00`,
+    ) >= new Date(new Date().toDateString());
   const displayPhoto = realtor.photo_url || linkedAvatar;
 
   return (
@@ -447,11 +474,25 @@ const AdminRealtorDetailPage = () => {
               <span className='text-muted-foreground'>Subscription:</span>{' '}
               <span className='text-foreground'>
                 {realtor.start_date
-                  ? format(new Date(realtor.start_date), 'MMM d, yyyy')
+                  ? format(
+                      new Date(
+                        realtor.start_date.includes('T')
+                          ? realtor.start_date
+                          : `${realtor.start_date}T00:00:00`,
+                      ),
+                      'MMM d, yyyy',
+                    )
                   : '—'}{' '}
                 →{' '}
                 {realtor.expiration_date
-                  ? format(new Date(realtor.expiration_date), 'MMM d, yyyy')
+                  ? format(
+                      new Date(
+                        realtor.expiration_date.includes('T')
+                          ? realtor.expiration_date
+                          : `${realtor.expiration_date}T00:00:00`,
+                      ),
+                      'MMM d, yyyy',
+                    )
                   : '—'}
               </span>
             </div>
@@ -459,19 +500,33 @@ const AdminRealtorDetailPage = () => {
               <span className='text-muted-foreground'>Featured:</span>{' '}
               <span className='text-foreground'>
                 {realtor.featured_start_date
-                  ? format(new Date(realtor.featured_start_date), 'MMM d, yyyy')
+                  ? format(
+                      new Date(
+                        realtor.featured_start_date.includes('T')
+                          ? realtor.featured_start_date
+                          : `${realtor.featured_start_date}T00:00:00`,
+                      ),
+                      'MMM d, yyyy',
+                    )
                   : '—'}{' '}
                 →{' '}
                 {realtor.featured_expiration_date
                   ? format(
-                      new Date(realtor.featured_expiration_date),
+                      new Date(
+                        realtor.featured_expiration_date.includes('T')
+                          ? realtor.featured_expiration_date
+                          : `${realtor.featured_expiration_date}T00:00:00`,
+                      ),
                       'MMM d, yyyy',
                     )
                   : '—'}{' '}
                 {realtor.is_featured &&
                 realtor.featured_expiration_date &&
-                new Date(realtor.featured_expiration_date) <
-                  new Date(new Date().toDateString()) ? (
+                new Date(
+                  realtor.featured_expiration_date.includes('T')
+                    ? realtor.featured_expiration_date
+                    : `${realtor.featured_expiration_date}T00:00:00`,
+                ) < new Date(new Date().toDateString()) ? (
                   <Badge variant='destructive' className='ml-2'>
                     Expired
                   </Badge>

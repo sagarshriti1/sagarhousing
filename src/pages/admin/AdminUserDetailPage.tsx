@@ -45,6 +45,7 @@ import {
   UserX,
   Home,
   ChevronRight,
+  Loader2, // Added Loader2 for Sticky Auth Gate
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -134,13 +135,28 @@ const AdminUserDetailPage = () => {
     if (role === 'admin') load();
   }, [userId, role]);
 
-  if (loading)
+  // ---------------------------------------------------------
+  // 🚨 STICKY AUTH GATE: FIXES THE REFRESH BUG
+  // ---------------------------------------------------------
+  if (loading || (user && !role)) {
     return (
-      <div className='min-h-screen flex items-center justify-center text-muted-foreground'>
-        Loading...
+      <div className='min-h-screen flex flex-col'>
+        <Header />
+        <main className='flex-1 flex items-center justify-center'>
+          <div className='flex flex-col items-center gap-3'>
+            <Loader2 className='h-10 w-10 animate-spin text-accent' />
+            <p className='text-muted-foreground animate-pulse'>
+              Verifying access...
+            </p>
+          </div>
+        </main>
+        <Footer />
       </div>
     );
+  }
+
   if (!user || role !== 'admin') return <Navigate to='/' replace />;
+  // ---------------------------------------------------------
 
   const callAdminAction = async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke('admin-actions', {
@@ -244,7 +260,12 @@ const AdminUserDetailPage = () => {
     return (
       <div className='min-h-screen flex flex-col'>
         <Header />
-        <main className='flex-1 container py-8'>Loading…</main>
+        <main className='flex-1 container py-8'>
+          <div className='flex flex-col items-center justify-center h-full gap-3 text-muted-foreground'>
+            <Loader2 className='h-8 w-8 animate-spin' />
+            <p>Loading User Data...</p>
+          </div>
+        </main>
         <Footer />
       </div>
     );
@@ -385,7 +406,14 @@ const AdminUserDetailPage = () => {
               <span className='text-muted-foreground'>Profile Created:</span>{' '}
               <span className='text-foreground'>
                 {profile.created_at
-                  ? format(new Date(profile.created_at), 'MMM d, yyyy')
+                  ? format(
+                      new Date(
+                        profile.created_at.includes('T')
+                          ? profile.created_at
+                          : `${profile.created_at}T00:00:00`,
+                      ),
+                      'MMM d, yyyy',
+                    )
                   : '—'}
               </span>
             </div>
