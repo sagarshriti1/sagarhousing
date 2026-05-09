@@ -1,182 +1,151 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Home, Menu, X, Heart, User, LogOut, Shield, Megaphone, Bookmark, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Menu, User, LogOut, LayoutDashboard, PlusCircle } from 'lucide-react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 const Header = () => {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+    setOpen(false);
+  };
+
+  const navLinks = [];
+
+  if (role === 'admin') {
+    navLinks.push({
+      name: 'Admin Dashboard',
+      href: '/admin',
+      icon: <LayoutDashboard className='h-4 w-4' />,
+    });
+  } else if (role === 'realtor') {
+    navLinks.push({
+      name: 'Realtor Dashboard',
+      href: '/realtor-dashboard',
+      icon: <LayoutDashboard className='h-4 w-4' />,
+    });
+    navLinks.push({
+      name: 'List Property',
+      href: '/list-property',
+      icon: <PlusCircle className='h-4 w-4' />,
+    });
+  } else if (user) {
+    navLinks.push({
+      name: 'My Listings',
+      href: '/my-listings',
+      icon: <PlusCircle className='h-4 w-4' />,
+    });
+  }
 
   return (
-    <header className='sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border'>
-      <div className='container flex items-center justify-between h-16'>
+    <header className='relative z-50 w-full border-b bg-background'>
+      <div className='container flex h-16 items-center justify-between px-4'>
         <Link to='/' className='flex items-center gap-2'>
-          <Home className='h-6 w-6 text-accent' />
-          <span className='font-display text-xl font-bold text-foreground'>
-            Welcome Home
+          {/* Brand Name updated to WELCOME HOME with Orange color */}
+          <span className='text-xl font-bold tracking-tight text-[#FF6B00] uppercase'>
+            WELCOME <span className='text-foreground'>HOME</span>
           </span>
         </Link>
 
-        <nav className='hidden md:flex items-center gap-8'>
-          <Link
-            to='/?type=buy'
-            className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
-          >
-            Buy
-          </Link>
-          <Link
-            to='/?type=rent'
-            className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
-          >
-            Rent
-          </Link>
-          <Link
-            to={user ? '/list-property' : '/auth'}
-            className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
-          >
-            Sell
-          </Link>
-          <Link
-            to='/'
-            className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
-          >
-            Estimate
-          </Link>
+        {/* DESKTOP NAV */}
+        <nav className='hidden md:flex items-center gap-6 text-sm font-medium'>
+          {navLinks.map(link => (
+            <Link
+              key={link.href}
+              to={link.href}
+              className='transition-colors hover:text-[#FF6B00]'
+            >
+              {link.name}
+            </Link>
+          ))}
         </nav>
 
-        <div className='hidden md:flex items-center gap-3'>
+        <div className='flex items-center gap-2'>
           {user ? (
             <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              <div className='hidden md:flex items-center gap-2'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => navigate('/profile')}
+                >
+                  <User className='mr-2 h-4 w-4' /> Profile
+                </Button>
+                <Button variant='outline' size='sm' onClick={handleSignOut}>
+                  <LogOut className='mr-2 h-4 w-4' /> Sign Out
+                </Button>
+              </div>
+
+              <Sheet open={open} onOpenChange={setOpen}>
+                <SheetTrigger asChild className='md:hidden'>
                   <Button variant='ghost' size='icon'>
-                    <User className='h-5 w-5' />
+                    <Menu className='h-6 w-6' />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end'>
-                  <DropdownMenuItem className='text-xs text-muted-foreground'>
-                    {user.email}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to='/profile'><User className='h-4 w-4 mr-2' /> My Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to='/my-listings'><List className='h-4 w-4 mr-2' /> My Listings</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to='/favorites'><Heart className='h-4 w-4 mr-2' /> My Favorites</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to='/saved-realtors'><Bookmark className='h-4 w-4 mr-2' /> Saved Realtors</Link>
-                  </DropdownMenuItem>
-                  {role === 'realtor' && (
-                    <DropdownMenuItem asChild>
-                      <Link to='/realtor-dashboard'><Megaphone className='h-4 w-4 mr-2' /> Realtor Dashboard</Link>
-                    </DropdownMenuItem>
-                  )}
-                  {role === 'admin' && (
-                    <DropdownMenuItem asChild>
-                      <Link to='/admin'><Shield className='h-4 w-4 mr-2' /> Admin Dashboard</Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={signOut}
-                    className='text-destructive'
-                  >
-                    <LogOut className='h-4 w-4 mr-2' /> Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </SheetTrigger>
+                <SheetContent side='right' className='w-[300px] sm:w-[400px]'>
+                  <SheetHeader>
+                    <SheetTitle className='text-left font-bold'>
+                      Menu
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className='grid gap-4 py-6'>
+                    {navLinks.map(link => (
+                      <Link
+                        key={link.href}
+                        to={link.href}
+                        onClick={() => setOpen(false)}
+                        className='flex items-center gap-4 text-lg font-semibold hover:text-[#FF6B00] transition-colors'
+                      >
+                        {link.icon}
+                        {link.name}
+                      </Link>
+                    ))}
+                    <Link
+                      to='/profile'
+                      onClick={() => setOpen(false)}
+                      className='flex items-center gap-4 text-lg font-semibold hover:text-[#FF6B00] transition-colors'
+                    >
+                      <User className='h-5 w-5' />
+                      My Profile
+                    </Link>
+                    <div className='pt-4 border-t'>
+                      <Button
+                        className='w-full justify-start text-destructive hover:text-destructive'
+                        variant='ghost'
+                        onClick={handleSignOut}
+                      >
+                        <LogOut className='mr-4 h-5 w-5' />
+                        Logout
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </>
           ) : (
-            <Link to='/auth'>
-              <Button
-                size='sm'
-                className='bg-accent text-accent-foreground hover:bg-accent/90'
-              >
-                Sign In
-              </Button>
-            </Link>
+            /* Login/Register Button updated to Orange */
+            <Button
+              size='sm'
+              onClick={() => navigate('/auth')}
+              className='bg-[#FF6B00] hover:bg-[#E66000] text-white border-none'
+            >
+              Login / Register
+            </Button>
           )}
         </div>
-
-        <Button
-          variant='ghost'
-          size='icon'
-          className='md:hidden'
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? (
-            <X className='h-5 w-5' />
-          ) : (
-            <Menu className='h-5 w-5' />
-          )}
-        </Button>
       </div>
-
-      {mobileOpen && (
-        <div className='md:hidden border-t border-border bg-card animate-fade-in'>
-          <nav className='container py-4 flex flex-col gap-3'>
-            <Link to='/?type=buy' className='text-sm font-medium py-2 text-foreground'>
-              Buy
-            </Link>
-            <Link to='/?type=rent' className='text-sm font-medium py-2 text-foreground'>
-              Rent
-            </Link>
-            <Link to={user ? '/list-property' : '/auth'} className='text-sm font-medium py-2 text-foreground'>
-              Sell
-            </Link>
-            {user ? (
-              <>
-                <Link to='/profile' className='text-sm font-medium py-2 text-foreground'>
-                  My Profile
-                </Link>
-                <Link to='/my-listings' className='text-sm font-medium py-2 text-foreground'>
-                  My Listings
-                </Link>
-                <Link to='/favorites' className='text-sm font-medium py-2 text-foreground'>
-                  My Favorites
-                </Link>
-                <Link to='/saved-realtors' className='text-sm font-medium py-2 text-foreground'>
-                  Saved Realtors
-                </Link>
-                {role === 'realtor' && (
-                  <Link to='/realtor-dashboard' className='text-sm font-medium py-2 text-foreground'>
-                    Realtor Dashboard
-                  </Link>
-                )}
-                <Button
-                  size='sm'
-                  variant='outline'
-                  onClick={signOut}
-                  className='w-full mt-2'
-                >
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <Link to='/auth'>
-                <Button
-                  size='sm'
-                  className='w-full bg-accent text-accent-foreground hover:bg-accent/90 mt-2'
-                >
-                  Sign In
-                </Button>
-              </Link>
-            )}
-          </nav>
-        </div>
-      )}
     </header>
   );
 };
