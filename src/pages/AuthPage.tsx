@@ -138,7 +138,7 @@ const AuthPage = () => {
       <Link to='/' className='flex items-center gap-2 mb-8'>
         <Home className='h-6 w-6 text-accent' />
         <span className='font-display text-2xl font-bold text-foreground'>
-          Welcome Home
+          Naya Thau
         </span>
       </Link>
 

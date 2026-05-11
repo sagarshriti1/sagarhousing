@@ -8,7 +8,7 @@ const Footer = () => (
         <div>
           <Link to='/' className='flex items-center gap-2 mb-4'>
             <Home className='h-6 w-6 text-accent' />
-            <span className='font-display text-xl font-bold'>Welcome Home</span>
+            <span className='font-display text-xl font-bold'>Naya Thau</span>
           </Link>
           <p className='text-primary-foreground/70 text-sm'>
             Your trusted partner in finding the perfect home. Browse thousands
@@ -54,7 +54,7 @@ const Footer = () => (
         ))}
       </div>
       <div className='border-t border-primary-foreground/20 mt-8 pt-8 text-center text-sm text-primary-foreground/50'>
-        © 2026 Welcome Home. All rights reserved.
+        © 2026 Naya Thau. All rights reserved.
       </div>
     </div>
   </footer>
