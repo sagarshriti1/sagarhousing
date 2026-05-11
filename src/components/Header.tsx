@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LogOut, LayoutDashboard, PlusCircle } from 'lucide-react';
+import { Menu, User, LogOut, LayoutDashboard, PlusCircle, Home } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -53,9 +53,10 @@ const Header = () => {
     <header className='relative z-50 w-full border-b bg-background'>
       <div className='container flex h-16 items-center justify-between px-4'>
         <Link to='/' className='flex items-center gap-2'>
-          {/* Brand Name updated to WELCOME HOME with Orange color */}
+          <Home className='h-6 w-6 text-[#FF6B00]' />
+          {/* Brand Name updated to NAYA THAU with Orange color */}
           <span className='text-xl font-bold tracking-tight text-[#FF6B00] uppercase'>
-            WELCOME <span className='text-foreground'>HOME</span>
+            NAYA <span className='text-foreground'>THAU</span>
           </span>
         </Link>
 

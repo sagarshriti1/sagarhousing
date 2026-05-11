@@ -35,7 +35,7 @@ const PaymentReceipt = forwardRef<HTMLDivElement, Props>(
           <div className="flex items-center gap-3">
             <Home className="h-8 w-8" />
             <div>
-              <h1 className="text-2xl font-bold leading-none">Welcome Home</h1>
+              <h1 className="text-2xl font-bold leading-none">Naya Thau</h1>
               <p className="text-xs text-gray-600 mt-1">Real Estate Services</p>
             </div>
           </div>
@@ -121,7 +121,7 @@ const PaymentReceipt = forwardRef<HTMLDivElement, Props>(
         </div>
 
         <div className="mt-8 pt-4 border-t border-gray-300 text-[10px] text-gray-500 text-center">
-          This is a computer-generated receipt. For questions, contact Welcome Home support.
+          This is a computer-generated receipt. For questions, contact Naya Thau support.
         </div>
       </div>
     );

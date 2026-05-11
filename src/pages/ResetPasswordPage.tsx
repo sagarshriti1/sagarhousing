@@ -59,7 +59,7 @@ const ResetPasswordPage = () => {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <Link to="/" className="flex items-center gap-2 mb-8">
           <Home className="h-6 w-6 text-accent" />
-          <span className="font-display text-2xl font-bold text-foreground">Welcome Home</span>
+          <span className="font-display text-2xl font-bold text-foreground">Naya Thau</span>
         </Link>
         <div className="w-full max-w-md bg-card rounded-lg border border-border p-8 shadow-card text-center">
           <h1 className="font-display text-2xl font-bold text-foreground mb-4">Invalid Link</h1>
@@ -80,7 +80,7 @@ const ResetPasswordPage = () => {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <Link to="/" className="flex items-center gap-2 mb-8">
         <Home className="h-6 w-6 text-accent" />
-        <span className="font-display text-2xl font-bold text-foreground">Welcome Home</span>
+        <span className="font-display text-2xl font-bold text-foreground">Naya Thau</span>
       </Link>
 
       <div className="w-full max-w-md bg-card rounded-lg border border-border p-8 shadow-card">
