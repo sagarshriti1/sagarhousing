@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LogOut, LayoutDashboard, PlusCircle, Home } from 'lucide-react';
+import { Menu, User, LogOut, LayoutDashboard, PlusCircle, Home, List, Heart, Bookmark, Megaphone, Shield } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import {
   Sheet,
   SheetContent,
@@ -77,16 +84,48 @@ const Header = () => {
           {user ? (
             <>
               <div className='hidden md:flex items-center gap-2'>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => navigate('/profile')}
-                >
-                  <User className='mr-2 h-4 w-4' /> Profile
-                </Button>
-                <Button variant='outline' size='sm' onClick={handleSignOut}>
-                  <LogOut className='mr-2 h-4 w-4' /> Sign Out
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='ghost' size='icon'>
+                      <User className='h-5 w-5' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end'>
+                    <DropdownMenuItem className='text-xs text-muted-foreground'>
+                      {user.email}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to='/profile'><User className='h-4 w-4 mr-2' /> My Profile</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to='/my-listings'><List className='h-4 w-4 mr-2' /> My Listings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to='/favorites'><Heart className='h-4 w-4 mr-2' /> My Favorites</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to='/saved-realtors'><Bookmark className='h-4 w-4 mr-2' /> Saved Realtors</Link>
+                    </DropdownMenuItem>
+                    {role === 'realtor' && (
+                      <DropdownMenuItem asChild>
+                        <Link to='/realtor-dashboard'><Megaphone className='h-4 w-4 mr-2' /> Realtor Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
+                    {role === 'admin' && (
+                      <DropdownMenuItem asChild>
+                        <Link to='/admin'><Shield className='h-4 w-4 mr-2' /> Admin Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className='text-destructive focus:text-destructive'
+                    >
+                      <LogOut className='h-4 w-4 mr-2' /> Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <Sheet open={open} onOpenChange={setOpen}>
