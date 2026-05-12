@@ -134,7 +134,7 @@ const RealtorProfilePage = () => {
               </Button>
               {realtor.user_id && (
                 <Button asChild className="gap-2">
-                  <Link to={`/?realtor_id=${realtor.user_id}`}>
+                  <Link to={`/realtor/${realtor.user_id}/listings`}>
                     <Building2 className="h-4 w-4" />
                     View Listings
                   </Link>
