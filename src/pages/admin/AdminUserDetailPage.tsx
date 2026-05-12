@@ -426,7 +426,7 @@ const AdminUserDetailPage = () => {
             </div>
             <div className='sm:col-span-2'>
               <span className='text-muted-foreground'>
-                Contact Details for Viewers:
+                Additional Info:
               </span>
               <p className='text-foreground whitespace-pre-line mt-1'>
                 {profile.contact_details || '—'}
@@ -578,7 +578,7 @@ const AdminUserDetailPage = () => {
                 />
               </div>
               <div>
-                <Label>Contact Details for Viewers</Label>
+                <Label>Additional Info</Label>
                 <Textarea
                   rows={4}
                   maxLength={600}

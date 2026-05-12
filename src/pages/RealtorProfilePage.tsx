@@ -18,11 +18,15 @@ interface Realtor {
   photo_url: string | null;
   city: string;
   state: string;
+  street_address: string | null;
+  district: string | null;
   bio: string | null;
   specialties: string[] | null;
   years_experience: number | null;
   is_featured: boolean;
   license_number: string | null;
+  user_id: string | null;
+  contact_details?: string | null;
 }
 
 const RealtorProfilePage = () => {
@@ -38,9 +42,14 @@ const RealtorProfilePage = () => {
       if (!id) return;
       const { data } = await supabase.from("realtors").select("*").eq("id", id).maybeSingle();
       if (data) {
+        let contactDetails = null;
+        if (data.user_id) {
+          const { data: profile } = await supabase.from('profiles').select('contact_details').eq('user_id', data.user_id).maybeSingle();
+          if (profile) contactDetails = profile.contact_details;
+        }
         const today = new Date(new Date().toDateString());
         const featuredActive = data.is_featured && (!data.featured_expiration_date || new Date(data.featured_expiration_date) >= today);
-        setRealtor({ ...data, is_featured: featuredActive } as any);
+        setRealtor({ ...data, is_featured: featuredActive, contact_details: contactDetails } as any);
       } else {
         setRealtor(null);
       }
@@ -94,18 +103,15 @@ const RealtorProfilePage = () => {
                   )}
                 </div>
                 <p className="flex items-center gap-1.5 text-muted-foreground justify-center sm:justify-start">
-                  <MapPin className="h-4 w-4 shrink-0" /> {realtor.city}{(realtor as any).district ? `, ${(realtor as any).district}` : ''}
+                  <MapPin className="h-4 w-4 shrink-0" /> 
+                  {[realtor.street_address, realtor.city, realtor.district].filter(Boolean).join(', ')}
                 </p>
-                {realtor.years_experience && (
-                  <p className="flex items-center gap-1.5 text-muted-foreground justify-center sm:justify-start">
-                    <Star className="h-4 w-4 shrink-0" /> {realtor.years_experience} years experience
-                  </p>
-                )}
-                {realtor.license_number && (
-                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground justify-center sm:justify-start">
-                    <Briefcase className="h-4 w-4 shrink-0" /> License: {realtor.license_number}
-                  </p>
-                )}
+                <p className="flex items-center gap-1.5 text-muted-foreground justify-center sm:justify-start">
+                  <Star className="h-4 w-4 shrink-0" /> {realtor.years_experience !== null ? `${realtor.years_experience} years experience` : "Experience: Not provided"}
+                </p>
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground justify-center sm:justify-start">
+                  <Briefcase className="h-4 w-4 shrink-0" /> License: {realtor.license_number || "Not provided"}
+                </p>
               </div>
             </div>
             <Button
@@ -128,43 +134,56 @@ const RealtorProfilePage = () => {
           </div>
           {/* Body */}
           <div className="p-8 space-y-6">
-            {realtor.bio && (
-              <div>
-                <h2 className="font-display text-lg font-semibold text-foreground mb-2">About Me</h2>
-                <p className="text-muted-foreground whitespace-pre-line">{realtor.bio}</p>
-              </div>
-            )}
+            <div>
+              <h2 className="font-display text-lg font-semibold text-foreground mb-2">About Me</h2>
+              <p className="text-muted-foreground whitespace-pre-line">{realtor.bio || "No bio provided."}</p>
+            </div>
 
-            {realtor.specialties && realtor.specialties.length > 0 && (
-              <div>
-                <h2 className="font-display text-lg font-semibold text-foreground mb-2">Specialties</h2>
+            <div>
+              <h2 className="font-display text-lg font-semibold text-foreground mb-2">Additional Info</h2>
+              <p className="text-muted-foreground whitespace-pre-line">{realtor.contact_details || "No additional info provided."}</p>
+            </div>
+
+            <div>
+              <h2 className="font-display text-lg font-semibold text-foreground mb-2">Specialties</h2>
+              {realtor.specialties && realtor.specialties.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {realtor.specialties.map((s) => (
                     <Badge key={s} variant="secondary">{s}</Badge>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-muted-foreground text-sm">No specialties listed.</p>
+              )}
+            </div>
 
             {/* Contact */}
             <div>
               <h2 className="font-display text-lg font-semibold text-foreground mb-3">Contact</h2>
               <div className="flex flex-col sm:flex-row gap-4">
-                {realtor.phone && (
+                {realtor.phone ? (
                   <a
                     href={`tel:${realtor.phone}`}
                     className="flex items-center gap-2 px-4 py-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-foreground"
                   >
                     <Phone className="h-4 w-4 text-muted-foreground" /> {realtor.phone}
                   </a>
+                ) : (
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-border bg-secondary/20 text-muted-foreground">
+                    <Phone className="h-4 w-4 opacity-50" /> Not provided
+                  </div>
                 )}
-                {realtor.email && (
+                {realtor.email ? (
                   <a
                     href={`mailto:${realtor.email}`}
                     className="flex items-center gap-2 px-4 py-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-foreground"
                   >
                     <Mail className="h-4 w-4 text-muted-foreground" /> {realtor.email}
                   </a>
+                ) : (
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-border bg-secondary/20 text-muted-foreground">
+                    <Mail className="h-4 w-4 opacity-50" /> Not provided
+                  </div>
                 )}
               </div>
             </div>
