@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSavedRealtors } from "@/hooks/useSavedRealtors";
@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Mail, Star, Award, Briefcase, Bookmark } from "lucide-react";
+import { MapPin, Phone, Mail, Star, Award, Briefcase, Bookmark, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Realtor {
@@ -114,23 +114,33 @@ const RealtorProfilePage = () => {
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="gap-2 mt-4"
-              onClick={() => {
-                if (!user) {
-                  toast.error("Please sign in to save realtors");
-                  navigate("/auth");
-                  return;
-                }
-                toggleSaved(realtor.id).then((ok) => {
-                  if (ok) toast.success(isSaved(realtor.id) ? "Removed from saved" : "Realtor saved");
-                });
-              }}
-            >
-              <Bookmark className={`h-4 w-4 ${isSaved(realtor.id) ? "text-accent fill-accent" : ""}`} />
-              {isSaved(realtor.id) ? "Saved" : "Save Realtor"}
-            </Button>
+            <div className="flex flex-wrap gap-2 mt-4 justify-center sm:justify-start">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  if (!user) {
+                    toast.error("Please sign in to save realtors");
+                    navigate("/auth");
+                    return;
+                  }
+                  toggleSaved(realtor.id).then((ok) => {
+                    if (ok) toast.success(isSaved(realtor.id) ? "Removed from saved" : "Realtor saved");
+                  });
+                }}
+              >
+                <Bookmark className={`h-4 w-4 ${isSaved(realtor.id) ? "text-accent fill-accent" : ""}`} />
+                {isSaved(realtor.id) ? "Saved" : "Save Realtor"}
+              </Button>
+              {realtor.user_id && (
+                <Button asChild className="gap-2">
+                  <Link to={`/realtor/${realtor.user_id}/listings`}>
+                    <Building2 className="h-4 w-4" />
+                    View Listings
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
           {/* Body */}
           <div className="p-8 space-y-6">

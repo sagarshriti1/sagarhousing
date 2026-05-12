@@ -26,4 +26,5 @@ export interface Property {
     phone: string;
     email: string;
   };
+  user_id?: string | null;
 }

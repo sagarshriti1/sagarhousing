@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Bed, Bath, Maximize, Trash2, CreditCard, Pencil, Receipt, Search } from "lucide-react";
 import PaymentHistoryList from "@/components/PaymentHistoryList";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ const MyListingsPage = () => {
   const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
   const [paymentsListing, setPaymentsListing] = useState<Tables<"user_properties"> | null>(null);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [blockedDeleteOpen, setBlockedDeleteOpen] = useState(false);
 
@@ -216,21 +218,31 @@ const MyListingsPage = () => {
         })()}
 
         {!loading && listings.length > 0 && (
-          <div className="relative mb-4 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by ID, title, address, city…"
-              className="pl-9"
-            />
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+              <TabsList className="w-full sm:w-auto grid grid-cols-3">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="sale">For Sale</TabsTrigger>
+                <TabsTrigger value="rent">For Rent</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="relative w-full sm:w-auto sm:min-w-[300px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by ID, title, address, city…"
+                className="pl-9"
+              />
+            </div>
           </div>
         )}
 
         {(() => {
+          const typeFiltered = activeTab === "all" ? listings : listings.filter(l => l.listing_type === activeTab);
           const q = search.trim().toLowerCase().replace(/^#/, "");
           const filtered = q
-            ? listings.filter((l) => {
+            ? typeFiltered.filter((l) => {
                 const code = String((l as any).property_code ?? "");
                 return (
                   code.includes(q) ||
@@ -240,7 +252,7 @@ const MyListingsPage = () => {
                   (l.district || "").toLowerCase().includes(q)
                 );
               })
-            : listings;
+            : typeFiltered;
 
           if (loading) return <div className="text-center py-16 text-muted-foreground">Loading...</div>;
           if (listings.length === 0) return (

@@ -14,6 +14,7 @@ import RealtorsPage from "./pages/RealtorsPage.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import RealtorDashboard from "./pages/RealtorDashboard.tsx";
 import RealtorProfilePage from "./pages/RealtorProfilePage.tsx";
+import RealtorListingsPage from "./pages/RealtorListingsPage.tsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
 import FavoritesPage from "./pages/FavoritesPage.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/saved-realtors" element={<ProtectedRoute><SavedRealtorsPage /></ProtectedRoute>} />
             <Route path="/realtor/:id" element={<RealtorProfilePage />} />
+            <Route path="/realtor/:id/listings" element={<RealtorListingsPage />} />
             <Route path="/realtors" element={<RealtorsPage />} />
             <Route path="/realtor-dashboard" element={<RealtorProtectedRoute><RealtorDashboard /></RealtorProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
