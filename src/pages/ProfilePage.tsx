@@ -585,7 +585,7 @@ const ProfilePage = () => {
                     </div>
 
                     <div className='space-y-2'>
-                      <Label>Contact Details for Viewers</Label>
+                      <Label>Additional Info</Label>
                       <Textarea
                         rows={6}
                         maxLength={600}

@@ -29,6 +29,7 @@ interface Realtor {
   photo_url: string | null;
   city: string;
   district: string;
+  street_address?: string | null;
   bio: string | null;
   specialties: string[] | null;
   years_experience: number | null;
@@ -167,8 +168,7 @@ const FindRealtors = () => {
                     <p className='flex items-center gap-1 text-sm text-slate-500'>
                       <MapPin className='h-3.5 w-3.5 shrink-0 text-[#FF6B00]' />
                       <span className='truncate'>
-                        {realtor.city}
-                        {realtor.district ? `, ${realtor.district}` : ''}
+                        {[realtor.street_address, realtor.city, realtor.district].filter(Boolean).join(', ')}
                       </span>
                     </p>
                   </div>
