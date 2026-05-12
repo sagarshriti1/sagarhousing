@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 const Index = () => {
   const [searchParams] = useSearchParams();
   const typeParam = searchParams.get("type");
+  const realtorIdParam = searchParams.get("realtor_id");
   const [activeTab, setActiveTab] = useState<"all" | "buy" | "rent">(
     typeParam === "rent" ? "rent" : typeParam === "buy" ? "buy" : "all"
   );
@@ -24,7 +25,7 @@ const Index = () => {
       <Header />
       <main className="flex-1">
         <HeroSection activeTab={activeTab} setActiveTab={setActiveTab} />
-        <FeaturedListings heroListingType={activeTab === "buy" ? "sale" : activeTab === "rent" ? "rent" : "all"} />
+        <FeaturedListings heroListingType={activeTab === "buy" ? "sale" : activeTab === "rent" ? "rent" : "all"} realtorId={realtorIdParam} />
         <FindRealtors />
       </main>
       <Footer />

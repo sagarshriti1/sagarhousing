@@ -6,9 +6,20 @@ import FilterBar from "@/components/FilterBar";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
 
-const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => {
+const FeaturedListings = ({ heroListingType, realtorId }: { heroListingType?: string, realtorId?: string | null }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [listingType, setListingType] = useState(heroListingType === "rent" ? "rent" : heroListingType === "sale" ? "sale" : "all");
+  const [realtorName, setRealtorName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (realtorId) {
+      const fetchRealtor = async () => {
+        const { data } = await supabase.from('realtors').select('name').eq('user_id', realtorId).maybeSingle();
+        if (data && data.name) setRealtorName(data.name);
+      };
+      fetchRealtor();
+    }
+  }, [realtorId]);
 
   useEffect(() => {
     if (heroListingType === "sale") setListingType("sale");
@@ -50,6 +61,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
           sqft: p.sqft ?? 0,
           type: p.property_type as Property["type"],
           listingType: p.listing_type as Property["listingType"],
+          user_id: p.user_id,
           image: p.images?.[0] ?? "/placeholder.svg",
           images: p.images ?? [],
           yearBuilt: p.year_built ?? 2000,
@@ -74,6 +86,7 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
 
   const filtered = useMemo(() => {
     return allProperties.filter((p) => {
+      if (realtorId && p.user_id !== realtorId) return false;
       if (effectiveListingType !== "all" && p.listingType !== effectiveListingType) return false;
       if (propertyType !== "all" && p.type !== propertyType) return false;
       if (beds !== "all" && p.beds < parseInt(beds)) return false;
@@ -107,7 +120,9 @@ const FeaturedListings = ({ heroListingType }: { heroListingType?: string }) => 
     <section className="container py-12">
       <div className="flex items-end justify-between mb-2">
         <div>
-          <h2 className="font-display text-3xl font-bold text-foreground">Featured Listings</h2>
+          <h2 className="font-display text-3xl font-bold text-foreground">
+             {realtorName ? `${realtorName}'s Listings` : "Featured Listings"}
+          </h2>
           <p className="text-muted-foreground mt-1">{filtered.length} properties found</p>
         </div>
       </div>
