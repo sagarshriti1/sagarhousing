@@ -166,7 +166,7 @@ const RealtorDashboard = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Listings</CardTitle>
+            <CardTitle>My Listings</CardTitle>
             <CardDescription>
               A list of properties you have posted on the platform
             </CardDescription>
