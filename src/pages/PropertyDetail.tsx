@@ -58,6 +58,12 @@ const PropertyDetail = () => {
   const formatPrice = (price: number, listingType: string) =>
     `Rs. ${price.toLocaleString()}${listingType === "rent" ? "/mo" : ""}`;
 
+  const getImageUrl = (imagePath: string) => {
+    if (!imagePath) return "/placeholder.svg";
+    if (imagePath.startsWith('http')) return imagePath;
+    return supabase.storage.from('properties').getPublicUrl(imagePath).data.publicUrl;
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -67,8 +73,12 @@ const PropertyDetail = () => {
             <ArrowLeft className="h-4 w-4" /> Back to listings
           </Link>
 
-          <div className="rounded-lg overflow-hidden mb-8 aspect-[16/9] max-h-[500px]">
-            <img src={property.images?.[0] || "/placeholder.svg"} alt={property.title} className="w-full h-full object-cover" />
+          <div className="rounded-lg overflow-hidden mb-8 aspect-[16/9] max-h-[500px] bg-muted">
+            <img 
+              src={getImageUrl(property.images?.[0])} 
+              alt={property.title} 
+              className="w-full h-full object-cover" 
+            />
           </div>
 
           <div className="space-y-8">
