@@ -61,7 +61,7 @@ const PropertyDetail = () => {
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return "/placeholder.svg";
     if (imagePath.startsWith('http')) return imagePath;
-    return supabase.storage.from('properties').getPublicUrl(imagePath).data.publicUrl;
+    return supabase.storage.from('property-images').getPublicUrl(imagePath).data.publicUrl;
   };
 
   return (
