@@ -18,6 +18,7 @@ export const FEATURE_KEYS = {
   REALTOR_SIGNUP: "realtor_signup",
   REALTOR_RENEWAL: "realtor_renewal",
   FEATURED_REALTOR: "featured_realtor",
+  NON_REALTOR_LIMIT_BYPASS: "non_realtor_limit_bypass",
 } as const;
 
 export type FeatureKey = (typeof FEATURE_KEYS)[keyof typeof FEATURE_KEYS];

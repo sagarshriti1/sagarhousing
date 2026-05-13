@@ -26,11 +26,29 @@ const FeaturesTab = () => {
     const { data, error } = await supabase.from("feature_flags").select("*").order("label");
     if (error) {
       toast.error("Failed to load feature flags");
-    } else {
-      const list = (data as FeatureFlag[]) ?? [];
-      setFlags(list);
-      setDrafts(Object.fromEntries(list.map((f) => [f.id, f])));
+      setLoading(false);
+      return;
     }
+    let list = (data as FeatureFlag[]) ?? [];
+
+    // Auto-seed the listing limit flag if it doesn't exist yet
+    const limitFlagExists = list.some((f) => f.key === FEATURE_KEYS.NON_REALTOR_LIMIT_BYPASS);
+    if (!limitFlagExists) {
+      await supabase.from("feature_flags").insert({
+        key: FEATURE_KEYS.NON_REALTOR_LIMIT_BYPASS,
+        label: "Standard User Listing Limit",
+        description:
+          "When enabled, standard (non-realtor) users are capped at the specified listing count. When disabled, they can post unlimited listings.",
+        fee: 2,
+        bypass_payment: true,
+      });
+      // Reload after seeding
+      const { data: refreshed } = await supabase.from("feature_flags").select("*").order("label");
+      list = (refreshed as FeatureFlag[]) ?? list;
+    }
+
+    setFlags(list);
+    setDrafts(Object.fromEntries(list.map((f) => [f.id, f])));
     setLoading(false);
   };
 
