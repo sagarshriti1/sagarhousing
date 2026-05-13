@@ -21,13 +21,16 @@ import { logPayment } from "@/lib/paymentHistory";
 
 const MyListingsPage = () => {
   const { user, role } = useAuth();
-  const FREE_USER_LISTING_LIMIT = 2;
   const isRealtor = role === 'realtor';
   const isStandardUser = !!user && !isRealtor && role !== 'admin';
   const [realtorInactive, setRealtorInactive] = useState(false);
   const navigate = useNavigate();
   const saleFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_SALE);
   const rentFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_RENT);
+  const limitBypassFlag = useFeatureFlag(FEATURE_KEYS.NON_REALTOR_LIMIT_BYPASS);
+  // bypass_payment=true means the limit IS enforced; fee stores the max count
+  const isLimitEnforced = limitBypassFlag.flag?.bypass_payment ?? true;
+  const LISTING_LIMIT = Math.max(1, limitBypassFlag.flag?.fee ?? 2);
   const flagFor = (listingType: string) => (listingType === "rent" ? rentFlag : saleFlag);
   const getListingFee = (listingType: string) => flagFor(listingType).fee;
   const isFreeFor = (listingType: string) => flagFor(listingType).isFree;
@@ -175,12 +178,12 @@ const MyListingsPage = () => {
       <Header />
       <main className="flex-1 container py-8">
         {(() => {
-          const atLimit = isStandardUser && listings.length >= FREE_USER_LISTING_LIMIT;
+          const atLimit = isStandardUser && isLimitEnforced && listings.length >= LISTING_LIMIT;
           const blockRealtor = isRealtor && realtorInactive;
           const disableAdd = atLimit || blockRealtor;
           const disableTitle = blockRealtor
             ? "Your Realtor profile is inactive or expired. Renew your subscription from the Realtor Dashboard before posting new listings."
-            : `You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit. Delete an existing listing or upgrade to a Realtor account.`;
+            : `You've reached the ${LISTING_LIMIT}-listing limit. Delete an existing listing or upgrade to a Realtor account.`;
           return (
             <>
               <div className="flex items-center justify-between mb-4">
@@ -188,7 +191,7 @@ const MyListingsPage = () => {
                   <h1 className="font-display text-3xl font-bold text-foreground">My Listings</h1>
                   <p className="text-muted-foreground mt-1">
                     {listings.length} properties
-                    {isStandardUser && ` · Standard accounts can post up to ${FREE_USER_LISTING_LIMIT} listings (${listings.length}/${FREE_USER_LISTING_LIMIT} used)`}
+                    {isStandardUser && isLimitEnforced && ` · Standard accounts can post up to ${LISTING_LIMIT} listings (${listings.length}/${LISTING_LIMIT} used)`}
                   </p>
                 </div>
                 {disableAdd ? (
