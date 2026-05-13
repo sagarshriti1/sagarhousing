@@ -74,19 +74,12 @@ const AuthPage = () => {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
 
-    // For realtor signup, require payment first (unless free promo)
-    if (isSignUp && selectedRole === 'realtor' && !realtorFree) {
-      if (!realtorPaymentComplete) {
-        setShowRealtorPayment(true);
-        return;
-      }
-    }
-
     setLoading(true);
 
     try {
       if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
+        // Step 1: Attempt to create the account first
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -94,14 +87,26 @@ const AuthPage = () => {
             emailRedirectTo: window.location.origin,
           },
         });
-        if (error) throw error;
-        // Detect duplicate signup: Supabase returns a user with empty identities array
+
+        if (signUpError) throw signUpError;
+
+        // Step 2: Check if user already exists
+        // Supabase returns a user with empty identities if they already exist
         if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
           setErrors({ email: 'An account with this email already exists. Try signing in instead.' });
           setLoading(false);
           return;
         }
-        // Log the realtor signup payment for transparency
+
+        // Step 3: If it's a Realtor and not free, we now REQUIRE payment to proceed
+        if (selectedRole === 'realtor' && !realtorFree && !realtorPaymentComplete) {
+          setShowRealtorPayment(true);
+          setLoading(false);
+          // We don't toast success yet because they still need to pay
+          return;
+        }
+
+        // Step 4: Log payment if it's a realtor (either free or just completed payment)
         if (selectedRole === 'realtor' && data.user) {
           const { logPayment } = await import('@/lib/paymentHistory');
           const { FEATURE_KEYS } = await import('@/hooks/useFeatureFlag');
@@ -116,7 +121,12 @@ const AuthPage = () => {
             promo_label: realtorFree ? realtorPromoLabel : null,
           });
         }
+
         toast.success('Account created! Check your email to verify.');
+        if (realtorPaymentComplete) {
+          // If they just paid, we can reset or navigate
+          setShowRealtorPayment(false);
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -301,7 +311,9 @@ const AuthPage = () => {
                     paid={realtorPaymentComplete}
                     onPaymentComplete={() => {
                       setRealtorPaymentComplete(true);
-                      toast.success('Payment received! Complete sign up to create your account.');
+                      toast.success('Payment received! Your realtor profile is being activated.');
+                      // Automatically trigger the final submission now that payment is done
+                      handleSubmit({ preventDefault: () => {} } as React.FormEvent);
                     }}
                     amount={REALTOR_SIGNUP_FEE}
                     label="Realtor monthly subscription"
@@ -313,7 +325,7 @@ const AuthPage = () => {
                 className='w-full bg-accent text-accent-foreground hover:bg-accent/90'
                 disabled={loading || (isSignUp && selectedRole === 'realtor' && !realtorFree && showRealtorPayment && !realtorPaymentComplete)}
               >
-                {loading ? 'Loading...' : isSignUp ? (selectedRole === 'realtor' && !realtorFree && !showRealtorPayment ? `Proceed to Payment — Rs. ${REALTOR_SIGNUP_FEE.toLocaleString()}` : 'Sign Up') : 'Sign In'}
+                {loading ? 'Loading...' : isSignUp ? (selectedRole === 'realtor' && !realtorFree && showRealtorPayment && !realtorPaymentComplete ? 'Awaiting Payment...' : 'Sign Up') : 'Sign In'}
               </Button>
             </form>
 
