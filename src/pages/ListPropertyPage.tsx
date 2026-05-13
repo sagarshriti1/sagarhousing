@@ -97,6 +97,10 @@ const ListPropertyPage = () => {
   const isAdmin = role === 'admin';
   const saleFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_SALE);
   const rentFlag = useFeatureFlag(FEATURE_KEYS.PROPERTY_RENT);
+  const limitBypassFlag = useFeatureFlag(FEATURE_KEYS.NON_REALTOR_LIMIT_BYPASS);
+  // bypass_payment=true means the limit IS enforced; fee stores the max count
+  const isLimitEnforced = limitBypassFlag.flag?.bypass_payment ?? true;
+  const LISTING_LIMIT = Math.max(1, limitBypassFlag.flag?.fee ?? 2);
   const navigate = useNavigate();
   const { id: editId } = useParams<{ id?: string }>();
   const isEdit = !!editId;
@@ -158,18 +162,18 @@ const ListPropertyPage = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [confirmBackOpen, setConfirmBackOpen] = useState(false);
 
-  const FREE_USER_LISTING_LIMIT = 2;
   const isRealtor = role === 'realtor';
   const isStandardUser = !!user && !isRealtor && role !== 'admin';
   const [existingListingCount, setExistingListingCount] = useState<
     number | null
   >(null);
   const atListingLimit =
+    isLimitEnforced &&
     isStandardUser &&
     !isEdit &&
     existingListingCount !== null &&
-    existingListingCount >= FREE_USER_LISTING_LIMIT;
-  const limitMessage = `You've reached the ${FREE_USER_LISTING_LIMIT}-listing limit for standard accounts. Delete an existing listing or upgrade to a Realtor account to post more.`;
+    existingListingCount >= LISTING_LIMIT;
+  const limitMessage = `You've reached the ${LISTING_LIMIT}-listing limit for standard accounts. Delete an existing listing or upgrade to a Realtor account to post more.`;
 
   const [realtorInactive, setRealtorInactive] = useState(false);
 
@@ -461,12 +465,12 @@ const ListPropertyPage = () => {
     e.preventDefault();
     if (!user) return;
 
-    if (!isEdit && isStandardUser) {
+    if (!isEdit && isStandardUser && isLimitEnforced) {
       const { count } = await supabase
         .from('user_properties')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id);
-      if ((count ?? 0) >= FREE_USER_LISTING_LIMIT) {
+      if ((count ?? 0) >= LISTING_LIMIT) {
         toast.error(limitMessage);
         setExistingListingCount(count ?? 0);
         return;

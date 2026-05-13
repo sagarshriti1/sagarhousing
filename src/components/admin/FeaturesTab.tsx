@@ -13,6 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { FeatureFlag } from "@/hooks/useFeatureFlag";
+import { FEATURE_KEYS } from "@/hooks/useFeatureFlag";
 
 const FeaturesTab = () => {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
@@ -97,6 +98,81 @@ const FeaturesTab = () => {
       <div className="grid gap-4">
         {flags.map((flag) => {
           const draft = drafts[flag.id] ?? flag;
+
+          // ── Special card: Standard User Listing Limit ──────────────────────
+          if (flag.key === FEATURE_KEYS.NON_REALTOR_LIMIT_BYPASS) {
+            const isEnforced = draft.bypass_payment;
+            return (
+              <Card key={flag.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        {draft.label}
+                        <Badge variant={isEnforced ? "default" : "secondary"}>
+                          {isEnforced ? "Limit active" : "No limit"}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>{draft.description}</CardDescription>
+                      <p className="mt-1 text-xs text-muted-foreground">Key: <code>{draft.key}</code></p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col justify-center rounded-md border p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <Label className="text-sm">Enforce Listing Limit</Label>
+                        <p className="text-xs text-muted-foreground">
+                          When ON, standard users are capped at the limit below. When OFF, they can post unlimited listings.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={isEnforced}
+                        onCheckedChange={(checked) => update(flag.id, { bypass_payment: checked })}
+                      />
+                    </div>
+                  </div>
+
+                  {isEnforced && (
+                    <div>
+                      <Label>Max Listings Per Standard User</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        className="mt-1 w-40"
+                        value={draft.fee === 0 ? "1" : String(Math.max(1, draft.fee))}
+                        onChange={(e) => {
+                          const v = Math.max(1, parseInt(e.target.value) || 1);
+                          update(flag.id, { fee: v });
+                        }}
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Standard users will be blocked from posting more than this many listings.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => save(flag.id)}
+                      disabled={saving === flag.id || !isDirty(flag, draft)}
+                      className="gap-2"
+                    >
+                      {saving === flag.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      Save
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+
+          // ── Generic card for all other flags ──────────────────────────────
           const promoActive =
             draft.bypass_payment &&
             (!draft.promo_ends_at || new Date(draft.promo_ends_at).getTime() > Date.now());
