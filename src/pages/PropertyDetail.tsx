@@ -1,40 +1,29 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Bed,
-  Bath,
-  Maximize,
-  MapPin,
-  Calendar,
-  Phone,
-  MessageSquare,
-  Share2,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-} from 'lucide-react';
-import { format } from 'date-fns';
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Bed, Bath, Maximize, Calendar, MapPin, Heart, Share2, Phone, Mail, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [currentImg, setCurrentImg] = useState(0);
 
   useEffect(() => {
     const fetchProperty = async () => {
+      if (!id) return;
       setLoading(true);
-      const { data, error } = await supabase
+      const cleanId = id.startsWith('db-') ? id.replace('db-', '') : id;
+      const { data } = await supabase
         .from('user_properties')
-        .select('*, profiles(display_name, phone, avatar_url)')
-        .eq('id', id)
+        .select('*, profiles(display_name, phone, email, avatar_url)')
+        .eq('id', cleanId)
         .maybeSingle();
 
       if (data) setProperty(data);
@@ -43,208 +32,125 @@ const PropertyDetail = () => {
     fetchProperty();
   }, [id]);
 
-  if (loading)
+  if (loading) {
     return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <Loader2 className='h-10 w-10 animate-spin text-primary' />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
+  }
 
-  if (!property)
+  if (!property) {
     return (
-      <div className='min-h-screen flex flex-col'>
+      <div className="min-h-screen flex flex-col">
         <Header />
-        <main className='flex-1 container py-20 text-center'>
-          <h2 className='text-2xl font-bold'>Property not found</h2>
-          <Button onClick={() => navigate('/')} className='mt-4'>
-            Go Home
-          </Button>
-        </main>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Property Not Found</h2>
+            <Link to="/" className="text-accent hover:underline">Back to listings</Link>
+          </div>
+        </div>
         <Footer />
       </div>
     );
+  }
+
+  const formatPrice = (price: number, listingType: string) =>
+    `Rs. ${price.toLocaleString()}${listingType === "rent" ? "/mo" : ""}`;
 
   return (
-    <div className='min-h-screen flex flex-col bg-slate-50/30'>
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className='flex-1'>
-        {/* MOBILE FIX: Reduce top padding on small screens */}
-        <div className='container py-4 md:py-8 space-y-6 px-4'>
-          <div className='flex items-center gap-2 mb-2'>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => navigate(-1)}
-              className='px-0'
-            >
-              <ChevronLeft className='h-4 w-4 mr-1' /> Back
-            </Button>
+      <main className="flex-1">
+        <div className="container py-6 max-w-5xl">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+            <ArrowLeft className="h-4 w-4" /> Back to listings
+          </Link>
+
+          <div className="rounded-lg overflow-hidden mb-8 aspect-[16/9] max-h-[500px]">
+            <img src={property.images?.[0] || "/placeholder.svg"} alt={property.title} className="w-full h-full object-cover" />
           </div>
 
-          <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-            {/* LEFT SIDE: Images & Description (Takes 2/3 space on Desktop) */}
-            <div className='lg:col-span-2 space-y-6'>
-              {/* IMAGE CAROUSEL: Fully responsive */}
-              <div className='relative aspect-[4/3] md:aspect-video rounded-xl overflow-hidden bg-black shadow-lg'>
-                <img
-                  src={property.images?.[currentImg]}
-                  className='w-full h-full object-contain'
-                  alt={property.title}
-                />
-                {property.images?.length > 1 && (
-                  <>
-                    <button
-                      onClick={() =>
-                        setCurrentImg(prev =>
-                          prev > 0 ? prev - 1 : property.images.length - 1,
-                        )
-                      }
-                      className='absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow hover:bg-white'
-                    >
-                      <ChevronLeft className='h-5 w-5' />
-                    </button>
-                    <button
-                      onClick={() =>
-                        setCurrentImg(prev =>
-                          prev < property.images.length - 1 ? prev + 1 : 0,
-                        )
-                      }
-                      className='absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow hover:bg-white'
-                    >
-                      <ChevronRight className='h-5 w-5' />
-                    </button>
-                    <div className='absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs'>
-                      {currentImg + 1} / {property.images.length}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* STATS BAR: Grid stacks on mobile */}
-              <div className='grid grid-cols-3 gap-4 py-4 border-y bg-white rounded-lg px-4'>
-                <div className='flex flex-col items-center justify-center border-r'>
-                  <Bed className='h-5 w-5 text-muted-foreground mb-1' />
-                  <span className='font-bold text-sm md:text-base'>
-                    {property.bedrooms}
-                  </span>
-                  <span className='text-[10px] uppercase text-muted-foreground'>
-                    Beds
-                  </span>
-                </div>
-                <div className='flex flex-col items-center justify-center border-r'>
-                  <Bath className='h-5 w-5 text-muted-foreground mb-1' />
-                  <span className='font-bold text-sm md:text-base'>
-                    {property.bathrooms}
-                  </span>
-                  <span className='text-[10px] uppercase text-muted-foreground'>
-                    Baths
-                  </span>
-                </div>
-                <div className='flex flex-col items-center justify-center'>
-                  <Maximize className='h-5 w-5 text-muted-foreground mb-1' />
-                  <span className='font-bold text-sm md:text-base'>
-                    {property.sqft?.toLocaleString()}
-                  </span>
-                  <span className='text-[10px] uppercase text-muted-foreground'>
-                    Sq Ft
-                  </span>
-                </div>
-              </div>
-
+          <div className="space-y-8">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h1 className='text-2xl md:text-3xl font-bold text-foreground leading-tight'>
-                  {property.title}
-                </h1>
-                <div className='flex items-center gap-2 text-muted-foreground mt-2'>
-                  <MapPin className='h-4 w-4 shrink-0' />
-                  <span className='text-sm'>
-                    {property.address}, {property.city}, {property.district}
-                  </span>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary">For {property.listing_type === "sale" ? "Sale" : "Rent"}</Badge>
+                  <Badge variant="outline" className="capitalize">{property.property_type}</Badge>
                 </div>
-              </div>
-
-              <div className='space-y-3'>
-                <h3 className='text-lg font-semibold'>About this property</h3>
-                <p className='text-muted-foreground whitespace-pre-line text-sm md:text-base leading-relaxed'>
-                  {property.description}
+                <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">{property.title}</h1>
+                <p className="flex items-center gap-1 text-muted-foreground mt-2">
+                  <MapPin className="h-4 w-4" /> {property.address}, {property.city}
                 </p>
               </div>
+              <p className="font-display text-3xl md:text-4xl font-bold text-primary">
+                {formatPrice(property.price, property.listing_type)}
+              </p>
             </div>
 
-            {/* RIGHT SIDE: Contact & Price (Stacks below on mobile) */}
-            <div className='space-y-6'>
-              <Card className='sticky top-24 border-none shadow-xl bg-primary text-primary-foreground'>
-                <CardContent className='p-6 space-y-4'>
-                  <div className='space-y-1'>
-                    <p className='text-sm opacity-80 uppercase font-semibold tracking-wider'>
-                      Price
+            <div className="flex flex-wrap items-center gap-6 py-4 border-y border-border">
+              <span className="flex items-center gap-2 text-foreground"><Bed className="h-5 w-5 text-muted-foreground" /> {property.bedrooms} Bedrooms</span>
+              <span className="flex items-center gap-2 text-foreground"><Bath className="h-5 w-5 text-muted-foreground" /> {Number(property.bathrooms)} Bathrooms</span>
+              <span className="flex items-center gap-2 text-foreground"><Maximize className="h-5 w-5 text-muted-foreground" /> {property.sqft?.toLocaleString()} sqft</span>
+              <span className="flex items-center gap-2 text-foreground"><Calendar className="h-5 w-5 text-muted-foreground" /> Built {property.year_built || 'N/A'}</span>
+            </div>
+
+            <div>
+              <h2 className="font-display text-xl font-bold text-foreground mb-3">About this property</h2>
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{property.description}</p>
+            </div>
+
+            {property.features && property.features.length > 0 && (
+              <div>
+                <h2 className="font-display text-xl font-bold text-foreground mb-3">Features</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {property.features.map((f: string) => (
+                    <div key={f} className="flex items-center gap-2 text-sm text-foreground bg-secondary rounded-md px-3 py-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                      {f}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <Button variant="outline" className="gap-2"><Heart className="h-4 w-4" /> Save</Button>
+              <Button variant="outline" className="gap-2"><Share2 className="h-4 w-4" /> Share</Button>
+            </div>
+
+            {/* Contact Seller Section at the bottom */}
+            <div className="bg-card rounded-lg border border-border p-6 shadow-card max-w-2xl mx-auto mt-12">
+              <h3 className="font-display text-xl font-bold text-foreground mb-4 text-center">Contact Seller</h3>
+              <div className="flex items-center gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
+                <div className="h-12 w-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold">
+                  {property.profiles?.avatar_url ? (
+                    <img src={property.profiles.avatar_url} className="w-full h-full object-cover" />
+                  ) : (
+                    property.profiles?.display_name?.[0] || "A"
+                  )}
+                </div>
+                <div>
+                  <p className="font-bold text-foreground">{property.profiles?.display_name || "Agent"}</p>
+                  <p className="text-xs text-muted-foreground">Listing Agent</p>
+                  {property.profiles?.phone && (
+                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                      <Phone className="h-3 w-3" /> {property.profiles.phone}
                     </p>
-                    <h2 className='text-3xl md:text-4xl font-bold'>
-                      Rs. {Number(property.price).toLocaleString()}
-                    </h2>
-                    <Badge variant='secondary' className='mt-2 capitalize'>
-                      {property.listing_type === 'sale'
-                        ? 'For Sale'
-                        : 'For Rent'}
-                    </Badge>
-                  </div>
+                  )}
+                </div>
+              </div>
 
-                  <div className='pt-4 border-t border-white/20 space-y-3'>
-                    <Button
-                      variant='secondary'
-                      className='w-full gap-2 h-12 font-bold'
-                      onClick={() =>
-                        window.open(`tel:${property.profiles?.phone}`)
-                      }
-                    >
-                      <Phone className='h-4 w-4' /> Call Agent
-                    </Button>
-                    <Button
-                      variant='outline'
-                      className='w-full gap-2 h-12 bg-white/10 border-white/30 hover:bg-white/20 text-white'
-                    >
-                      <MessageSquare className='h-4 w-4' /> WhatsApp Inquiry
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* SELLER PROFILE INFO */}
-              <Card>
-                <CardContent className='p-6'>
-                  <div className='flex items-center gap-4'>
-                    <div className='h-12 w-12 rounded-full overflow-hidden bg-muted'>
-                      {property.profiles?.avatar_url ? (
-                        <img
-                          src={property.profiles.avatar_url}
-                          className='w-full h-full object-cover'
-                        />
-                      ) : (
-                        <div className='h-full w-full flex items-center justify-center bg-primary text-white font-bold'>
-                          {property.profiles?.display_name?.[0]}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className='font-bold text-foreground'>
-                        {property.profiles?.display_name}
-                      </p>
-                      <p className='text-xs text-muted-foreground'>
-                        Listing Agent
-                      </p>
-                    </div>
-                  </div>
-                  <div className='mt-4 pt-4 border-t flex items-center justify-between text-xs text-muted-foreground'>
-                    <div className='flex items-center gap-1'>
-                      <Calendar className='h-3 w-3' /> Listed on{' '}
-                      {format(new Date(property.created_at), 'MMM d')}
-                    </div>
-                    <div className='flex items-center gap-1'>
-                      <Share2 className='h-3 w-3' /> Share
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-4">
+                <h4 className="font-display font-semibold text-center mb-2">Inquire About This Property</h4>
+                <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
+                  <Input placeholder="Your Name" />
+                  <Input placeholder="Email" type="email" />
+                  <Input placeholder="Phone" type="tel" />
+                  <Textarea placeholder="I'm interested in this property..." rows={3} />
+                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 py-6 text-lg font-bold">Send Message</Button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
