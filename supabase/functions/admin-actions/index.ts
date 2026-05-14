@@ -11,8 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("APP_URL")!;
+    const serviceRoleKey = Deno.env.get("APP_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Verify the caller is an admin
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const anonKey = Deno.env.get("APP_ANON_KEY")!;
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -97,11 +97,12 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Send password reset email via admin API
-      const { error } = await supabase.auth.admin.generateLink({
-        type: "recovery",
-        email,
+      
+      // Use the standard resetPasswordForEmail which triggers the actual email delivery
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${req.headers.get("origin") || 'https://ijrfgqpcahwjkqbekrdo.supabase.co'}/reset-password`,
       });
+      
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
           status: 400,
@@ -157,16 +158,48 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 400,
+
+      console.log(`Attempting to SOFT DELETE user and related data for: ${userId}`);
+
+      try {
+        const now = new Date().toISOString();
+        
+        // Soft delete properties and profile
+        await supabase.from("user_properties").update({ deleted_at: now }).eq("user_id", userId);
+        await supabase.from("profiles").update({ 
+          deleted_at: now, 
+          is_active: false,
+          updated_by: caller.id 
+        }).eq("user_id", userId);
+
+        // Optional: Clean up other non-essential relational data
+        await Promise.all([
+          supabase.from("favorites").delete().eq("user_id", userId),
+          supabase.from("saved_realtors").delete().eq("user_id", userId),
+        ]);
+
+        // We still delete from Auth so the user can't login and the email is released
+        console.log(`Finalizing Auth deletion for ${userId} (Soft Delete in DB completed)`);
+        const { error } = await supabase.auth.admin.deleteUser(userId);
+        if (error) {
+          console.error(`Auth deletion failed for ${userId}:`, error.message);
+          return new Response(JSON.stringify({ error: error.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        console.log(`Successfully deleted user: ${userId}`);
+        return new Response(JSON.stringify({ success: true, message: "User deleted" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (err) {
+        console.error(`Unexpected error during deletion for ${userId}:`, err.message);
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ success: true, message: "User deleted" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), {

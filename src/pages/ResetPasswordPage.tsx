@@ -48,7 +48,10 @@ const ResetPasswordPage = () => {
       toast.success('Password updated successfully!');
       navigate('/');
     } catch (error: any) {
-      toast.error(error.message);
+      const message = error.message === 'User is banned' 
+        ? 'Your account is Inactive. Please contact customer support' 
+        : error.message;
+      toast.error(message);
     } finally {
       setLoading(false);
     }

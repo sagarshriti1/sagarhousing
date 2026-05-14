@@ -46,7 +46,7 @@ const RealtorDashboard = () => {
 
     const fetchData = async () => {
       setFetching(true);
-      const [realtorRes, propsRes] = await Promise.all([
+      const [realtorRes, propsRes, profileRes] = await Promise.all([
         supabase
           .from('realtors')
           .select('*')
@@ -57,13 +57,35 @@ const RealtorDashboard = () => {
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('profiles')
+          .select('is_active')
+          .eq('user_id', user.id)
+          .maybeSingle(),
       ]);
       setRealtor(realtorRes.data);
       setProperties(propsRes.data ?? []);
+      setIsActive(profileRes.data?.is_active ?? true);
+      
+      const rData = realtorRes.data;
+      const active = !!rData
+        && (rData.payment_status === 'paid' || rData.payment_status === 'promotion' || rData.payment_status === 'bypassed')
+        && (!rData.expiration_date || new Date(rData.expiration_date) > new Date());
+      setRealtorInactive(!active);
+      
       setFetching(false);
     };
     fetchData();
   }, [user, role, loading]);
+
+  const [isActive, setIsActive] = useState(true);
+  const [realtorInactive, setRealtorInactive] = useState(false);
+
+  const disableAdd = !isActive || realtorInactive;
+  const disableTitle = !isActive 
+    ? "Your account is deactivated. Please contact support." 
+    : "Your Realtor profile is inactive or expired. Renew your subscription to post new listings.";
+
 
   // STICKY AUTH GATE:
   // Wait if loading is true OR if we have a user but the role hasn't loaded yet.
@@ -115,11 +137,21 @@ const RealtorDashboard = () => {
               Manage your properties and profile
             </p>
           </div>
-          <Link to='/list-property'>
-            <Button className='gap-2 bg-accent text-accent-foreground hover:bg-accent/90'>
+          {disableAdd ? (
+            <Button
+              className='gap-2 bg-accent text-accent-foreground hover:bg-accent/90'
+              disabled
+              title={disableTitle}
+            >
               <Plus className='h-4 w-4' /> List New Property
             </Button>
-          </Link>
+          ) : (
+            <Link to='/list-property'>
+              <Button className='gap-2 bg-accent text-accent-foreground hover:bg-accent/90'>
+                <Plus className='h-4 w-4' /> List New Property
+              </Button>
+            </Link>
+          )}
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
@@ -181,9 +213,15 @@ const RealtorDashboard = () => {
                 <p className='text-muted-foreground mb-4'>
                   You haven't posted any listings yet.
                 </p>
-                <Link to='/list-property'>
-                  <Button variant='outline'>Create your first listing</Button>
-                </Link>
+                {disableAdd ? (
+                  <Button variant='outline' disabled title={disableTitle}>
+                    Create your first listing
+                  </Button>
+                ) : (
+                  <Link to='/list-property'>
+                    <Button variant='outline'>Create your first listing</Button>
+                  </Link>
+                )}
               </div>
             ) : (
               <div className='rounded-md border'>

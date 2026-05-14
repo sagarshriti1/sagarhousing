@@ -110,6 +110,8 @@ const AuthPage = () => {
         if (selectedRole === 'realtor' && data.user) {
           const { logPayment } = await import('@/lib/paymentHistory');
           const { FEATURE_KEYS } = await import('@/hooks/useFeatureFlag');
+          
+          // Log the signup event
           await logPayment({
             user_id: data.user.id,
             service_key: FEATURE_KEYS.REALTOR_SIGNUP,
@@ -120,6 +122,24 @@ const AuthPage = () => {
             status: realtorFree ? 'promotion' : 'paid',
             promo_label: realtorFree ? realtorPromoLabel : null,
           });
+
+          // Create the actual realtor profile record so they are "Active"
+          const today = new Date();
+          const nextYear = new Date();
+          nextYear.setFullYear(today.getFullYear() + 1);
+          
+          const { error: realtorErr } = await supabase.from('realtors').insert({
+            user_id: data.user.id,
+            email: data.user.email,
+            name: displayName,
+            payment_status: realtorFree ? 'promotion' : 'paid',
+            start_date: today.toISOString().split('T')[0],
+            expiration_date: nextYear.toISOString().split('T')[0],
+          });
+
+          if (realtorErr) {
+            console.error('Failed to create realtor record:', realtorErr);
+          }
         }
 
         toast.success('Account created! Check your email to verify.');
@@ -137,7 +157,10 @@ const AuthPage = () => {
         navigate('/');
       }
     } catch (error: any) {
-      toast.error(error.message);
+      const message = error.message === 'User is banned' 
+        ? 'Your account is Inactive, please contact customer support' 
+        : error.message;
+      toast.error(message);
     } finally {
       setLoading(false);
     }

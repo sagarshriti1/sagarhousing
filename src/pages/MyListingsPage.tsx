@@ -261,11 +261,21 @@ const MyListingsPage = () => {
           if (listings.length === 0) return (
             <div className="text-center py-16">
               <p className="text-muted-foreground text-lg mb-4">You haven't listed any properties yet.</p>
-              <Link to="/list-property">
-                <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+              {disableAdd ? (
+                <Button
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2"
+                  disabled
+                  title={disableTitle}
+                >
                   <Plus className="h-4 w-4" /> List Your First Property
                 </Button>
-              </Link>
+              ) : (
+                <Link to="/list-property">
+                  <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+                    <Plus className="h-4 w-4" /> List Your First Property
+                  </Button>
+                </Link>
+              )}
             </div>
           );
           if (filtered.length === 0) return (

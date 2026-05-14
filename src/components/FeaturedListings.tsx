@@ -48,6 +48,7 @@ const FeaturedListings = ({ heroListingType, realtorId }: { heroListingType?: st
         .from("user_properties")
         .select("*")
         .eq("status", "active")
+        .is("deleted_at", null)
         .or(`expiration_date.is.null,expiration_date.gte.${todayStr}`);
 
       if (data) {
