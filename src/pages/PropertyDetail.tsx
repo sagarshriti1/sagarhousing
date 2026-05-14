@@ -87,6 +87,9 @@ const PropertyDetail = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="secondary">For {property.listing_type === "sale" ? "Sale" : "Rent"}</Badge>
                   <Badge variant="outline" className="capitalize">{property.property_type}</Badge>
+                  {property.property_code && (
+                    <span className="text-xs font-mono text-muted-foreground ml-2">Property ID: {property.property_code}</span>
+                  )}
                 </div>
                 <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">{property.title}</h1>
                 <p className="flex items-center gap-1 text-muted-foreground mt-2">

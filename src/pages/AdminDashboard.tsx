@@ -749,6 +749,7 @@ const AdminDashboard = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>Property ID</TableHead>
                           <TableHead>Title</TableHead>
                           <TableHead>Price</TableHead>
                           <TableHead>Status</TableHead>
@@ -759,6 +760,7 @@ const AdminDashboard = () => {
                       <TableBody>
                         {list.map(prop => (
                           <TableRow key={prop.id} className='cursor-pointer hover:bg-muted/40' onClick={() => navigate(`/admin/property/${prop.id}`)}>
+                            <TableCell className='font-mono text-xs text-muted-foreground'>{prop.property_code}</TableCell>
                             <TableCell className='font-medium'>{prop.title}</TableCell>
                             <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
                             <TableCell><Badge>{prop.status}</Badge></TableCell>

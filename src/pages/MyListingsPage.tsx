@@ -293,7 +293,7 @@ const MyListingsPage = () => {
                         <Badge className={`border-0 capitalize ${statusColor(listing.status)}`}>{listing.status}</Badge>
                         <Badge variant="outline" className="capitalize">{listing.listing_type === "sale" ? "For Sale" : "For Rent"}</Badge>
                         {(listing as any).property_code != null && (
-                          <span className="font-mono text-xs text-muted-foreground">#{(listing as any).property_code}</span>
+                          <span className="font-mono text-xs text-muted-foreground">Property ID: {(listing as any).property_code}</span>
                         )}
                       </div>
                       <h3 className="font-display text-lg font-bold text-foreground">{listing.title}</h3>

@@ -66,6 +66,7 @@ const FeaturedListings = ({ heroListingType, realtorId }: { heroListingType?: st
           user_id: p.user_id,
           image: p.images?.[0] ?? "/placeholder.svg",
           images: p.images ?? [],
+          propertyCode: p.property_code,
           yearBuilt: p.year_built ?? 2000,
           description: p.description ?? "",
           features: p.features ?? [],
