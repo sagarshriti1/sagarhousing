@@ -159,23 +159,27 @@ Deno.serve(async (req) => {
         });
       }
 
-      console.log(`Attempting to delete user and related data for: ${userId}`);
+      console.log(`Attempting to SOFT DELETE user and related data for: ${userId}`);
 
       try {
-        // Delete related data in order to respect foreign key constraints
-        console.log(`Cleaning up database records for ${userId}...`);
+        const now = new Date().toISOString();
         
-        await supabase.from("user_properties").delete().eq("user_id", userId);
-        await supabase.from("favorites").delete().eq("user_id", userId);
-        await supabase.from("payment_history").delete().eq("user_id", userId);
-        await supabase.from("realtors").delete().eq("user_id", userId);
-        await supabase.from("saved_realtors").delete().eq("user_id", userId);
-        await supabase.from("user_roles").delete().eq("user_id", userId);
-        
-        // Profiles usually have FKs from other tables, so delete it last in the public schema
-        await supabase.from("profiles").delete().eq("user_id", userId);
+        // Soft delete properties and profile
+        await supabase.from("user_properties").update({ deleted_at: now }).eq("user_id", userId);
+        await supabase.from("profiles").update({ 
+          deleted_at: now, 
+          is_active: false,
+          updated_by: caller.id 
+        }).eq("user_id", userId);
 
-        console.log(`Finalizing deletion in Auth for ${userId}...`);
+        // Optional: Clean up other non-essential relational data
+        await Promise.all([
+          supabase.from("favorites").delete().eq("user_id", userId),
+          supabase.from("saved_realtors").delete().eq("user_id", userId),
+        ]);
+
+        // We still delete from Auth so the user can't login and the email is released
+        console.log(`Finalizing Auth deletion for ${userId} (Soft Delete in DB completed)`);
         const { error } = await supabase.auth.admin.deleteUser(userId);
         if (error) {
           console.error(`Auth deletion failed for ${userId}:`, error.message);

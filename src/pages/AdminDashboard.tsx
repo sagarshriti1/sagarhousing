@@ -267,9 +267,9 @@ const AdminDashboard = () => {
   const fetchAll = async () => {
     const [r, p, ro, pr] = await Promise.all([
       supabase.from('realtors').select('*'),
-      supabase.from('profiles').select('*'),
+      supabase.from('profiles').select('*').is('deleted_at', null),
       supabase.from('user_roles').select('*'),
-      supabase.from('user_properties').select('id, property_code, title, city, district, state, price, status, listing_type, user_id, updated_by, expiration_date, created_at'),
+      supabase.from('user_properties').select('id, property_code, title, city, district, state, price, status, listing_type, user_id, updated_by, expiration_date, created_at').is('deleted_at', null),
     ]);
     setRealtors(r.data ?? []);
     setProfiles((p.data ?? []) as UserProfile[]);
