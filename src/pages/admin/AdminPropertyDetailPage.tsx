@@ -191,7 +191,7 @@ const AdminPropertyDetailPage = () => {
                 <div>
                   <CardTitle className='text-2xl'>{property.title}</CardTitle>
                   <p className='text-sm text-muted-foreground mt-1'>
-                    #{property.property_code} · {property.address},{' '}
+                    Property ID: {property.property_code} · {property.address},{' '}
                     {property.city}
                     {property.district ? `, ${property.district}` : ''}
                   </p>
