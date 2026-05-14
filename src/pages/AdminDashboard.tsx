@@ -39,7 +39,6 @@ import {
   Search,
   Star,
   Pencil,
-  Trash2,
   Shield,
   Users,
   Home,
@@ -364,55 +363,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const deleteUser = (profile: UserProfile) => {
-    setConfirmAction({
-      title: 'Delete user account?',
-      description: `This will permanently delete "${profile.display_name || profile.email || 'this user'}". This action cannot be undone.`,
-      onConfirm: async () => {
-        const ok = await callAdminAction({
-          action: 'delete_user',
-          userId: profile.user_id,
-        });
-        if (ok) {
-          toast.success('User deleted');
-          setProfiles(prev => prev.filter(p => p.user_id !== profile.user_id));
-          setRoles(prev => prev.filter(r => r.user_id !== profile.user_id));
-        }
-      },
-    });
-  };
 
-  const deleteRealtor = (id: string) => {
-    const realtor = realtors.find(r => r.id === id);
-    setConfirmAction({
-      title: 'Delete realtor?',
-      description: `This will permanently delete "${realtor?.name ?? 'this realtor'}". This action cannot be undone.`,
-      onConfirm: async () => {
-        const { error } = await supabase.from('realtors').delete().eq('id', id);
-        if (error) toast.error('Failed to delete realtor');
-        else {
-          toast.success('Realtor deleted');
-          setRealtors(prev => prev.filter(r => r.id !== id));
-        }
-      },
-    });
-  };
-
-  const deleteProperty = (id: string) => {
-    const prop = properties.find(p => p.id === id);
-    setConfirmAction({
-      title: 'Delete property?',
-      description: `This will permanently delete "${prop?.title ?? 'this property'}". This action cannot be undone.`,
-      onConfirm: async () => {
-        const { error } = await supabase.from('user_properties').delete().eq('id', id);
-        if (error) toast.error('Failed to delete property');
-        else {
-          toast.success('Property deleted');
-          setProperties(prev => prev.filter(p => p.id !== id));
-        }
-      },
-    });
-  };
 
   const bulkDeleteProperties = () => {
     if (selectedPropertyIds.size === 0) return;
@@ -575,7 +526,6 @@ const AdminDashboard = () => {
                 <SortHeader tab={target} sortKey='location'>Location</SortHeader>
                 <SortHeader tab={target} sortKey='status'>Status</SortHeader>
                 <SortHeader tab={target} sortKey='updated_by'>Updated By</SortHeader>
-                <TableHead className='text-right'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -595,9 +545,6 @@ const AdminDashboard = () => {
                   <TableCell>{profile.location || '—'}</TableCell>
                   <TableCell><Badge variant={profile.is_active ? 'default' : 'secondary'}>{profile.is_active ? 'Active' : 'Inactive'}</Badge></TableCell>
                   <TableCell className='text-xs text-muted-foreground'>{updatedByLabel(profile.updated_by)}</TableCell>
-                  <TableCell className='text-right' onClick={e => e.stopPropagation()}>
-                    <Button variant='ghost' size='icon' className='text-destructive' onClick={() => deleteUser(profile)}><Trash2 className='h-4 w-4' /></Button>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -689,7 +636,6 @@ const AdminDashboard = () => {
                     <SortHeader tab='realtors' sortKey='payment'>Payment</SortHeader>
                     <SortHeader tab='realtors' sortKey='status'>Status</SortHeader>
                     <SortHeader tab='realtors' sortKey='updated_by'>Updated By</SortHeader>
-                    <TableHead className='text-right'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -708,9 +654,6 @@ const AdminDashboard = () => {
                       <TableCell>{realtor.payment_status === 'paid' ? <Badge>Paid</Badge> : <Badge variant='secondary'>{realtor.payment_status}</Badge>}</TableCell>
                       <TableCell><Badge variant='default'>Active</Badge></TableCell>
                       <TableCell className='text-xs text-muted-foreground'>{updatedByLabel(realtor.updated_by)}</TableCell>
-                      <TableCell className='text-right' onClick={e => e.stopPropagation()}>
-                        {!realtor.isProfileOnly && <Button variant='ghost' size='icon' className='text-destructive' onClick={() => deleteRealtor(realtor.id)}><Trash2 className='h-4 w-4' /></Button>}
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -754,7 +697,6 @@ const AdminDashboard = () => {
                           <TableHead>Price</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Updated By</TableHead>
-                          <TableHead className='text-right'>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -765,9 +707,7 @@ const AdminDashboard = () => {
                             <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
                             <TableCell><Badge>{prop.status}</Badge></TableCell>
                             <TableCell className='text-xs text-muted-foreground'>{updatedByLabel(prop.updated_by)}</TableCell>
-                            <TableCell className='text-right' onClick={e => e.stopPropagation()}>
-                              <Button variant='ghost' size='icon' className='text-destructive' onClick={() => deleteProperty(prop.id)}><Trash2 className='h-4 w-4' /></Button>
-                            </TableCell>
+
                           </TableRow>
                         ))}
                       </TableBody>
