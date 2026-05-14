@@ -32,8 +32,8 @@ const MyListingsPage = () => {
   const isLimitEnforced = limitBypassFlag.flag?.bypass_payment ?? true;
   const LISTING_LIMIT = Math.max(1, limitBypassFlag.flag?.fee ?? 2);
   const flagFor = (listingType: string) => (listingType === "rent" ? rentFlag : saleFlag);
-  const getListingFee = (listingType: string) => flagFor(listingType).fee;
-  const isFreeFor = (listingType: string) => flagFor(listingType).isFree;
+  const getListingFee = (listingType: string) => flagFor(listingType)?.fee ?? 0;
+  const isFreeFor = (listingType: string) => flagFor(listingType)?.isFree ?? false;
   const [listings, setListings] = useState<Tables<"user_properties">[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentListing, setPaymentListing] = useState<Tables<"user_properties"> | null>(null);
@@ -45,18 +45,24 @@ const MyListingsPage = () => {
 
 
   useEffect(() => {
-    if (!user) return;
+    let cancelled = false;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     const fetchListings = async () => {
       const { data, error } = await supabase
         .from("user_properties")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
+      if (cancelled) return;
       if (error) toast.error(error.message);
       else setListings(data || []);
       setLoading(false);
     };
     fetchListings();
+    return () => { cancelled = true; };
   }, [user]);
 
   useEffect(() => {
@@ -116,17 +122,17 @@ const MyListingsPage = () => {
       toast.error("Failed to activate listing");
     } else {
       const flag = flagFor(paymentListing.listing_type);
-      const isFree = flag.isFree;
+      const isFree = flag?.isFree ?? false;
       await logPayment({
         user_id: paymentListing.user_id,
         service_key: paymentListing.listing_type === "rent" ? FEATURE_KEYS.PROPERTY_RENT : FEATURE_KEYS.PROPERTY_SALE,
         service_label: paymentListing.listing_type === "rent" ? "Property Listing — For Rent" : "Property Listing — For Sale",
         related_type: "property",
         related_id: paymentListing.id,
-        related_label: paymentListing.title,
-        amount: isFree ? 0 : flag.fee,
+        related_label: paymentListing.title || "Untitled Property",
+        amount: isFree ? 0 : (flag?.fee ?? 0),
         status: isFree ? "promotion" : "paid",
-        promo_label: isFree ? flag.promoLabel : null,
+        promo_label: isFree ? flag?.promoLabel : null,
         expiration_date: expiration.toISOString(),
       });
       setListings((prev) =>
@@ -173,25 +179,28 @@ const MyListingsPage = () => {
     }
   };
 
+  const currentListingsCount = listings?.length ?? 0;
+  const atLimit = isStandardUser && isLimitEnforced && currentListingsCount >= LISTING_LIMIT;
+  const blockRealtor = isRealtor && realtorInactive;
+  const disableAdd = atLimit || blockRealtor;
+  const disableTitle = blockRealtor
+    ? "Your Realtor profile is inactive or expired. Renew your subscription from the Realtor Dashboard before posting new listings."
+    : `You've reached the ${LISTING_LIMIT}-listing limit. Delete an existing listing or upgrade to a Realtor account.`;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 container py-8">
         {(() => {
-          const atLimit = isStandardUser && isLimitEnforced && listings.length >= LISTING_LIMIT;
-          const blockRealtor = isRealtor && realtorInactive;
-          const disableAdd = atLimit || blockRealtor;
-          const disableTitle = blockRealtor
-            ? "Your Realtor profile is inactive or expired. Renew your subscription from the Realtor Dashboard before posting new listings."
-            : `You've reached the ${LISTING_LIMIT}-listing limit. Delete an existing listing or upgrade to a Realtor account.`;
+          if (loading) return null;
           return (
             <>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h1 className="font-display text-3xl font-bold text-foreground">My Listings</h1>
                   <p className="text-muted-foreground mt-1">
-                    {listings.length} properties
-                    {isStandardUser && isLimitEnforced && ` · Standard accounts can post up to ${LISTING_LIMIT} listings (${listings.length}/${LISTING_LIMIT} used)`}
+                    {listings?.length ?? 0} properties
+                    {isStandardUser && isLimitEnforced && ` · Standard accounts can post up to ${LISTING_LIMIT} listings (${(listings?.length ?? 0)}/${LISTING_LIMIT} used)`}
                   </p>
                 </div>
                 {disableAdd ? (
@@ -242,17 +251,18 @@ const MyListingsPage = () => {
         )}
 
         {(() => {
-          const typeFiltered = activeTab === "all" ? listings : listings.filter(l => l.listing_type === activeTab);
+          const typeFiltered = (activeTab === "all" ? (listings || []) : (listings || []).filter(l => l.listing_type === activeTab));
           const q = search.trim().toLowerCase().replace(/^#/, "");
           const filtered = q
             ? typeFiltered.filter((l) => {
                 const code = String((l as any).property_code ?? "");
+                const searchQ = q || "";
                 return (
-                  code.includes(q) ||
-                  l.title.toLowerCase().includes(q) ||
-                  (l.address || "").toLowerCase().includes(q) ||
-                  (l.city || "").toLowerCase().includes(q) ||
-                  (l.district || "").toLowerCase().includes(q)
+                  code.includes(searchQ) ||
+                  (l.title || "").toLowerCase().includes(searchQ) ||
+                  (l.address || "").toLowerCase().includes(searchQ) ||
+                  (l.city || "").toLowerCase().includes(searchQ) ||
+                  (l.district || "").toLowerCase().includes(searchQ)
                 );
               })
             : typeFiltered;
@@ -310,7 +320,7 @@ const MyListingsPage = () => {
                       <p className="text-sm text-muted-foreground">{listing.address}, {listing.city}{listing.district ? `, ${listing.district}` : ''}</p>
                     </div>
                     <p className="font-display text-xl font-bold text-price">
-                      Rs. {listing.price.toLocaleString()}{listing.listing_type === "rent" ? "/mo" : ""}
+                      Rs. {(listing.price || 0).toLocaleString()}{listing.listing_type === "rent" ? "/mo" : ""}
                     </p>
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
@@ -323,7 +333,7 @@ const MyListingsPage = () => {
                         const isExpired = exp && new Date(exp) < new Date();
                         const free = isFreeFor(listing.listing_type);
                         const fee = getListingFee(listing.listing_type);
-                        const promoLabel = flagFor(listing.listing_type).promoLabel;
+                        const promoLabel = flagFor(listing.listing_type)?.promoLabel;
                         const startPay = () => {
                           if (free) {
                             setPaymentListing(listing);
@@ -333,10 +343,14 @@ const MyListingsPage = () => {
                           }
                         };
 
-                        if (isExpired) {
+                        if (isExpired && exp) {
+                          const expDate = new Date(exp);
+                          const isValidDate = !isNaN(expDate.getTime());
                           return (
                             <div className="flex items-center gap-2">
-                              <Badge variant="destructive" className="text-xs">Expired {format(new Date(exp), "MMM d, yyyy")}</Badge>
+                              <Badge variant="destructive" className="text-xs">
+                                Expired {isValidDate ? format(expDate, "MMM d, yyyy") : "Unknown Date"}
+                              </Badge>
                               <Button variant="default" size="sm" className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={startPay}>
                                 <CreditCard className="h-3.5 w-3.5" />
                                 {free ? (promoLabel || "Renew Free 🎉") : `Renew Rs. ${fee.toLocaleString()}`}
@@ -345,7 +359,9 @@ const MyListingsPage = () => {
                           );
                         }
                         if (listing.status === "active" && exp) {
-                          return <span className="text-xs text-muted-foreground">Active until {format(new Date(exp), "MMM d, yyyy")}</span>;
+                          const expDate = new Date(exp);
+                          const isValidDate = !isNaN(expDate.getTime());
+                          return <span className="text-xs text-muted-foreground">Active until {isValidDate ? format(expDate, "MMM d, yyyy") : "Unknown Date"}</span>;
                         }
                         if (listing.status === "pending") {
                           const withinActivePeriod = exp && new Date(exp) > new Date();

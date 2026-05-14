@@ -92,10 +92,15 @@ const joinLocation = (city: string, district: string) =>
 
 const formatLocalDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return '—';
-  const date = new Date(
-    dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
-  );
-  return format(date, 'MMM d, yyyy');
+  try {
+    const date = new Date(
+      dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
+    );
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return format(date, 'MMM d, yyyy');
+  } catch (e) {
+    return 'Invalid Date';
+  }
 };
 
 interface Realtor {
@@ -644,9 +649,9 @@ const AdminDashboard = () => {
                       <TableCell>
                         <div className='flex items-center gap-3'>
                           <div className='h-9 w-9 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground'>
-                            {(realtor.photo_url || realtor.profile?.avatar_url) ? <img src={realtor.photo_url || realtor.profile?.avatar_url || ''} alt='' className='h-full w-full object-cover' /> : realtor.name.charAt(0).toUpperCase()}
+                            {(realtor.photo_url || realtor.profile?.avatar_url) ? <img src={realtor.photo_url || realtor.profile?.avatar_url || ''} alt='' className='h-full w-full object-cover' /> : (realtor.name || "?").charAt(0).toUpperCase()}
                           </div>
-                          <p className='font-medium'>{realtor.name}</p>
+                          <p className='font-medium'>{realtor.name || "Unnamed Realtor"}</p>
                         </div>
                       </TableCell>
                       <TableCell>{realtor.email || '—'}</TableCell>
@@ -704,7 +709,7 @@ const AdminDashboard = () => {
                           <TableRow key={prop.id} className='cursor-pointer hover:bg-muted/40' onClick={() => navigate(`/admin/property/${prop.id}`)}>
                             <TableCell className='font-mono text-xs text-muted-foreground'>{prop.property_code}</TableCell>
                             <TableCell className='font-medium'>{prop.title}</TableCell>
-                            <TableCell>Rs. {prop.price.toLocaleString()}</TableCell>
+                            <TableCell>Rs. {(prop.price || 0).toLocaleString()}</TableCell>
                             <TableCell><Badge>{prop.status}</Badge></TableCell>
                             <TableCell className='text-xs text-muted-foreground'>{updatedByLabel(prop.updated_by)}</TableCell>
 

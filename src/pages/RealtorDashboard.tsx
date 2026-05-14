@@ -27,10 +27,15 @@ import { format } from 'date-fns';
 
 const formatLocalDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return '—';
-  const date = new Date(
-    dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
-  );
-  return format(date, 'MMM d, yyyy');
+  try {
+    const date = new Date(
+      dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
+    );
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return format(date, 'MMM d, yyyy');
+  } catch (e) {
+    return 'Invalid Date';
+  }
 };
 
 const RealtorDashboard = () => {
@@ -238,7 +243,7 @@ const RealtorDashboard = () => {
                     {properties.map(p => (
                       <TableRow key={p.id}>
                         <TableCell className='font-medium'>{p.title}</TableCell>
-                        <TableCell>Rs. {p.price.toLocaleString()}</TableCell>
+                        <TableCell>Rs. {(p.price || 0).toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge
                             variant={
