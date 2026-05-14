@@ -784,7 +784,7 @@ const AdminDashboard = () => {
       <RealtorFormDialog open={realtorDialogOpen} onOpenChange={setRealtorDialogOpen} realtor={selectedRealtor} onSave={handleSaveRealtor} mode={realtorDialogMode} />
 
       <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
-        <DialogContent className='max-w-md'>
+        <DialogContent className='max-w-md max-h-[90vh] overflow-y-auto'>
           <DialogHeader><DialogTitle>Create {createUserRole.charAt(0).toUpperCase() + createUserRole.slice(1)} Account</DialogTitle></DialogHeader>
           <div className='space-y-4'>
             <div><Label>Name *</Label><Input value={newUser.displayName} onChange={e => setNewUser({ ...newUser, displayName: e.target.value })} placeholder='Full name' /></div>
