@@ -162,17 +162,20 @@ Deno.serve(async (req) => {
       console.log(`Attempting to delete user and related data for: ${userId}`);
 
       try {
-        // Delete related data first to avoid foreign key constraints
-        await Promise.all([
-          supabase.from("user_properties").delete().eq("user_id", userId),
-          supabase.from("realtors").delete().eq("user_id", userId),
-          supabase.from("user_roles").delete().eq("user_id", userId),
-          supabase.from("profiles").delete().eq("user_id", userId),
-          supabase.from("favorites").delete().eq("user_id", userId),
-          supabase.from("saved_realtors").delete().eq("user_id", userId),
-          supabase.from("payment_history").delete().eq("user_id", userId),
-        ]);
+        // Delete related data in order to respect foreign key constraints
+        console.log(`Cleaning up database records for ${userId}...`);
+        
+        await supabase.from("user_properties").delete().eq("user_id", userId);
+        await supabase.from("favorites").delete().eq("user_id", userId);
+        await supabase.from("payment_history").delete().eq("user_id", userId);
+        await supabase.from("realtors").delete().eq("user_id", userId);
+        await supabase.from("saved_realtors").delete().eq("user_id", userId);
+        await supabase.from("user_roles").delete().eq("user_id", userId);
+        
+        // Profiles usually have FKs from other tables, so delete it last in the public schema
+        await supabase.from("profiles").delete().eq("user_id", userId);
 
+        console.log(`Finalizing deletion in Auth for ${userId}...`);
         const { error } = await supabase.auth.admin.deleteUser(userId);
         if (error) {
           console.error(`Auth deletion failed for ${userId}:`, error.message);
