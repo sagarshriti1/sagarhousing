@@ -158,16 +158,41 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 400,
+
+      console.log(`Attempting to delete user and related data for: ${userId}`);
+
+      try {
+        // Delete related data first to avoid foreign key constraints
+        await Promise.all([
+          supabase.from("user_properties").delete().eq("user_id", userId),
+          supabase.from("realtors").delete().eq("user_id", userId),
+          supabase.from("user_roles").delete().eq("user_id", userId),
+          supabase.from("profiles").delete().eq("user_id", userId),
+          supabase.from("favorites").delete().eq("user_id", userId),
+          supabase.from("saved_realtors").delete().eq("user_id", userId),
+          supabase.from("payment_history").delete().eq("user_id", userId),
+        ]);
+
+        const { error } = await supabase.auth.admin.deleteUser(userId);
+        if (error) {
+          console.error(`Auth deletion failed for ${userId}:`, error.message);
+          return new Response(JSON.stringify({ error: error.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        console.log(`Successfully deleted user: ${userId}`);
+        return new Response(JSON.stringify({ success: true, message: "User deleted" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (err) {
+        console.error(`Unexpected error during deletion for ${userId}:`, err.message);
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ success: true, message: "User deleted" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), {
