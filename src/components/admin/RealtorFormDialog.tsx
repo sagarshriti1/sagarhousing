@@ -47,6 +47,7 @@ import SimulatedPaymentForm from '@/components/SimulatedPaymentForm';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
 import ConfirmSaveButton from '@/components/ConfirmSaveButton';
+import SearchableCombobox from '@/components/SearchableCombobox';
 
 export interface RealtorFormData {
   id?: string;
@@ -426,43 +427,30 @@ const RealtorFormDialog = ({
             </div>
             <div>
               <Label>City</Label>
-              <Select value={form.city} onValueChange={handleCityChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select City' />
-                </SelectTrigger>
-                <SelectContent>
-                  {NEPAL_CITIES.map(c => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableCombobox
+                value={form.city}
+                onValueChange={handleCityChange}
+                options={NEPAL_CITIES}
+                placeholder='Select City'
+                searchPlaceholder='Search cities...'
+                className='w-full'
+              />
             </div>
             <div>
               <Label>District *</Label>
-              <Select
+              <SearchableCombobox
                 value={form.state || form.district}
                 onValueChange={v => {
                   handleDistrictChange(v);
                   clearError('district');
                 }}
-              >
-                <SelectTrigger aria-invalid={!!errors.district}>
-                  <SelectValue placeholder='Select District' />
-                </SelectTrigger>
-                <SelectContent>
-                  {NEPAL_DISTRICTS.map(d => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={NEPAL_DISTRICTS}
+                placeholder='Select District'
+                searchPlaceholder='Search districts...'
+                className='w-full'
+              />
               {errors.district && (
-                <p className='text-xs text-destructive mt-1'>
-                  {errors.district}
-                </p>
+                <p className='text-xs text-destructive mt-1'>{errors.district}</p>
               )}
             </div>
           </div>

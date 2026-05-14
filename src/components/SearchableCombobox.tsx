@@ -60,9 +60,36 @@ const SearchableCombobox = ({
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput 
+            placeholder={searchPlaceholder} 
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const val = e.currentTarget.value;
+                if (val) {
+                  onValueChange(val);
+                  setOpen(false);
+                }
+              }
+            }}
+          />
           <CommandList>
-            <CommandEmpty>{emptyText}</CommandEmpty>
+            <CommandEmpty className="p-4 flex flex-col items-center gap-2">
+              <span className="text-sm">{emptyText}</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full mt-2"
+                onClick={() => {
+                  const input = document.querySelector('[cmdk-input]') as HTMLInputElement;
+                  if (input && input.value) {
+                    onValueChange(input.value);
+                    setOpen(false);
+                  }
+                }}
+              >
+                Use custom value
+              </Button>
+            </CommandEmpty>
             <CommandGroup>
               {showAllOption && (
                 <CommandItem

@@ -31,10 +31,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  NEPAL_CITIES,
   NEPAL_DISTRICTS,
+  NEPAL_CITIES,
   getDistrictForCity,
 } from '@/data/nepalLocations';
+import SearchableCombobox from '@/components/SearchableCombobox';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ConfirmSaveButton from '@/components/ConfirmSaveButton';
 import { format } from 'date-fns';
@@ -497,7 +498,7 @@ const ProfilePage = () => {
                       </div>
                       <div className='space-y-2'>
                         <Label>City</Label>
-                        <Select
+                        <SearchableCombobox
                           value={loc.city}
                           onValueChange={city => {
                             const district =
@@ -507,22 +508,14 @@ const ProfilePage = () => {
                               location: joinLocation(city, district),
                             });
                           }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select City' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {NEPAL_CITIES.map(c => (
-                              <SelectItem key={c} value={c}>
-                                {c}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={NEPAL_CITIES}
+                          placeholder='Select City'
+                          searchPlaceholder='Search cities...'
+                        />
                       </div>
                       <div className='space-y-2'>
                         <Label>District</Label>
-                        <Select
+                        <SearchableCombobox
                           value={loc.district}
                           onValueChange={district => {
                             const cityDist = getDistrictForCity(loc.city);
@@ -533,18 +526,10 @@ const ProfilePage = () => {
                               location: joinLocation(nextCity, district),
                             });
                           }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select District' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {NEPAL_DISTRICTS.map(d => (
-                              <SelectItem key={d} value={d}>
-                                {d}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={NEPAL_DISTRICTS}
+                          placeholder='Select District'
+                          searchPlaceholder='Search districts...'
+                        />
                       </div>
                     </div>
 

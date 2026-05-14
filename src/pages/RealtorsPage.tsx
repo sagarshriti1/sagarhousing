@@ -17,6 +17,7 @@ interface Realtor {
   phone: string | null;
   photo_url: string | null;
   city: string;
+  district: string | null;
   state: string;
   bio: string | null;
   specialties: string[] | null;
@@ -36,17 +37,26 @@ const RealtorsPage = () => {
   useEffect(() => {
     const fetchRealtors = async () => {
       setLoading(true);
-      let query = supabase.from("realtors").select("*").order("is_featured", { ascending: false });
+      const todayStr = new Date().toISOString().split('T')[0];
+      let query = supabase
+        .from('realtors')
+        .select('*')
+        .eq('payment_status', 'paid')
+        .gte('expiration_date', todayStr)
+        .order('is_featured', { ascending: false });
 
       if (citySearch.trim()) {
-        query = query.ilike("city", `%${citySearch.trim()}%`);
+        query = query.ilike('city', `%${citySearch.trim()}%`);
       }
 
       const { data } = await query;
       const today = new Date(new Date().toDateString());
       const normalized = (data ?? []).map((r: any) => ({
         ...r,
-        is_featured: r.is_featured && (!r.featured_expiration_date || new Date(r.featured_expiration_date) >= today),
+        is_featured:
+          r.is_featured &&
+          (!r.featured_expiration_date ||
+            new Date(r.featured_expiration_date) >= today),
       }));
       setRealtors(normalized);
       setLoading(false);
@@ -146,7 +156,7 @@ const RealtorsPage = () => {
                   <div className="min-w-0">
                     <h3 className="font-display text-lg font-bold text-foreground truncate">{realtor.name}</h3>
                     <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" /> {realtor.city}{(realtor as any).district ? `, ${(realtor as any).district}` : ''}
+                      <MapPin className="h-3.5 w-3.5 shrink-0" /> {realtor.city}{realtor.district ? `, ${realtor.district}` : ''}
                     </p>
                     {realtor.years_experience && (
                       <p className="flex items-center gap-1 text-sm text-muted-foreground">
