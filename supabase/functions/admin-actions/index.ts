@@ -97,11 +97,12 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Send password reset email via admin API
-      const { error } = await supabase.auth.admin.generateLink({
-        type: "recovery",
-        email,
+      
+      // Use the standard resetPasswordForEmail which triggers the actual email delivery
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${req.headers.get("origin") || 'https://ijrfgqpcahwjkqbekrdo.supabase.co'}/reset-password`,
       });
+      
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
           status: 400,
