@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, Navigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,7 +45,8 @@ import {
   UserX,
   Home,
   ChevronRight,
-  Loader2, // Added Loader2 for Sticky Auth Gate
+  Loader2,
+  Camera,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -139,6 +140,31 @@ const AdminUserDetailPage = () => {
   // ---------------------------------------------------------
   // 🚨 STICKY AUTH GATE: FIXES THE REFRESH BUG
   // ---------------------------------------------------------
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!draft) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${draft.user_id}/avatar-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from('realtor-photos')
+        .upload(filePath, file, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage
+        .from('realtor-photos')
+        .getPublicUrl(filePath);
+      setDraft({ ...draft, avatar_url: urlData.publicUrl });
+      toast.success('Photo uploaded!');
+    } catch (error: any) {
+      toast.error('Failed to upload photo: ' + error.message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   if (loading || (user && !role)) {
     return (
       <div className='min-h-screen flex flex-col'>
@@ -519,6 +545,51 @@ const AdminUserDetailPage = () => {
           </DialogHeader>
           {draft && (
             <div className='space-y-4'>
+              <div>
+                <Label>Profile Photo</Label>
+                <div className='flex items-center gap-4 mt-1'>
+                  <div className='h-16 w-16 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center'>
+                    {draft.avatar_url ? (
+                      <img
+                        src={draft.avatar_url}
+                        alt=''
+                        className='h-full w-full object-cover'
+                      />
+                    ) : (
+                      <span className='text-xl font-bold text-muted-foreground'>
+                        {draft.display_name?.charAt(0).toUpperCase() || '?'}
+                      </span>
+                    )}
+                  </div>
+                  <div className='space-y-1'>
+                    <input
+                      ref={avatarInputRef}
+                      type='file'
+                      accept='image/*'
+                      className='hidden'
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) handleAvatarUpload(file);
+                      }}
+                    />
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      disabled={uploadingAvatar}
+                      onClick={() => avatarInputRef.current?.click()}
+                      className='gap-2'
+                    >
+                      {uploadingAvatar ? (
+                        <Loader2 className='h-4 w-4 animate-spin' />
+                      ) : (
+                        <Camera className='h-4 w-4' />
+                      )}
+                      {uploadingAvatar ? 'Uploading...' : 'Upload Photo'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
               <div>
                 <Label>Name *</Label>
                 <Input

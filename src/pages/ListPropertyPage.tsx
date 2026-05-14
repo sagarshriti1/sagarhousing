@@ -597,6 +597,24 @@ const ListPropertyPage = () => {
         }
         const { error } = await updateQuery;
         if (error) throw error;
+        
+        // LOG ADMIN ADJUSTMENT
+        if (isAdmin && (paymentDate || expirationDate)) {
+          const { logPayment } = await import('@/lib/paymentHistory');
+          await logPayment({
+            user_id: user.id, // property owner
+            service_key: form.listing_type === 'rent' ? FEATURE_KEYS.PROPERTY_RENT : FEATURE_KEYS.PROPERTY_SALE,
+            service_label: (form.listing_type === 'rent' ? 'Property Listing — For Rent' : 'Property Listing — For Sale') + ' (Admin Update)',
+            related_type: 'property',
+            related_id: editId,
+            related_label: form.title,
+            amount: 0,
+            status: bypassPayment ? 'bypassed' : 'paid',
+            expiration_date: expirationDate ? new Date(expirationDate + 'T00:00:00').toISOString() : null,
+            notes: `Admin update to listing period. ${bypassPayment ? `Bypass Reason: ${bypassReason}` : 'Modified dates.'}`,
+          });
+        }
+        
         toast.success('Listing updated successfully!');
       } else {
         const { data: inserted, error } = await supabase

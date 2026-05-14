@@ -13,6 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 
+import { logPayment } from '@/lib/paymentHistory';
+
 interface RealtorExpiredBannerProps {
   realtorId: string;
   onRenewed: () => void;
@@ -36,6 +38,12 @@ const RealtorExpiredBanner = ({
     const expiration = new Date(now);
     expiration.setMonth(expiration.getMonth() + 1);
 
+    const { data: realtor } = await supabase
+      .from('realtors')
+      .select('user_id, name')
+      .eq('id', realtorId)
+      .single();
+
     const { error } = await supabase
       .from('realtors')
       .update({
@@ -50,7 +58,23 @@ const RealtorExpiredBanner = ({
       return;
     }
 
+    if (realtor) {
+      await logPayment({
+        user_id: realtor.user_id!,
+        service_key: FEATURE_KEYS.REALTOR_RENEWAL,
+        service_label: 'Realtor Subscription Renewal',
+        related_type: 'realtor',
+        related_id: realtorId,
+        related_label: realtor.name,
+        amount: isFree ? 0 : RENEWAL_FEE,
+        status: isFree ? 'promotion' : 'paid',
+        promo_label: isFree ? promoLabel : null,
+        expiration_date: expiration.toISOString(),
+      });
+    }
+
     setPaid(true);
+
     toast.success(
       isFree
         ? 'Subscription renewed (free)! Redirecting...'

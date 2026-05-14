@@ -37,17 +37,26 @@ const RealtorsPage = () => {
   useEffect(() => {
     const fetchRealtors = async () => {
       setLoading(true);
-      let query = supabase.from("realtors").select("*").order("is_featured", { ascending: false });
+      const todayStr = new Date().toISOString().split('T')[0];
+      let query = supabase
+        .from('realtors')
+        .select('*')
+        .eq('payment_status', 'paid')
+        .gte('expiration_date', todayStr)
+        .order('is_featured', { ascending: false });
 
       if (citySearch.trim()) {
-        query = query.ilike("city", `%${citySearch.trim()}%`);
+        query = query.ilike('city', `%${citySearch.trim()}%`);
       }
 
       const { data } = await query;
       const today = new Date(new Date().toDateString());
       const normalized = (data ?? []).map((r: any) => ({
         ...r,
-        is_featured: r.is_featured && (!r.featured_expiration_date || new Date(r.featured_expiration_date) >= today),
+        is_featured:
+          r.is_featured &&
+          (!r.featured_expiration_date ||
+            new Date(r.featured_expiration_date) >= today),
       }));
       setRealtors(normalized);
       setLoading(false);

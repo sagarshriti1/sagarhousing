@@ -43,10 +43,12 @@ const FeaturedListings = ({ heroListingType, realtorId }: { heroListingType?: st
 
   useEffect(() => {
     const fetchDbProperties = async () => {
+      const todayStr = new Date().toISOString().split('T')[0];
       const { data } = await supabase
         .from("user_properties")
         .select("*")
-        .eq("status", "active");
+        .eq("status", "active")
+        .or(`expiration_date.is.null,expiration_date.gte.${todayStr}`);
 
       if (data) {
         const mapped: Property[] = data.map((p) => ({
