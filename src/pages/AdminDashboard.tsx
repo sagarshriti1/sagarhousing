@@ -78,6 +78,7 @@ import {
   NEPAL_DISTRICTS,
   getDistrictForCity,
 } from '@/data/nepalLocations';
+import SearchableCombobox from '@/components/SearchableCombobox';
 
 const parseLocation = (
   loc: string | null | undefined,
@@ -523,12 +524,13 @@ const AdminDashboard = () => {
       district: data.district || data.state,
       street_address: data.street_address || null,
       bio: data.bio || null,
-      years_experience: data.years_experience,
+      years_experience: data.years_experience?.toString() || null,
       is_featured: data.is_featured,
       start_date: data.start_date,
       expiration_date: data.expiration_date,
       payment_status: data.payment_status,
       payment_bypassed: data.payment_bypassed,
+      bypass_reason: data.bypass_reason,
       user_id: data.user_id,
       specialties: data.specialties,
       license_number: data.license_number,
@@ -536,6 +538,8 @@ const AdminDashboard = () => {
       featured_expiration_date: data.featured_expiration_date,
       featured_payment_status: data.featured_payment_status,
       featured_payment_bypassed: data.featured_payment_bypassed,
+      featured_bypass_reason: data.featured_bypass_reason,
+      updated_by: user?.id,
     };
 
     if (realtorDialogMode === 'edit' && data.id) {
@@ -553,6 +557,22 @@ const AdminDashboard = () => {
           r.id === data.id ? { ...r, ...payload, id: data.id! } : r,
         ),
       );
+
+      // SYNC TO PROFILES TABLE
+      if (data.user_id) {
+        await supabase
+          .from('profiles')
+          .update({
+            display_name: data.name,
+            email: data.email,
+            phone: data.phone,
+            avatar_url: data.photo_url,
+            street_address: data.street_address,
+            location: joinLocation(data.city, data.district || data.state),
+          })
+          .eq('user_id', data.user_id);
+      }
+
       setRealtorDialogOpen(false);
     } else {
       const { data: newData, error } = await supabase
@@ -1606,7 +1626,7 @@ const AdminDashboard = () => {
                   <div className='grid grid-cols-2 gap-4'>
                     <div>
                       <Label>City</Label>
-                      <Select
+                      <SearchableCombobox
                         value={loc.city}
                         onValueChange={city => {
                           const district =
@@ -1616,22 +1636,14 @@ const AdminDashboard = () => {
                             location: joinLocation(city, district),
                           });
                         }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select City' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {NEPAL_CITIES.map(c => (
-                            <SelectItem key={c} value={c}>
-                              {c}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={NEPAL_CITIES}
+                        placeholder='Select City'
+                        searchPlaceholder='Search cities...'
+                      />
                     </div>
                     <div>
                       <Label>District</Label>
-                      <Select
+                      <SearchableCombobox
                         value={loc.district}
                         onValueChange={district => {
                           const cityDist = getDistrictForCity(loc.city);
@@ -1642,18 +1654,10 @@ const AdminDashboard = () => {
                             location: joinLocation(nextCity, district),
                           });
                         }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select District' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {NEPAL_DISTRICTS.map(d => (
-                            <SelectItem key={d} value={d}>
-                              {d}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={NEPAL_DISTRICTS}
+                        placeholder='Select District'
+                        searchPlaceholder='Search districts...'
+                      />
                     </div>
                   </div>
                 );
@@ -1866,7 +1870,7 @@ const AdminDashboard = () => {
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
                     <Label>City</Label>
-                    <Select
+                    <SearchableCombobox
                       value={loc.city}
                       onValueChange={city => {
                         const district =
@@ -1876,22 +1880,14 @@ const AdminDashboard = () => {
                           location: joinLocation(city, district),
                         });
                       }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select City' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {NEPAL_CITIES.map(c => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={NEPAL_CITIES}
+                      placeholder='Select City'
+                      searchPlaceholder='Search cities...'
+                    />
                   </div>
                   <div>
                     <Label>District</Label>
-                    <Select
+                    <SearchableCombobox
                       value={loc.district}
                       onValueChange={district => {
                         const cityDist = getDistrictForCity(loc.city);
@@ -1902,18 +1898,10 @@ const AdminDashboard = () => {
                           location: joinLocation(nextCity, district),
                         });
                       }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select District' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {NEPAL_DISTRICTS.map(d => (
-                          <SelectItem key={d} value={d}>
-                            {d}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={NEPAL_DISTRICTS}
+                      placeholder='Select District'
+                      searchPlaceholder='Search districts...'
+                    />
                   </div>
                 </div>
               );

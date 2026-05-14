@@ -54,6 +54,7 @@ import {
   NEPAL_DISTRICTS,
   getDistrictForCity,
 } from '@/data/nepalLocations';
+import SearchableCombobox from '@/components/SearchableCombobox';
 
 interface Profile {
   id: string;
@@ -619,7 +620,7 @@ const AdminUserDetailPage = () => {
                     <div className='grid grid-cols-2 gap-4'>
                       <div>
                         <Label>City</Label>
-                        <Select
+                        <SearchableCombobox
                           value={l.city}
                           onValueChange={c =>
                             setDraft({
@@ -630,22 +631,14 @@ const AdminUserDetailPage = () => {
                               ),
                             })
                           }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select City' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {NEPAL_CITIES.map(c => (
-                              <SelectItem key={c} value={c}>
-                                {c}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={NEPAL_CITIES}
+                          placeholder='Select City'
+                          searchPlaceholder='Search cities...'
+                        />
                       </div>
                       <div>
                         <Label>District</Label>
-                        <Select
+                        <SearchableCombobox
                           value={l.district}
                           onValueChange={d =>
                             setDraft({
@@ -653,18 +646,10 @@ const AdminUserDetailPage = () => {
                               location: joinLocation(l.city, d),
                             })
                           }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select District' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {NEPAL_DISTRICTS.map(d => (
-                              <SelectItem key={d} value={d}>
-                                {d}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={NEPAL_DISTRICTS}
+                          placeholder='Select District'
+                          searchPlaceholder='Search districts...'
+                        />
                       </div>
                     </div>
                   );

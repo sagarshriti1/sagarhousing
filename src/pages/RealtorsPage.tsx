@@ -17,6 +17,7 @@ interface Realtor {
   phone: string | null;
   photo_url: string | null;
   city: string;
+  district: string | null;
   state: string;
   bio: string | null;
   specialties: string[] | null;
@@ -146,7 +147,7 @@ const RealtorsPage = () => {
                   <div className="min-w-0">
                     <h3 className="font-display text-lg font-bold text-foreground truncate">{realtor.name}</h3>
                     <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" /> {realtor.city}{(realtor as any).district ? `, ${(realtor as any).district}` : ''}
+                      <MapPin className="h-3.5 w-3.5 shrink-0" /> {realtor.city}{realtor.district ? `, ${realtor.district}` : ''}
                     </p>
                     {realtor.years_experience && (
                       <p className="flex items-center gap-1 text-sm text-muted-foreground">

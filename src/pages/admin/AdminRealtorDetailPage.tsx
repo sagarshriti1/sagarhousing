@@ -200,12 +200,13 @@ const AdminRealtorDetailPage = () => {
       district: data.district || data.state,
       street_address: data.street_address || null,
       bio: data.bio || null,
-      years_experience: data.years_experience,
+      years_experience: data.years_experience?.toString() || null,
       is_featured: data.is_featured,
       start_date: data.start_date,
       expiration_date: data.expiration_date,
       payment_status: data.payment_status,
       payment_bypassed: data.payment_bypassed,
+      bypass_reason: data.bypass_reason,
       user_id: data.user_id,
       specialties: data.specialties,
       license_number: data.license_number,
@@ -213,6 +214,8 @@ const AdminRealtorDetailPage = () => {
       featured_expiration_date: data.featured_expiration_date,
       featured_payment_status: data.featured_payment_status,
       featured_payment_bypassed: data.featured_payment_bypassed,
+      featured_bypass_reason: data.featured_bypass_reason,
+      updated_by: user?.id,
     };
     const { data: flagRow } = await supabase
       .from('feature_flags')
@@ -306,6 +309,24 @@ const AdminRealtorDetailPage = () => {
     }
 
     toast.success('Realtor updated');
+
+    // SYNC TO PROFILES TABLE
+    if (data.user_id) {
+      await supabase
+        .from('profiles')
+        .update({
+          display_name: data.name,
+          email: data.email,
+          phone: data.phone,
+          avatar_url: data.photo_url,
+          street_address: data.street_address,
+          location: [data.city, data.district || data.state]
+            .filter(Boolean)
+            .join(', '),
+        })
+        .eq('user_id', data.user_id);
+    }
+
     setEditOpen(false);
     fetchRealtor();
   };
@@ -349,7 +370,8 @@ const AdminRealtorDetailPage = () => {
     featured_expiration_date: realtor.featured_expiration_date ?? null,
     featured_payment_status: realtor.featured_payment_status ?? 'none',
     featured_payment_bypassed: realtor.featured_payment_bypassed ?? false,
-    featured_bypass_reason: null,
+    featured_bypass_reason: realtor.featured_bypass_reason ?? null,
+    bypass_reason: realtor.bypass_reason ?? null,
   };
 
   // UPDATED LOCAL DATE FORMATTING
