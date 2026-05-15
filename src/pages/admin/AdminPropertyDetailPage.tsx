@@ -44,6 +44,24 @@ const AdminPropertyDetailPage = () => {
     onConfirm: () => Promise<void> | void;
   } | null>(null);
 
+  const formatSafeDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '—';
+    try {
+      const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+        ? dateStr.replace(' ', 'T')
+        : dateStr;
+      const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+        ? `${normalized}T00:00:00`
+        : normalized;
+
+      const date = new Date(finalStr);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return format(date, 'MMM d, yyyy');
+    } catch (e) {
+      return 'Invalid Date';
+    }
+  };
+
   useEffect(() => {
     const load = async () => {
       if (!id) return;
@@ -151,13 +169,22 @@ const AdminPropertyDetailPage = () => {
   }
 
   // UPDATED LOCAL DATE FORMATTING
-  const expired =
-    property.expiration_date &&
-    new Date(
-      property.expiration_date.includes('T')
-        ? property.expiration_date
-        : `${property.expiration_date}T00:00:00`,
-    ) < new Date(new Date().toDateString());
+  const expired = (() => {
+    if (!property.expiration_date) return false;
+    try {
+      const dateStr = property.expiration_date;
+      const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+        ? dateStr.replace(' ', 'T')
+        : dateStr;
+      const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+        ? `${normalized}T00:00:00`
+        : normalized;
+      const d = new Date(finalStr);
+      return !isNaN(d.getTime()) && d < new Date(new Date().toDateString());
+    } catch (e) {
+      return false;
+    }
+  })();
   const isActive = property.status === 'active' && !expired;
 
   return (

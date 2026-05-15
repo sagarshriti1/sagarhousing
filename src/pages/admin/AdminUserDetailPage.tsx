@@ -73,6 +73,24 @@ interface Profile {
   created_at: string;
 }
 
+const formatSafeDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return '—';
+  try {
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+
+    const date = new Date(finalStr);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return format(date, 'MMM d, yyyy');
+  } catch (e) {
+    return 'Invalid Date';
+  }
+};
+
 const parseLocation = (loc: string | null | undefined) => {
   if (!loc) return { city: '', district: '' };
   const [city = '', district = ''] = loc.split(',').map(s => s.trim());
