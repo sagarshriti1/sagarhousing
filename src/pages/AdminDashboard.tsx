@@ -56,6 +56,7 @@ import {
   Sliders,
   ChevronDown,
   ChevronRight,
+  Trash2,
 } from 'lucide-react';
 import FeaturesTab from '@/components/admin/FeaturesTab';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
@@ -90,17 +91,26 @@ const parseLocation = (
 const joinLocation = (city: string, district: string) =>
   [city, district].filter(Boolean).join(', ');
 
-const formatLocalDate = (dateStr: string | null | undefined) => {
-  if (!dateStr) return '—';
+const safeParseDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
   try {
-    const date = new Date(
-      dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
-    );
-    if (isNaN(date.getTime())) return 'Invalid Date';
-    return format(date, 'MMM d, yyyy');
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+    const d = new Date(finalStr);
+    return isNaN(d.getTime()) ? null : d;
   } catch (e) {
-    return 'Invalid Date';
+    return null;
   }
+};
+
+const formatSafeDate = (dateStr: string | null | undefined) => {
+  const d = safeParseDate(dateStr);
+  if (!d) return '—';
+  return format(d, 'MMM d, yyyy');
 };
 
 interface Realtor {
@@ -272,9 +282,9 @@ const AdminDashboard = () => {
   const fetchAll = async () => {
     const [r, p, ro, pr] = await Promise.all([
       supabase.from('realtors').select('*'),
-      supabase.from('profiles').select('*').is('deleted_at', null),
+      supabase.from('profiles').select('*'),
       supabase.from('user_roles').select('*'),
-      supabase.from('user_properties').select('id, property_code, title, city, district, state, price, status, listing_type, user_id, updated_by, expiration_date, created_at').is('deleted_at', null),
+      supabase.from('user_properties').select('id, property_code, title, city, district, state, price, status, listing_type, user_id, updated_by, expiration_date, created_at, deleted_at'),
     ]);
     setRealtors(r.data ?? []);
     setProfiles((p.data ?? []) as UserProfile[]);
@@ -501,6 +511,8 @@ const AdminDashboard = () => {
       updated_by: p => updatedByLabel(p.updated_by).toLowerCase(),
     });
 
+    const isTrash = title.toLowerCase().includes('trash') || title.toLowerCase().includes('deleted');
+
     return (
       <div className='space-y-4'>
         <div className='flex items-center gap-4 flex-wrap'>
@@ -508,13 +520,15 @@ const AdminDashboard = () => {
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
             <Input placeholder={`Search ${title.toLowerCase()}...`} className='pl-10' value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <div className='flex items-center gap-2 ml-auto'>
-            <Label htmlFor='show-inactive' className='text-sm text-muted-foreground'>
-              {showInactive ? 'Showing inactive' : 'Showing active'}
-            </Label>
-            <Switch id='show-inactive' checked={showInactive} onCheckedChange={setShowInactive} />
-          </div>
-          {target !== 'realtor' && (
+          {!isTrash && (
+            <div className='flex items-center gap-2 ml-auto'>
+              <Label htmlFor='show-inactive' className='text-sm text-muted-foreground'>
+                {showInactive ? 'Showing inactive' : 'Showing active'}
+              </Label>
+              <Switch id='show-inactive' checked={showInactive} onCheckedChange={setShowInactive} />
+            </div>
+          )}
+          {target !== 'realtor' && !isTrash && (
             <Button onClick={() => { setCreateUserRole(target); setCreateUserOpen(true); }} className='gap-2'>
               <Plus className='h-4 w-4' /> Create {target === 'user' ? 'Non-Realtor' : 'Admin'}
             </Button>
@@ -530,6 +544,7 @@ const AdminDashboard = () => {
                 {target === 'admin' && <SortHeader tab={target} sortKey='job_title'>Job Title</SortHeader>}
                 <SortHeader tab={target} sortKey='location'>Location</SortHeader>
                 <SortHeader tab={target} sortKey='status'>Status</SortHeader>
+                {isTrash && <TableHead>Deleted At</TableHead>}
                 <SortHeader tab={target} sortKey='updated_by'>Updated By</SortHeader>
               </TableRow>
             </TableHeader>
@@ -548,7 +563,18 @@ const AdminDashboard = () => {
                   <TableCell>{profile.phone || '—'}</TableCell>
                   {target === 'admin' && <TableCell>{profile.job_title || '—'}</TableCell>}
                   <TableCell>{profile.location || '—'}</TableCell>
-                  <TableCell><Badge variant={profile.is_active ? 'default' : 'secondary'}>{profile.is_active ? 'Active' : 'Inactive'}</Badge></TableCell>
+                  <TableCell>
+                    {isTrash ? (
+                      <Badge variant='destructive'>Deleted</Badge>
+                    ) : (
+                      <Badge variant={profile.is_active ? 'default' : 'secondary'}>{profile.is_active ? 'Active' : 'Inactive'}</Badge>
+                    )}
+                  </TableCell>
+                  {isTrash && (
+                    <TableCell className='text-xs text-muted-foreground'>
+                      {formatSafeDate(profile.deleted_at)}
+                    </TableCell>
+                  )}
                   <TableCell className='text-xs text-muted-foreground'>{updatedByLabel(profile.updated_by)}</TableCell>
                 </TableRow>
               ))}
@@ -583,15 +609,8 @@ const AdminDashboard = () => {
     const realtorRows = realtors.map(r => ({ ...r, isProfileOnly: false as const, profile: profiles.find(p => p.user_id === r.user_id) || null }));
     const all = [...realtorRows, ...orphanProfiles];
     return all.map((r: any) => {
-      const dateStr = r.expiration_date;
-      const normalized = dateStr && (dateStr.includes(' ') && !dateStr.includes('T'))
-        ? dateStr.replace(' ', 'T')
-        : dateStr;
-      const finalStr = normalized && (normalized.length === 10 && !normalized.includes('T'))
-        ? `${normalized}T00:00:00`
-        : normalized;
-      const expDate = finalStr ? new Date(finalStr) : null;
-      const isExpired = expDate && !isNaN(expDate.getTime()) && expDate < new Date(new Date().toDateString());
+      const d = safeParseDate(r.expiration_date);
+      const isExpired = d && d < new Date(new Date().toDateString());
       
       return {
         ...r,
@@ -628,10 +647,11 @@ const AdminDashboard = () => {
             <TabsTrigger value='realtors' className='gap-2'><MapPin className='h-4 w-4' /> Realtors</TabsTrigger>
             <TabsTrigger value='non-realtors' className='gap-2'><User className='h-4 w-4' /> Non-Realtors</TabsTrigger>
             <TabsTrigger value='properties' className='gap-2'><Home className='h-4 w-4' /> Properties</TabsTrigger>
+            <TabsTrigger value='trash' className='gap-2'><Trash2 className='h-4 w-4' /> Trash</TabsTrigger>
             <TabsTrigger value='features' className='gap-2'><Sliders className='h-4 w-4' /> Features</TabsTrigger>
           </TabsList>
 
-          <TabsContent value='admins'>{renderAccountsTable('admin', 'Admins')}</TabsContent>
+          <TabsContent value='admins'>{renderAccountsTable('admin', 'Admins', profiles.filter(p => !p.deleted_at && roles.find(r => r.user_id === p.user_id)?.role === 'admin'))}</TabsContent>
 
           <TabsContent value='realtors' className='space-y-4'>
             <div className='flex items-center gap-4 flex-wrap'>
@@ -658,7 +678,7 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRealtors.map(realtor => (
+                  {filteredRealtors.filter(r => !r.profile?.deleted_at).map(realtor => (
                     <TableRow key={realtor.id} className='cursor-pointer hover:bg-muted/40' onClick={() => navigate(realtor.isProfileOnly ? `/admin/user/${realtor.user_id}` : `/admin/realtor/${realtor.id}`)}>
                       <TableCell>
                         <div className='flex items-center gap-3'>
@@ -686,13 +706,15 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value='non-realtors'>{renderAccountsTable('user', 'Non-Realtors')}</TabsContent>
+          <TabsContent value='non-realtors'>{renderAccountsTable('user', 'Non-Realtors', profiles.filter(p => !p.deleted_at && roles.find(r => r.user_id === p.user_id)?.role === 'user'))}</TabsContent>
 
           <TabsContent value='properties' className='space-y-4'>
             {(() => {
               const q = search.trim().toLowerCase().replace(/^#/, '');
-              const baseFiltered = properties.filter(p => {
-                const isActive = p.status === 'active' && (!p.expiration_date || new Date(p.expiration_date) >= new Date(new Date().toDateString()));
+              const baseFiltered = properties.filter(p => !p.deleted_at).filter(p => {
+                const d = safeParseDate(p.expiration_date);
+                const expired = d && d < new Date(new Date().toDateString());
+                const isActive = p.status === 'active' && !expired;
                 if (showInactive ? isActive : !isActive) return false;
                 if (!q) return true;
                 return String(p.property_code ?? '').includes(q) || creatorEmail(p.user_id).toLowerCase().includes(q);
@@ -741,6 +763,61 @@ const AdminDashboard = () => {
                 </>
               );
             })()}
+          </TabsContent>
+
+          <TabsContent value='trash'>
+            <Tabs defaultValue='trash-realtors' className='space-y-4'>
+              <TabsList className='bg-muted/50'>
+                <TabsTrigger value='trash-admins'>Admins</TabsTrigger>
+                <TabsTrigger value='trash-realtors'>Realtors</TabsTrigger>
+                <TabsTrigger value='trash-non-realtors'>Non-Realtors</TabsTrigger>
+                <TabsTrigger value='trash-properties'>Properties</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value='trash-admins'>
+                {renderAccountsTable('admin', 'Deleted Admins', profiles.filter(p => !!p.deleted_at && roles.find(r => r.user_id === p.user_id)?.role === 'admin'))}
+              </TabsContent>
+              
+              <TabsContent value='trash-realtors'>
+                {renderAccountsTable('realtor', 'Deleted Realtors', profiles.filter(p => !!p.deleted_at && roles.find(r => r.user_id === p.user_id)?.role === 'realtor'))}
+              </TabsContent>
+              
+              <TabsContent value='trash-non-realtors'>
+                {renderAccountsTable('user', 'Deleted Non-Realtors', profiles.filter(p => !!p.deleted_at && roles.find(r => r.user_id === p.user_id)?.role === 'user'))}
+              </TabsContent>
+              
+              <TabsContent value='trash-properties'>
+                <div className='rounded-lg border border-border overflow-auto'>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Property ID</TableHead>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Deleted At</TableHead>
+                        <TableHead>Updated By</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {properties.filter(p => !!p.deleted_at).map(prop => (
+                        <TableRow key={prop.id} className='hover:bg-muted/40'>
+                          <TableCell className='font-mono text-xs text-muted-foreground'>{prop.property_code}</TableCell>
+                          <TableCell className='font-medium'>{prop.title}</TableCell>
+                          <TableCell className='text-xs text-muted-foreground'>{formatSafeDate(prop.deleted_at)}</TableCell>
+                          <TableCell className='text-xs text-muted-foreground'>{updatedByLabel(prop.updated_by)}</TableCell>
+                        </TableRow>
+                      ))}
+                      {properties.filter(p => !!p.deleted_at).length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className='h-24 text-center text-muted-foreground'>
+                            No deleted properties found.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value='features'><FeaturesTab /></TabsContent>
