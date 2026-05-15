@@ -7,18 +7,29 @@ export interface FeaturedFields {
   featured_payment_status?: string | null;
 }
 
+const safeParseDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
+  try {
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+    const d = new Date(finalStr);
+    return isNaN(d.getTime()) ? null : d;
+  } catch (e) {
+    return null;
+  }
+};
+
 /** True only if marked featured AND not past the featured expiration date. */
 export const isFeaturedActive = (
   r: FeaturedFields | null | undefined,
 ): boolean => {
   if (!r || !r.is_featured) return false;
-  if (!r.featured_expiration_date) return true;
-  // FIX: Force local midnight parsing for correct evaluation
-  const expDate = new Date(
-    r.featured_expiration_date.includes('T')
-      ? r.featured_expiration_date
-      : `${r.featured_expiration_date}T00:00:00`,
-  );
+  const expDate = safeParseDate(r.featured_expiration_date);
+  if (!expDate) return true;
   return expDate >= new Date(new Date().toDateString());
 };
 
@@ -28,13 +39,8 @@ export const markFeaturedExpiredIfNeeded = async (
   fields: FeaturedFields,
 ): Promise<boolean> => {
   if (!fields.is_featured || !fields.featured_expiration_date) return false;
-  // FIX: Force local midnight parsing
-  const expDate = new Date(
-    fields.featured_expiration_date.includes('T')
-      ? fields.featured_expiration_date
-      : `${fields.featured_expiration_date}T00:00:00`,
-  );
-  const expired = expDate < new Date(new Date().toDateString());
+  const expDate = safeParseDate(fields.featured_expiration_date);
+  const expired = expDate && expDate < new Date(new Date().toDateString());
 
   if (!expired) return false;
 
@@ -47,14 +53,7 @@ export const markFeaturedExpiredIfNeeded = async (
 
 // FIX: Generate the date using strictly local time parsing to prevent UTC "yesterday" shift
 export const addOneMonthISO = (fromDateStr?: string | null): string => {
-  let d: Date;
-  if (fromDateStr) {
-    d = new Date(
-      fromDateStr.includes('T') ? fromDateStr : `${fromDateStr}T00:00:00`,
-    );
-  } else {
-    d = new Date();
-  }
+  let d = (fromDateStr ? safeParseDate(fromDateStr) : null) || new Date();
   d.setMonth(d.getMonth() + 1);
   return format(d, 'yyyy-MM-dd');
 };

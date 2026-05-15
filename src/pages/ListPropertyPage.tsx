@@ -92,6 +92,25 @@ const addMonthsLocal = (dateStr: string, months: number) => {
   return format(addMonths(date, months), 'yyyy-MM-dd');
 };
 
+const joinLocation = (city: string, district: string) =>
+  [city, district].filter(Boolean).join(', ');
+
+const safeParseDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
+  try {
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+    const d = new Date(finalStr);
+    return isNaN(d.getTime()) ? null : d;
+  } catch (e) {
+    return null;
+  }
+};
+
 const ListPropertyPage = () => {
   const { user, role, loading: authLoading } = useAuth();
   const isAdmin = role === 'admin';
@@ -401,6 +420,8 @@ const ListPropertyPage = () => {
     );
   };
 
+
+
   const updateForm = (field: string, value: string) => {
     setForm(prev => {
       const updated = { ...prev, [field]: value };
@@ -610,7 +631,7 @@ const ListPropertyPage = () => {
             related_label: form.title,
             amount: 0,
             status: bypassPayment ? 'bypassed' : 'paid',
-            expiration_date: expirationDate ? new Date(expirationDate + 'T00:00:00').toISOString() : null,
+            expiration_date: expirationDate ? safeParseDate(expirationDate)?.toISOString() : null,
             notes: `Admin update to listing period. ${bypassPayment ? `Bypass Reason: ${bypassReason}` : 'Modified dates.'}`,
           });
         }
@@ -727,10 +748,10 @@ const ListPropertyPage = () => {
               {currentStatus === 'active' && expirationDate && (
                 <span className='text-sm text-muted-foreground'>
                   Active until{' '}
-                  {format(
-                    new Date(expirationDate + 'T00:00:00'),
-                    'MMM d, yyyy',
-                  )}
+                  {(() => {
+                    const d = safeParseDate(expirationDate);
+                    return d ? format(d, 'MMM d, yyyy') : '—';
+                  })()}
                 </span>
               )}
               {currentStatus !== 'active' &&
@@ -738,10 +759,10 @@ const ListPropertyPage = () => {
                 new Date(expirationDate) > new Date() && (
                   <span className='text-sm text-muted-foreground'>
                     Paid period until{' '}
-                    {format(
-                      new Date(expirationDate + 'T00:00:00'),
-                      'MMM d, yyyy',
-                    )}{' '}
+                    {(() => {
+                      const d = safeParseDate(expirationDate);
+                      return d ? format(d, 'MMM d, yyyy') : '—';
+                    })()}{' '}
                     — reactivation is free
                   </span>
                 )}
@@ -1320,10 +1341,10 @@ const ListPropertyPage = () => {
                             >
                               <CalendarIcon className='mr-2 h-4 w-4' />
                               {paymentDate
-                                ? format(
-                                    new Date(paymentDate + 'T00:00:00'),
-                                    'PPP',
-                                  )
+                                ? (() => {
+                                    const d = safeParseDate(paymentDate);
+                                    return d ? format(d, 'PPP') : 'Invalid Date';
+                                  })()
                                 : 'Pick start date'}
                             </Button>
                           </PopoverTrigger>
@@ -1332,7 +1353,7 @@ const ListPropertyPage = () => {
                               mode='single'
                               selected={
                                 paymentDate
-                                  ? new Date(paymentDate + 'T00:00:00')
+                                  ? safeParseDate(paymentDate) || undefined
                                   : undefined
                               }
                               onSelect={d => {
@@ -1371,10 +1392,10 @@ const ListPropertyPage = () => {
                             >
                               <CalendarIcon className='mr-2 h-4 w-4' />
                               {expirationDate
-                                ? format(
-                                    new Date(expirationDate + 'T00:00:00'),
-                                    'PPP',
-                                  )
+                                ? (() => {
+                                    const d = safeParseDate(expirationDate);
+                                    return d ? format(d, 'PPP') : 'Invalid Date';
+                                  })()
                                 : 'Pick expiration date'}
                             </Button>
                           </PopoverTrigger>
@@ -1383,7 +1404,7 @@ const ListPropertyPage = () => {
                               mode='single'
                               selected={
                                 expirationDate
-                                  ? new Date(expirationDate + 'T00:00:00')
+                                  ? safeParseDate(expirationDate) || undefined
                                   : undefined
                               }
                               onSelect={d => {

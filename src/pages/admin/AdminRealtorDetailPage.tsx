@@ -36,8 +36,8 @@ import { format } from 'date-fns';
 import { logPayment } from '@/lib/paymentHistory';
 import { FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 
-const formatSafeDate = (dateStr: string | null | undefined) => {
-  if (!dateStr) return '—';
+const safeParseDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
   try {
     const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
       ? dateStr.replace(' ', 'T')
@@ -45,13 +45,17 @@ const formatSafeDate = (dateStr: string | null | undefined) => {
     const finalStr = (normalized.length === 10 && !normalized.includes('T'))
       ? `${normalized}T00:00:00`
       : normalized;
-
-    const date = new Date(finalStr);
-    if (isNaN(date.getTime())) return 'Invalid Date';
-    return format(date, 'MMM d, yyyy');
+    const d = new Date(finalStr);
+    return isNaN(d.getTime()) ? null : d;
   } catch (e) {
-    return 'Invalid Date';
+    return null;
   }
+};
+
+const formatSafeDate = (dateStr: string | null | undefined) => {
+  const d = safeParseDate(dateStr);
+  if (!d) return '—';
+  return format(d, 'MMM d, yyyy');
 };
 
 const AdminRealtorDetailPage = () => {
@@ -523,23 +527,12 @@ const AdminRealtorDetailPage = () => {
                 {formatSafeDate(realtor.featured_expiration_date)}{' '}
                 {(() => {
                   if (!realtor.is_featured || !realtor.featured_expiration_date) return null;
-                  try {
-                    const dateStr = realtor.featured_expiration_date;
-                    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
-                      ? dateStr.replace(' ', 'T')
-                      : dateStr;
-                    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
-                      ? `${normalized}T00:00:00`
-                      : normalized;
-                    const d = new Date(finalStr);
-                    if (isNaN(d.getTime())) return null;
-                    if (d < new Date(new Date().toDateString())) {
-                      return <Badge variant='destructive' className='ml-2'>Expired</Badge>;
-                    }
-                    return <Badge className='ml-2'>Active</Badge>;
-                  } catch (e) {
-                    return null;
+                  const d = safeParseDate(realtor.featured_expiration_date);
+                  if (!d) return null;
+                  if (d < new Date(new Date().toDateString())) {
+                    return <Badge variant='destructive' className='ml-2'>Expired</Badge>;
                   }
+                  return <Badge className='ml-2'>Active</Badge>;
                 })()}
               </span>
             </div>

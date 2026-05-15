@@ -78,13 +78,31 @@ const FindRealtors = () => {
         });
       }
 
+      const safeParseDate = (dateStr: string | null | undefined) => {
+        if (!dateStr) return null;
+        try {
+          const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+            ? dateStr.replace(' ', 'T')
+            : dateStr;
+          const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+            ? `${normalized}T00:00:00`
+            : normalized;
+          const d = new Date(finalStr);
+          return isNaN(d.getTime()) ? null : d;
+        } catch (e) {
+          return null;
+        }
+      };
+
       const normalized = (data ?? []).map((r: any) => ({
         ...r,
         photo_url: r.photo_url || (r.user_id ? profilesMap[r.user_id] : null),
         is_featured:
           r.is_featured &&
-          (!r.featured_expiration_date ||
-            new Date(r.featured_expiration_date + 'T00:00:00') >= today),
+          (() => {
+            const d = safeParseDate(r.featured_expiration_date);
+            return !d || d >= today;
+          })(),
       }));
 
       setRealtors(normalized);
