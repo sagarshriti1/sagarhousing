@@ -61,13 +61,26 @@ const parseLocation = (
 const joinLocation = (city: string, district: string) =>
   [city, district].filter(Boolean).join(', ');
 
-// LOCAL DATE FIX
+const safeParseDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
+  try {
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+    const d = new Date(finalStr);
+    return isNaN(d.getTime()) ? null : d;
+  } catch (e) {
+    return null;
+  }
+};
+
 const formatLocalDate = (dateStr: string | null | undefined) => {
-  if (!dateStr) return '—';
-  const date = new Date(
-    dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
-  );
-  return format(date, 'MMM d, yyyy');
+  const d = safeParseDate(dateStr);
+  if (!d) return '—';
+  return format(d, 'MMM d, yyyy');
 };
 
 interface ProfileData {
@@ -270,7 +283,7 @@ const ProfilePage = () => {
       amount: featuredFree ? 0 : FEATURED_FEE,
       status: featuredFree ? 'promotion' : 'paid',
       promo_label: featuredFree ? featuredPromoLabel : null,
-      expiration_date: new Date(expiration + 'T00:00:00').toISOString(),
+      expiration_date: safeParseDate(expiration)?.toISOString(),
     });
 
     toast.success("You're now featured! ⭐", {
