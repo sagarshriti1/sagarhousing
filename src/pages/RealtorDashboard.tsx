@@ -25,17 +25,26 @@ import { Plus, Home, BarChart3, Clock, Loader2 } from 'lucide-react';
 import RealtorExpiredBanner from '@/components/RealtorExpiredBanner';
 import { format } from 'date-fns';
 
+const safeParseDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
+  try {
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+    return new Date(finalStr);
+  } catch (e) {
+    return null;
+  }
+};
+
 const formatLocalDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return '—';
-  try {
-    const date = new Date(
-      dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
-    );
-    if (isNaN(date.getTime())) return 'Invalid Date';
-    return format(date, 'MMM d, yyyy');
-  } catch (e) {
-    return 'Invalid Date';
-  }
+  const date = safeParseDate(dateStr);
+  if (!date || isNaN(date.getTime())) return 'Invalid Date';
+  return format(date, 'MMM d, yyyy');
 };
 
 const RealtorDashboard = () => {
@@ -75,7 +84,10 @@ const RealtorDashboard = () => {
       const rData = realtorRes.data;
       const active = !!rData
         && (rData.payment_status === 'paid' || rData.payment_status === 'promotion' || rData.payment_status === 'bypassed')
-        && (!rData.expiration_date || new Date(rData.expiration_date) > new Date());
+        && (() => {
+          const d = safeParseDate(rData.expiration_date);
+          return !d || isNaN(d.getTime()) || d > new Date();
+        })();
       setRealtorInactive(!active);
       
       setFetching(false);
@@ -116,9 +128,11 @@ const RealtorDashboard = () => {
     return <Navigate to='/' replace />;
   }
 
-  const isExpired =
-    realtor?.expiration_date &&
-    new Date(realtor.expiration_date) < new Date(new Date().toDateString());
+  const isExpired = (() => {
+    if (!realtor?.expiration_date) return false;
+    const d = safeParseDate(realtor.expiration_date);
+    return !!d && !isNaN(d.getTime()) && d < new Date(new Date().toDateString());
+  })();
 
   if (isExpired) {
     return (
