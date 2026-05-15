@@ -36,6 +36,24 @@ import { format } from 'date-fns';
 import { logPayment } from '@/lib/paymentHistory';
 import { FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 
+const formatSafeDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return '—';
+  try {
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+
+    const date = new Date(finalStr);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return format(date, 'MMM d, yyyy');
+  } catch (e) {
+    return 'Invalid Date';
+  }
+};
+
 const AdminRealtorDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -495,66 +513,35 @@ const AdminRealtorDetailPage = () => {
             <div>
               <span className='text-muted-foreground'>Subscription:</span>{' '}
               <span className='text-foreground'>
-                {realtor.start_date
-                  ? format(
-                      new Date(
-                        realtor.start_date.includes('T')
-                          ? realtor.start_date
-                          : `${realtor.start_date}T00:00:00`,
-                      ),
-                      'MMM d, yyyy',
-                    )
-                  : '—'}{' '}
-                →{' '}
-                {realtor.expiration_date
-                  ? format(
-                      new Date(
-                        realtor.expiration_date.includes('T')
-                          ? realtor.expiration_date
-                          : `${realtor.expiration_date}T00:00:00`,
-                      ),
-                      'MMM d, yyyy',
-                    )
-                  : '—'}
+                {formatSafeDate(realtor.start_date)} →{' '}
+                {formatSafeDate(realtor.expiration_date)}
               </span>
             </div>
             <div>
               <span className='text-muted-foreground'>Featured:</span>{' '}
               <span className='text-foreground'>
-                {realtor.featured_start_date
-                  ? format(
-                      new Date(
-                        realtor.featured_start_date.includes('T')
-                          ? realtor.featured_start_date
-                          : `${realtor.featured_start_date}T00:00:00`,
-                      ),
-                      'MMM d, yyyy',
-                    )
-                  : '—'}{' '}
-                →{' '}
-                {realtor.featured_expiration_date
-                  ? format(
-                      new Date(
-                        realtor.featured_expiration_date.includes('T')
-                          ? realtor.featured_expiration_date
-                          : `${realtor.featured_expiration_date}T00:00:00`,
-                      ),
-                      'MMM d, yyyy',
-                    )
-                  : '—'}{' '}
-                {realtor.is_featured &&
-                realtor.featured_expiration_date &&
-                new Date(
-                  realtor.featured_expiration_date.includes('T')
-                    ? realtor.featured_expiration_date
-                    : `${realtor.featured_expiration_date}T00:00:00`,
-                ) < new Date(new Date().toDateString()) ? (
-                  <Badge variant='destructive' className='ml-2'>
-                    Expired
-                  </Badge>
-                ) : realtor.is_featured ? (
-                  <Badge className='ml-2'>Active</Badge>
-                ) : null}
+                {formatSafeDate(realtor.featured_start_date)} →{' '}
+                {formatSafeDate(realtor.featured_expiration_date)}{' '}
+                {(() => {
+                  if (!realtor.is_featured || !realtor.featured_expiration_date) return null;
+                  try {
+                    const dateStr = realtor.featured_expiration_date;
+                    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+                      ? dateStr.replace(' ', 'T')
+                      : dateStr;
+                    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+                      ? `${normalized}T00:00:00`
+                      : normalized;
+                    const d = new Date(finalStr);
+                    if (isNaN(d.getTime())) return null;
+                    if (d < new Date(new Date().toDateString())) {
+                      return <Badge variant='destructive' className='ml-2'>Expired</Badge>;
+                    }
+                    return <Badge className='ml-2'>Active</Badge>;
+                  } catch (e) {
+                    return null;
+                  }
+                })()}
               </span>
             </div>
 

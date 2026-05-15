@@ -79,9 +79,31 @@ export interface RealtorFormData {
 
 // LOCAL DATE FIX: Forces initialization to local system date
 const getLocalTodayStr = () => format(new Date(), 'yyyy-MM-dd');
+
+const safeParseDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
+  try {
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+    const d = new Date(finalStr);
+    return isNaN(d.getTime()) ? null : d;
+  } catch (e) {
+    return null;
+  }
+};
+
+const formatSafeDate = (dateStr: string | null | undefined) => {
+  const d = safeParseDate(dateStr);
+  if (!d) return '—';
+  return format(d, 'PPP');
+};
+
 const addMonthsLocal = (dateStr: string, months: number) => {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
+  const date = safeParseDate(dateStr) || new Date();
   return format(addMonths(date, months), 'yyyy-MM-dd');
 };
 
@@ -592,12 +614,7 @@ const RealtorFormDialog = ({
                               >
                                 <CalendarIcon className='mr-2 h-4 w-4' />
                                 {form.featured_start_date
-                                  ? format(
-                                      new Date(
-                                        form.featured_start_date + 'T00:00:00',
-                                      ),
-                                      'PPP',
-                                    )
+                                  ? formatSafeDate(form.featured_start_date)
                                   : 'Pick start date'}
                               </Button>
                             </PopoverTrigger>
@@ -607,13 +624,7 @@ const RealtorFormDialog = ({
                             >
                               <Calendar
                                 mode='single'
-                                selected={
-                                  form.featured_start_date
-                                    ? new Date(
-                                        form.featured_start_date + 'T00:00:00',
-                                      )
-                                    : undefined
-                                }
+                                selected={safeParseDate(form.featured_start_date) || undefined}
                                 onSelect={date => {
                                   if (!date) {
                                     setForm({
@@ -659,13 +670,7 @@ const RealtorFormDialog = ({
                               >
                                 <CalendarIcon className='mr-2 h-4 w-4' />
                                 {form.featured_expiration_date
-                                  ? format(
-                                      new Date(
-                                        form.featured_expiration_date +
-                                          'T00:00:00',
-                                      ),
-                                      'PPP',
-                                    )
+                                  ? formatSafeDate(form.featured_expiration_date)
                                   : 'Pick expiration date'}
                               </Button>
                             </PopoverTrigger>
@@ -675,14 +680,7 @@ const RealtorFormDialog = ({
                             >
                               <Calendar
                                 mode='single'
-                                selected={
-                                  form.featured_expiration_date
-                                    ? new Date(
-                                        form.featured_expiration_date +
-                                          'T00:00:00',
-                                      )
-                                    : undefined
-                                }
+                                selected={safeParseDate(form.featured_expiration_date) || undefined}
                                 onSelect={date => {
                                   setForm({
                                     ...form,
@@ -696,10 +694,7 @@ const RealtorFormDialog = ({
                                   form.featured_start_date
                                     ? {
                                         from: new Date(-8640000000000000),
-                                        to: new Date(
-                                          form.featured_start_date +
-                                            'T00:00:00',
-                                        ),
+                                        to: safeParseDate(form.featured_start_date) || new Date(),
                                       }
                                     : undefined
                                 }
@@ -838,21 +833,14 @@ const RealtorFormDialog = ({
                         >
                           <CalendarIcon className='mr-2 h-4 w-4' />
                           {form.start_date
-                            ? format(
-                                new Date(form.start_date + 'T00:00:00'),
-                                'PPP',
-                              )
+                            ? formatSafeDate(form.start_date)
                             : 'Pick start date'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className='w-auto p-0' align='start'>
                         <Calendar
                           mode='single'
-                          selected={
-                            form.start_date
-                              ? new Date(form.start_date + 'T00:00:00')
-                              : undefined
-                          }
+                          selected={safeParseDate(form.start_date) || undefined}
                           onSelect={date => {
                             if (!date) {
                               setForm({ ...form, start_date: null });
@@ -891,21 +879,14 @@ const RealtorFormDialog = ({
                         >
                           <CalendarIcon className='mr-2 h-4 w-4' />
                           {form.expiration_date
-                            ? format(
-                                new Date(form.expiration_date + 'T00:00:00'),
-                                'PPP',
-                              )
+                            ? formatSafeDate(form.expiration_date)
                             : 'Pick expiration date'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className='w-auto p-0' align='start'>
                         <Calendar
                           mode='single'
-                          selected={
-                            form.expiration_date
-                              ? new Date(form.expiration_date + 'T00:00:00')
-                              : undefined
-                          }
+                          selected={safeParseDate(form.expiration_date) || undefined}
                           onSelect={date => {
                             setForm({
                               ...form,
@@ -919,7 +900,7 @@ const RealtorFormDialog = ({
                             form.start_date
                               ? {
                                   from: new Date(-8640000000000000),
-                                  to: new Date(form.start_date + 'T00:00:00'),
+                                  to: safeParseDate(form.start_date) || new Date(),
                                 }
                               : undefined
                           }
