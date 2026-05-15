@@ -582,11 +582,25 @@ const AdminDashboard = () => {
     }));
     const realtorRows = realtors.map(r => ({ ...r, isProfileOnly: false as const, profile: profiles.find(p => p.user_id === r.user_id) || null }));
     const all = [...realtorRows, ...orphanProfiles];
-    return all.filter((r: any) => {
+    return all.map((r: any) => {
+      const dateStr = r.expiration_date;
+      const normalized = dateStr && (dateStr.includes(' ') && !dateStr.includes('T'))
+        ? dateStr.replace(' ', 'T')
+        : dateStr;
+      const finalStr = normalized && (normalized.length === 10 && !normalized.includes('T'))
+        ? `${normalized}T00:00:00`
+        : normalized;
+      const expDate = finalStr ? new Date(finalStr) : null;
+      const isExpired = expDate && !isNaN(expDate.getTime()) && expDate < new Date(new Date().toDateString());
+      
+      return {
+        ...r,
+        isActiveStatus: (r.profile?.is_active ?? true) && !isExpired
+      };
+    }).filter((r: any) => {
       const matchSearch = !q || (r.name || '').toLowerCase().includes(q) || (r.city || '').toLowerCase().includes(q) || (r.email || '').toLowerCase().includes(q);
       if (!matchSearch) return false;
-      const isActive = (r.profile?.is_active ?? true) && (!r.expiration_date || new Date(r.expiration_date) >= new Date(new Date().toDateString()));
-      return showInactive ? !isActive : isActive;
+      return showInactive ? !r.isActiveStatus : r.isActiveStatus;
     });
   })();
 
@@ -595,7 +609,7 @@ const AdminDashboard = () => {
     email: r => (r.email || '').toLowerCase(),
     location: r => `${r.city || ''} ${r.district || ''}`.toLowerCase(),
     payment: r => r.payment_status || '',
-    status: r => ((r.profile?.is_active ?? true) && (!r.expiration_date || new Date(r.expiration_date) >= new Date(new Date().toDateString())) ? 1 : 0),
+    status: r => (r.isActiveStatus ? 1 : 0),
     updated_by: r => updatedByLabel(r.updated_by).toLowerCase(),
   });
 
@@ -657,7 +671,13 @@ const AdminDashboard = () => {
                       <TableCell>{realtor.email || '—'}</TableCell>
                       <TableCell>{realtor.city}{realtor.district ? `, ${realtor.district}` : ''}</TableCell>
                       <TableCell>{realtor.payment_status === 'paid' ? <Badge>Paid</Badge> : <Badge variant='secondary'>{realtor.payment_status}</Badge>}</TableCell>
-                      <TableCell><Badge variant='default'>Active</Badge></TableCell>
+                      <TableCell>
+                        {realtor.isActiveStatus ? (
+                          <Badge>Active</Badge>
+                        ) : (
+                          <Badge variant='destructive'>Inactive</Badge>
+                        )}
+                      </TableCell>
                       <TableCell className='text-xs text-muted-foreground'>{updatedByLabel(realtor.updated_by)}</TableCell>
                     </TableRow>
                   ))}

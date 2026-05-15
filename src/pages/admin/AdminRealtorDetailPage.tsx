@@ -393,13 +393,12 @@ const AdminRealtorDetailPage = () => {
   };
 
   // UPDATED LOCAL DATE FORMATTING
-  const notExpired =
-    !realtor.expiration_date ||
-    new Date(
-      realtor.expiration_date.includes('T')
-        ? realtor.expiration_date
-        : `${realtor.expiration_date}T00:00:00`,
-    ) >= new Date(new Date().toDateString());
+  const notExpired = (() => {
+    if (!realtor.expiration_date) return true;
+    const d = safeParseDate(realtor.expiration_date);
+    if (!d || isNaN(d.getTime())) return false;
+    return d >= new Date(new Date().toDateString());
+  })();
   const displayPhoto = realtor.photo_url || linkedAvatar;
 
   return (
