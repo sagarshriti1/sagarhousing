@@ -90,17 +90,26 @@ const parseLocation = (
 const joinLocation = (city: string, district: string) =>
   [city, district].filter(Boolean).join(', ');
 
-const formatLocalDate = (dateStr: string | null | undefined) => {
-  if (!dateStr) return '—';
+const safeParseDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
   try {
-    const date = new Date(
-      dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`,
-    );
-    if (isNaN(date.getTime())) return 'Invalid Date';
-    return format(date, 'MMM d, yyyy');
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+    const d = new Date(finalStr);
+    return isNaN(d.getTime()) ? null : d;
   } catch (e) {
-    return 'Invalid Date';
+    return null;
   }
+};
+
+const formatLocalDate = (dateStr: string | null | undefined) => {
+  const d = safeParseDate(dateStr);
+  if (!d) return '—';
+  return format(d, 'MMM d, yyyy');
 };
 
 interface Realtor {
@@ -583,15 +592,8 @@ const AdminDashboard = () => {
     const realtorRows = realtors.map(r => ({ ...r, isProfileOnly: false as const, profile: profiles.find(p => p.user_id === r.user_id) || null }));
     const all = [...realtorRows, ...orphanProfiles];
     return all.map((r: any) => {
-      const dateStr = r.expiration_date;
-      const normalized = dateStr && (dateStr.includes(' ') && !dateStr.includes('T'))
-        ? dateStr.replace(' ', 'T')
-        : dateStr;
-      const finalStr = normalized && (normalized.length === 10 && !normalized.includes('T'))
-        ? `${normalized}T00:00:00`
-        : normalized;
-      const expDate = finalStr ? new Date(finalStr) : null;
-      const isExpired = expDate && !isNaN(expDate.getTime()) && expDate < new Date(new Date().toDateString());
+      const d = safeParseDate(r.expiration_date);
+      const isExpired = d && d < new Date(new Date().toDateString());
       
       return {
         ...r,
@@ -692,7 +694,9 @@ const AdminDashboard = () => {
             {(() => {
               const q = search.trim().toLowerCase().replace(/^#/, '');
               const baseFiltered = properties.filter(p => {
-                const isActive = p.status === 'active' && (!p.expiration_date || new Date(p.expiration_date) >= new Date(new Date().toDateString()));
+                const d = safeParseDate(p.expiration_date);
+                const expired = d && d < new Date(new Date().toDateString());
+                const isActive = p.status === 'active' && !expired;
                 if (showInactive ? isActive : !isActive) return false;
                 if (!q) return true;
                 return String(p.property_code ?? '').includes(q) || creatorEmail(p.user_id).toLowerCase().includes(q);

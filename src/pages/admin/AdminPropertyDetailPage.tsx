@@ -44,23 +44,27 @@ const AdminPropertyDetailPage = () => {
     onConfirm: () => Promise<void> | void;
   } | null>(null);
 
-  const formatSafeDate = (dateStr: string | null | undefined) => {
-    if (!dateStr) return '—';
-    try {
-      const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
-        ? dateStr.replace(' ', 'T')
-        : dateStr;
-      const finalStr = (normalized.length === 10 && !normalized.includes('T'))
-        ? `${normalized}T00:00:00`
-        : normalized;
+const safeParseDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
+  try {
+    const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const finalStr = (normalized.length === 10 && !normalized.includes('T'))
+      ? `${normalized}T00:00:00`
+      : normalized;
+    const d = new Date(finalStr);
+    return isNaN(d.getTime()) ? null : d;
+  } catch (e) {
+    return null;
+  }
+};
 
-      const date = new Date(finalStr);
-      if (isNaN(date.getTime())) return 'Invalid Date';
-      return format(date, 'MMM d, yyyy');
-    } catch (e) {
-      return 'Invalid Date';
-    }
-  };
+const formatSafeDate = (dateStr: string | null | undefined) => {
+  const d = safeParseDate(dateStr);
+  if (!d) return '—';
+  return format(d, 'MMM d, yyyy');
+};
 
   useEffect(() => {
     const load = async () => {
@@ -171,19 +175,8 @@ const AdminPropertyDetailPage = () => {
   // UPDATED LOCAL DATE FORMATTING
   const expired = (() => {
     if (!property.expiration_date) return false;
-    try {
-      const dateStr = property.expiration_date;
-      const normalized = (dateStr.includes(' ') && !dateStr.includes('T'))
-        ? dateStr.replace(' ', 'T')
-        : dateStr;
-      const finalStr = (normalized.length === 10 && !normalized.includes('T'))
-        ? `${normalized}T00:00:00`
-        : normalized;
-      const d = new Date(finalStr);
-      return !isNaN(d.getTime()) && d < new Date(new Date().toDateString());
-    } catch (e) {
-      return false;
-    }
+    const d = safeParseDate(property.expiration_date);
+    return !!d && d < new Date(new Date().toDateString());
   })();
   const isActive = property.status === 'active' && !expired;
 
