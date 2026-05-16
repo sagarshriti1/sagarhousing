@@ -117,7 +117,7 @@ const FindRealtors = () => {
     <section className='bg-slate-50/50 py-12 md:py-16'>
       <div className='container px-4'>
         {/* HEADER & SEARCH SECTION - Left Aligned Stack */}
-        <div className='flex flex-col items-start space-y-6 mb-10'>
+        <div className='flex flex-col items-center text-center space-y-6 mb-10'>
           <div className='space-y-1'>
             <h2 className='text-3xl md:text-4xl font-bold text-foreground'>
               Find Local <span className='text-[#FF6B00]'>Realtors</span>
@@ -128,7 +128,7 @@ const FindRealtors = () => {
             </p>
           </div>
 
-          <div className='relative w-full max-w-md'>
+          <div className='relative w-full max-w-md mx-auto'>
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
             <Input
               placeholder='Search by Name, City, or District...'
