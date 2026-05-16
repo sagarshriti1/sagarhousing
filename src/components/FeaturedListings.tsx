@@ -13,6 +13,7 @@ interface FeaturedListingsProps {
   heroListingType?: string;
   realtorId?: string | null;
   hideFilters?: boolean;
+  hideTabs?: boolean;
   limit?: number;
   showViewAll?: boolean;
 }
@@ -21,6 +22,7 @@ const FeaturedListings = ({
   heroListingType, 
   realtorId, 
   hideFilters = false, 
+  hideTabs = false,
   limit, 
   showViewAll = false 
 }: FeaturedListingsProps) => {
@@ -155,17 +157,19 @@ const FeaturedListings = ({
             )}
           </div>
         </div>
-        <Tabs 
-          value={listingType} 
-          onValueChange={(v) => setListingType(v as any)}
-          className="w-full md:w-auto"
-        >
-          <TabsList className="grid w-full grid-cols-3 md:w-[300px]">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="sale">For Sale</TabsTrigger>
-            <TabsTrigger value="rent">For Rent</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {!hideTabs && (
+          <Tabs 
+            value={listingType} 
+            onValueChange={(v) => setListingType(v as any)}
+            className="w-full md:w-auto"
+          >
+            <TabsList className="grid w-full grid-cols-3 md:w-[300px]">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="sale">For Sale</TabsTrigger>
+              <TabsTrigger value="rent">For Rent</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
       </div>
 
       {!hideFilters && (
