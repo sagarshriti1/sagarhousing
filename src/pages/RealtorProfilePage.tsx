@@ -207,6 +207,7 @@ const RealtorProfilePage = () => {
             <FeaturedListings 
               realtorId={realtor.user_id} 
               hideFilters={true}
+              hideTabs={true}
               limit={6}
               showViewAll={true}
             />
