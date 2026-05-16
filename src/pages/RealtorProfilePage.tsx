@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSavedRealtors } from "@/hooks/useSavedRealtors";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FeaturedListings from "@/components/FeaturedListings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Mail, Star, Award, Briefcase, Bookmark, Building2 } from "lucide-react";
@@ -79,7 +80,7 @@ const RealtorProfilePage = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container py-8 max-w-3xl">
+      <main className="flex-1 container py-8 max-w-5xl">
         <div className="bg-card rounded-lg border border-border overflow-hidden">
           {/* Header section */}
           <div className="bg-secondary/50 p-8">
@@ -199,6 +200,18 @@ const RealtorProfilePage = () => {
             </div>
           </div>
         </div>
+
+        {/* Listings Section */}
+        {realtor.user_id && (
+          <div className="mt-12 pt-8 border-t border-border">
+            <FeaturedListings 
+              realtorId={realtor.user_id} 
+              hideFilters={true}
+              limit={6}
+              showViewAll={true}
+            />
+          </div>
+        )}
       </main>
       <Footer />
     </div>

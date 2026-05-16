@@ -32,7 +32,16 @@ const PropertyDetail = () => {
         .eq('id', cleanId)
         .maybeSingle();
 
-      if (data) setProperty(data);
+      if (data) {
+        // Also fetch realtor ID associated with this user
+        const { data: realtorData } = await supabase
+          .from('realtors')
+          .select('id')
+          .eq('user_id', data.user_id)
+          .maybeSingle();
+        
+        setProperty({ ...data, realtor_id: realtorData?.id });
+      }
       setLoading(false);
     };
     fetchProperty();
@@ -188,24 +197,45 @@ const PropertyDetail = () => {
             {/* Contact Seller Section at the bottom */}
             <div className="bg-card rounded-lg border border-border p-6 shadow-card max-w-2xl mx-auto mt-12">
               <h3 className="font-display text-xl font-bold text-foreground mb-4 text-center">Contact Seller</h3>
-              <div className="flex items-center gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
-                <div className="h-12 w-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold">
-                  {property.profiles?.avatar_url ? (
-                    <img src={property.profiles.avatar_url} className="w-full h-full object-cover" />
-                  ) : (
-                    property.profiles?.display_name?.[0] || "A"
-                  )}
+              {property.realtor_id ? (
+                <Link to={`/realtor/${property.realtor_id}`} className="flex items-center gap-4 mb-6 p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors group">
+                  <div className="h-12 w-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold group-hover:ring-2 ring-accent transition-all">
+                    {property.profiles?.avatar_url ? (
+                      <img src={property.profiles.avatar_url} className="w-full h-full object-cover" />
+                    ) : (
+                      property.profiles?.display_name?.[0] || "A"
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground group-hover:text-accent transition-colors">{property.profiles?.display_name || "Agent"}</p>
+                    <p className="text-xs text-muted-foreground">Listing Agent</p>
+                    {property.profiles?.phone && (
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {property.profiles.phone}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              ) : (
+                <div className="flex items-center gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
+                  <div className="h-12 w-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold">
+                    {property.profiles?.avatar_url ? (
+                      <img src={property.profiles.avatar_url} className="w-full h-full object-cover" />
+                    ) : (
+                      property.profiles?.display_name?.[0] || "A"
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground">{property.profiles?.display_name || "Agent"}</p>
+                    <p className="text-xs text-muted-foreground">Listing Agent</p>
+                    {property.profiles?.phone && (
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {property.profiles.phone}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-foreground">{property.profiles?.display_name || "Agent"}</p>
-                  <p className="text-xs text-muted-foreground">Listing Agent</p>
-                  {property.profiles?.phone && (
-                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                      <Phone className="h-3 w-3" /> {property.profiles.phone}
-                    </p>
-                  )}
-                </div>
-              </div>
+              )}
 
               <div className="space-y-4">
                 <h4 className="font-display font-semibold text-center mb-2">Inquire About This Property</h4>

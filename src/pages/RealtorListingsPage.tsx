@@ -22,7 +22,9 @@ const RealtorListingsPage = () => {
             <ArrowLeft className="h-4 w-4" /> Back
           </Button>
         </div>
-        <FeaturedListings realtorId={id} />
+        <div className="container">
+          <FeaturedListings realtorId={id} />
+        </div>
       </main>
       <Footer />
     </div>

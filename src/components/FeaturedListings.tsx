@@ -3,10 +3,27 @@ import type { Property } from "@/data/properties";
 import { supabase } from "@/integrations/supabase/client";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
+import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link } from "react-router-dom";
 
-const FeaturedListings = ({ heroListingType, realtorId }: { heroListingType?: string, realtorId?: string | null }) => {
+interface FeaturedListingsProps {
+  heroListingType?: string;
+  realtorId?: string | null;
+  hideFilters?: boolean;
+  limit?: number;
+  showViewAll?: boolean;
+}
+
+const FeaturedListings = ({ 
+  heroListingType, 
+  realtorId, 
+  hideFilters = false, 
+  limit, 
+  showViewAll = false 
+}: FeaturedListingsProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [listingType, setListingType] = useState(heroListingType === "rent" ? "rent" : heroListingType === "sale" ? "sale" : "all");
   const [realtorName, setRealtorName] = useState<string | null>(null);
@@ -121,69 +138,92 @@ const FeaturedListings = ({ heroListingType, realtorId }: { heroListingType?: st
   }, [effectiveListingType, propertyType, priceRange, beds, baths, sqmMin, sqmMax, yearBuilt, maintenanceFee, bikeParkingSpaces, carParkingSpaces, stories, district, city, keywords, allProperties]);
 
   return (
-    <section className="container py-12">
-      <div className="flex items-end justify-between mb-2">
+    <section className="py-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h2 className="font-display text-3xl font-bold text-foreground">
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
              {realtorName ? `${realtorName}'s Listings` : "Featured Listings"}
           </h2>
-          <p className="text-muted-foreground mt-1">{filtered.length} properties found</p>
+          <div className="flex flex-col gap-1 mt-1">
+            <p className="text-muted-foreground">{filtered.length} {filtered.length === 1 ? 'property' : 'properties'} found</p>
+            {showViewAll && realtorId && (
+              <Button asChild variant="link" className="p-0 h-auto justify-start text-accent hover:text-accent/80 font-semibold gap-1">
+                <Link to={`/realtor/${realtorId}/listings`}>
+                  View all listings →
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
+        <Tabs 
+          value={listingType} 
+          onValueChange={(v) => setListingType(v as any)}
+          className="w-full md:w-auto"
+        >
+          <TabsList className="grid w-full grid-cols-3 md:w-[300px]">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="sale">For Sale</TabsTrigger>
+            <TabsTrigger value="rent">For Rent</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      <FilterBar
-        listingType={listingType}
-        setListingType={setListingType}
-        propertyType={propertyType}
-        setPropertyType={setPropertyType}
-        city={city}
-        setCity={setCity}
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
-        beds={beds}
-        setBeds={setBeds}
-        baths={baths}
-        setBaths={setBaths}
-        sqmMin={sqmMin}
-        setSqmMin={setSqmMin}
-        sqmMax={sqmMax}
-        setSqmMax={setSqmMax}
-        yearBuilt={yearBuilt}
-        setYearBuilt={setYearBuilt}
-        maintenanceFee={maintenanceFee}
-        setMaintenanceFee={setMaintenanceFee}
-        bikeParkingSpaces={bikeParkingSpaces}
-        setBikeParkingSpaces={setBikeParkingSpaces}
-        carParkingSpaces={carParkingSpaces}
-        setCarParkingSpaces={setCarParkingSpaces}
-        stories={stories}
-        setStories={setStories}
-        keywords={keywords}
-        setKeywords={setKeywords}
-        district={district}
-        setDistrict={setDistrict}
-        availableCities={[...new Set(allProperties.map(p => p.city).filter(Boolean))].sort()}
-        onReset={() => {
-          setListingType("all");
-          setPropertyType("all");
-          setCity("all");
-          setPriceRange("all");
-          setBeds("all");
-          setBaths("all");
-          setSqmMin("");
-          setSqmMax("");
-          setYearBuilt("all");
-          setMaintenanceFee("all");
-          setBikeParkingSpaces("0");
-          setCarParkingSpaces("0");
-          setStories("0");
-          setKeywords("");
-          setDistrict("all");
-        }}
-      />
+      {!hideFilters && (
+        <FilterBar
+          listingType={listingType}
+          setListingType={setListingType}
+          hideListingType={true}
+          propertyType={propertyType}
+          setPropertyType={setPropertyType}
+          city={city}
+          setCity={setCity}
+          priceRange={priceRange}
+          setPriceRange={setPriceRange}
+          beds={beds}
+          setBeds={setBeds}
+          baths={baths}
+          setBaths={setBaths}
+          sqmMin={sqmMin}
+          setSqmMin={setSqmMin}
+          sqmMax={sqmMax}
+          setSqmMax={setSqmMax}
+          yearBuilt={yearBuilt}
+          setYearBuilt={setYearBuilt}
+          maintenanceFee={maintenanceFee}
+          setMaintenanceFee={setMaintenanceFee}
+          bikeParkingSpaces={bikeParkingSpaces}
+          setBikeParkingSpaces={setBikeParkingSpaces}
+          carParkingSpaces={carParkingSpaces}
+          setCarParkingSpaces={setCarParkingSpaces}
+          stories={stories}
+          setStories={setStories}
+          keywords={keywords}
+          setKeywords={setKeywords}
+          district={district}
+          setDistrict={setDistrict}
+          availableCities={[...new Set(allProperties.map(p => p.city).filter(Boolean))].sort()}
+          onReset={() => {
+            setListingType("all");
+            setPropertyType("all");
+            setCity("all");
+            setPriceRange("all");
+            setBeds("all");
+            setBaths("all");
+            setSqmMin("");
+            setSqmMax("");
+            setYearBuilt("all");
+            setMaintenanceFee("all");
+            setBikeParkingSpaces("0");
+            setCarParkingSpaces("0");
+            setStories("0");
+            setKeywords("");
+            setDistrict("all");
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.map((property) => (
+        {(limit ? filtered.slice(0, limit) : filtered).map((property) => (
           <PropertyCard
             key={property.id}
             property={property}
