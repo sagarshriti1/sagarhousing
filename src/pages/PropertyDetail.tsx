@@ -141,9 +141,14 @@ const PropertyDetail = () => {
                   )}
                 </div>
                 <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">{property.title}</h1>
-                <p className="flex items-center gap-1 text-muted-foreground mt-2">
-                  <MapPin className="h-4 w-4" /> {property.address}, {property.city}
-                </p>
+                <div className="flex flex-col gap-1 text-muted-foreground mt-2">
+                  <p className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4 text-accent" /> {property.address}
+                  </p>
+                  <p className="ml-5">
+                    {[property.city, property.district].filter(Boolean).join(', ')}
+                  </p>
+                </div>
               </div>
               <p className="font-display text-3xl md:text-4xl font-bold text-primary">
                 {formatPrice(property.price, property.listing_type)}

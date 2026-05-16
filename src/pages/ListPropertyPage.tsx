@@ -53,6 +53,7 @@ import {
   getDistrictForCity,
 } from '@/data/nepalLocations';
 import SearchableCombobox from '@/components/SearchableCombobox';
+import LocationSelector from '@/components/LocationSelector';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -879,37 +880,20 @@ const ListPropertyPage = () => {
                 <p className='text-xs text-destructive'>{errors.address}</p>
               )}
             </div>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label>City</Label>
-                <SearchableCombobox
-                  value={form.city}
-                  onValueChange={v => {
-                    updateForm('city', v);
-                    const dist = getDistrictForCity(v);
-                    if (dist) updateForm('district', dist);
-                  }}
-                  options={NEPAL_CITIES}
-                  placeholder='Select City'
-                  searchPlaceholder='Search cities...'
-                  className='w-full'
-                />
-              </div>
-              <div className='space-y-2' data-field='district'>
-                <Label>District *</Label>
-                <SearchableCombobox
-                  value={form.district}
-                  onValueChange={v => updateForm('district', v)}
-                  options={NEPAL_DISTRICTS}
-                  placeholder='Select District'
-                  searchPlaceholder='Search districts...'
-                  className='w-full'
-                />
-                {errors.district && (
-                  <p className='text-xs text-destructive'>{errors.district}</p>
-                )}
-              </div>
-            </div>
+            <LocationSelector
+              city={form.city}
+              district={form.district}
+              onLocationChange={(city, district) => {
+                setForm(prev => ({ ...prev, city, district }));
+                if (errors.district) {
+                  setErrors(prev => {
+                    const { district: _, ...rest } = prev;
+                    return rest;
+                  });
+                }
+              }}
+              error={errors.district}
+            />
           </section>
 
           {/* Details */}
