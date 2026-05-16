@@ -64,6 +64,7 @@ interface FilterBarProps {
   setDistrict: (v: string) => void;
   onReset: () => void;
   availableCities?: string[];
+  hideListingType?: boolean;
 }
 
 const FilterBar = ({
@@ -99,6 +100,7 @@ const FilterBar = ({
   setDistrict,
   onReset,
   availableCities = [],
+  hideListingType = false,
 }: FilterBarProps) => {
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -271,16 +273,18 @@ const FilterBar = ({
 
   return (
     <div className='flex flex-wrap items-center gap-3 py-6'>
-      <Select value={listingType} onValueChange={setListingType}>
-        <SelectTrigger className='w-[130px] focus:ring-[#FF6B00]'>
-          <SelectValue placeholder='Listing Type' />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value='all'>All</SelectItem>
-          <SelectItem value='sale'>For Sale</SelectItem>
-          <SelectItem value='rent'>For Rent</SelectItem>
-        </SelectContent>
-      </Select>
+      {!hideListingType && (
+        <Select value={listingType} onValueChange={setListingType}>
+          <SelectTrigger className='w-[130px] focus:ring-[#FF6B00]'>
+            <SelectValue placeholder='Listing Type' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='all'>All</SelectItem>
+            <SelectItem value='sale'>For Sale</SelectItem>
+            <SelectItem value='rent'>For Rent</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
 
       <Select value={propertyType} onValueChange={setPropertyType}>
         <SelectTrigger className='w-[150px] focus:ring-[#FF6B00]'>
