@@ -8,12 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -62,6 +68,40 @@ const PropertyDetail = () => {
     if (!imagePath) return "/placeholder.svg";
     if (imagePath.startsWith('http')) return imagePath;
     return supabase.storage.from('property-images').getPublicUrl(imagePath).data.publicUrl;
+  };
+
+
+
+  const handleSave = async () => {
+    if (!user) {
+      toast.error("Please sign in to save properties");
+      return;
+    }
+    const success = await toggleFavorite(id!);
+    if (success) {
+      toast.success(isFavorite(id!) ? "Removed from favorites" : "Added to favorites");
+    } else {
+      toast.error("Failed to update favorites");
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: property.title,
+      text: `Check out this property: ${property.title}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied to clipboard");
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
   };
 
   return (
@@ -128,8 +168,21 @@ const PropertyDetail = () => {
             )}
 
             <div className="flex gap-3">
-              <Button variant="outline" className="gap-2"><Heart className="h-4 w-4" /> Save</Button>
-              <Button variant="outline" className="gap-2"><Share2 className="h-4 w-4" /> Share</Button>
+              <Button 
+                variant={isFavorite(id!) ? "default" : "outline"} 
+                className="gap-2 transition-all"
+                onClick={handleSave}
+              >
+                <Heart className={cn("h-4 w-4", isFavorite(id!) && "fill-current")} /> 
+                {isFavorite(id!) ? "Saved" : "Save"}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={handleShare}
+              >
+                <Share2 className="h-4 w-4" /> Share
+              </Button>
             </div>
 
             {/* Contact Seller Section at the bottom */}
