@@ -50,12 +50,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import {
-  NEPAL_CITIES,
-  NEPAL_DISTRICTS,
-  getDistrictForCity,
-} from '@/data/nepalLocations';
-import SearchableCombobox from '@/components/SearchableCombobox';
+import LocationSelector from '@/components/LocationSelector';
 
 interface Profile {
   id: string;
@@ -97,11 +92,15 @@ const formatSafeDate = (dateStr: string | null | undefined) => {
 
 const parseLocation = (loc: string | null | undefined) => {
   if (!loc) return { city: '', district: '' };
-  const [city = '', district = ''] = loc.split(',').map(s => s.trim());
-  return { city, district };
+  const parts = loc.split(',');
+  return {
+    city: parts[0]?.trim() || '',
+    district: parts.slice(1).join(',').trim() || '',
+  };
 };
-const joinLocation = (c: string, d: string) =>
-  [c, d].filter(Boolean).join(', ');
+
+const joinLocation = (city: string, district: string) =>
+  `${city}, ${district}`;
 
 const AdminUserDetailPage = () => {
   const { userId } = useParams();
@@ -289,6 +288,9 @@ const AdminUserDetailPage = () => {
     if (!draft.email?.trim()) errs.email = 'Email is required';
     else if (!validEmailFormat(draft.email))
       errs.email = 'Enter a valid email address';
+    
+    const loc = parseLocation(draft.location);
+    if (!loc.district) errs.district = 'District is required';
     if (Object.keys(errs).length) {
       setEditErrors(errs);
       return;
@@ -704,41 +706,18 @@ const AdminUserDetailPage = () => {
                 (() => {
                   const l = parseLocation(draft.location);
                   return (
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div>
-                        <Label>City</Label>
-                        <SearchableCombobox
-                          value={l.city}
-                          onValueChange={c =>
-                            setDraft({
-                              ...draft,
-                              location: joinLocation(
-                                c,
-                                getDistrictForCity(c) || l.district,
-                              ),
-                            })
-                          }
-                          options={NEPAL_CITIES}
-                          placeholder='Select City'
-                          searchPlaceholder='Search cities...'
-                        />
-                      </div>
-                      <div>
-                        <Label>District</Label>
-                        <SearchableCombobox
-                          value={l.district}
-                          onValueChange={d =>
-                            setDraft({
-                              ...draft,
-                              location: joinLocation(l.city, d),
-                            })
-                          }
-                          options={NEPAL_DISTRICTS}
-                          placeholder='Select District'
-                          searchPlaceholder='Search districts...'
-                        />
-                      </div>
-                    </div>
+                    <LocationSelector
+                      city={l.city}
+                      district={l.district}
+                      onLocationChange={(city, district) => {
+                        setDraft({
+                          ...draft,
+                          location: joinLocation(city, district),
+                        });
+                      }}
+                      districtLabel="District"
+                      error={editErrors.district}
+                    />
                   );
                 })()}
             </div>

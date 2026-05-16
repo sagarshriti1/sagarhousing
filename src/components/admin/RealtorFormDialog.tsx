@@ -44,6 +44,7 @@ import {
 } from '@/data/nepalLocations';
 import { CreditCard, ShieldCheck } from 'lucide-react';
 import SimulatedPaymentForm from '@/components/SimulatedPaymentForm';
+import LocationSelector from '@/components/LocationSelector';
 import { useFeatureFlag, FEATURE_KEYS } from '@/hooks/useFeatureFlag';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
 import ConfirmSaveButton from '@/components/ConfirmSaveButton';
@@ -218,25 +219,6 @@ const RealtorFormDialog = ({
       }));
     }
   }, [realtorPromoFree, form.payment_status]);
-
-  const handleCityChange = (city: string) => {
-    const district = getDistrictForCity(city);
-    setForm(prev => ({
-      ...prev,
-      city,
-      ...(district ? { state: district, district } : {}),
-    }));
-  };
-
-  const handleDistrictChange = (district: string) => {
-    const cityDistrict = getDistrictForCity(form.city);
-    setForm(prev => ({
-      ...prev,
-      state: district,
-      district,
-      ...(cityDistrict !== district ? { city: '' } : {}),
-    }));
-  };
 
   const handleBypassToggle = (checked: boolean) => {
     setBypassPayment(checked);
@@ -447,33 +429,21 @@ const RealtorFormDialog = ({
                 placeholder='e.g. Thamel, Ward No. 26'
               />
             </div>
-            <div>
-              <Label>City</Label>
-              <SearchableCombobox
-                value={form.city}
-                onValueChange={handleCityChange}
-                options={NEPAL_CITIES}
-                placeholder='Select City'
-                searchPlaceholder='Search cities...'
-                className='w-full'
-              />
-            </div>
-            <div>
-              <Label>District *</Label>
-              <SearchableCombobox
-                value={form.state || form.district}
-                onValueChange={v => {
-                  handleDistrictChange(v);
+            <div className='col-span-2'>
+              <LocationSelector
+                city={form.city}
+                district={form.state || form.district}
+                onLocationChange={(city, district) => {
+                  setForm(prev => ({
+                    ...prev,
+                    city,
+                    district,
+                    state: district,
+                  }));
                   clearError('district');
                 }}
-                options={NEPAL_DISTRICTS}
-                placeholder='Select District'
-                searchPlaceholder='Search districts...'
-                className='w-full'
+                error={errors.district}
               />
-              {errors.district && (
-                <p className='text-xs text-destructive mt-1'>{errors.district}</p>
-              )}
             </div>
           </div>
 

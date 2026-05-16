@@ -36,6 +36,7 @@ import {
   getDistrictForCity,
 } from '@/data/nepalLocations';
 import SearchableCombobox from '@/components/SearchableCombobox';
+import LocationSelector from '@/components/LocationSelector';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ConfirmSaveButton from '@/components/ConfirmSaveButton';
 import { format } from 'date-fns';
@@ -51,15 +52,17 @@ import {
   markFeaturedExpiredIfNeeded,
 } from '@/lib/featuredStatus';
 
-const parseLocation = (
-  loc: string | null | undefined,
-): { city: string; district: string } => {
+const parseLocation = (loc: string | null | undefined) => {
   if (!loc) return { city: '', district: '' };
-  const [city, district] = loc.split(',').map(s => s.trim());
-  return { city: city || '', district: district || '' };
+  const parts = loc.split(',');
+  return {
+    city: parts[0]?.trim() || '',
+    district: parts.slice(1).join(',').trim() || '',
+  };
 };
+
 const joinLocation = (city: string, district: string) =>
-  [city, district].filter(Boolean).join(', ');
+  `${city}, ${district}`;
 
 const safeParseDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return null;
@@ -509,39 +512,16 @@ const ProfilePage = () => {
                           placeholder='e.g. Thamel, Ward No. 26'
                         />
                       </div>
-                      <div className='space-y-2'>
-                        <Label>City</Label>
-                        <SearchableCombobox
-                          value={loc.city}
-                          onValueChange={city => {
-                            const district =
-                              getDistrictForCity(city) || loc.district;
+                      <div className='col-span-2'>
+                        <LocationSelector
+                          city={loc.city}
+                          district={loc.district}
+                          onLocationChange={(city, district) => {
                             setProfile({
                               ...profile,
                               location: joinLocation(city, district),
                             });
                           }}
-                          options={NEPAL_CITIES}
-                          placeholder='Select City'
-                          searchPlaceholder='Search cities...'
-                        />
-                      </div>
-                      <div className='space-y-2'>
-                        <Label>District</Label>
-                        <SearchableCombobox
-                          value={loc.district}
-                          onValueChange={district => {
-                            const cityDist = getDistrictForCity(loc.city);
-                            const nextCity =
-                              cityDist && cityDist !== district ? '' : loc.city;
-                            setProfile({
-                              ...profile,
-                              location: joinLocation(nextCity, district),
-                            });
-                          }}
-                          options={NEPAL_DISTRICTS}
-                          placeholder='Select District'
-                          searchPlaceholder='Search districts...'
                         />
                       </div>
                     </div>

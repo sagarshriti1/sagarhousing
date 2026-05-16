@@ -103,10 +103,14 @@ const RealtorProfilePage = () => {
                     </Badge>
                   )}
                 </div>
-                <p className="flex items-center gap-1.5 text-muted-foreground justify-center sm:justify-start">
-                  <MapPin className="h-4 w-4 shrink-0" /> 
-                  {[realtor.street_address, realtor.city, realtor.district].filter(Boolean).join(', ')}
-                </p>
+                <div className="flex flex-col gap-1 text-muted-foreground items-center sm:items-start">
+                  <p className="flex items-center gap-1.5 font-medium text-foreground">
+                    <MapPin className="h-4 w-4 shrink-0 text-accent" /> {realtor.street_address || '—'}
+                  </p>
+                  <p className="sm:ml-5.5 ml-0">
+                    {[realtor.city, realtor.district].filter(Boolean).join(', ')}
+                  </p>
+                </div>
                 <p className="flex items-center gap-1.5 text-muted-foreground justify-center sm:justify-start">
                   <Star className="h-4 w-4 shrink-0" /> {realtor.years_experience !== null ? `${realtor.years_experience} years experience` : "Experience: Not provided"}
                 </p>

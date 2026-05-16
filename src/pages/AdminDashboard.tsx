@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -66,6 +67,7 @@ import { format, addMonths } from 'date-fns';
 import RealtorFormDialog, {
   type RealtorFormData,
 } from '@/components/admin/RealtorFormDialog';
+import LocationSelector from '@/components/LocationSelector';
 import {
   Select,
   SelectContent,
@@ -73,23 +75,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  NEPAL_CITIES,
-  NEPAL_DISTRICTS,
-  getDistrictForCity,
-} from '@/data/nepalLocations';
-import SearchableCombobox from '@/components/SearchableCombobox';
 
-const parseLocation = (
-  loc: string | null | undefined,
-): { city: string; district: string } => {
+const parseLocation = (loc: string | null | undefined) => {
   if (!loc) return { city: '', district: '' };
-  const [city = '', district = ''] = loc.split(',').map(s => s.trim());
-  return { city, district };
+  const parts = loc.split(',');
+  return {
+    city: parts[0]?.trim() || '',
+    district: parts.slice(1).join(',').trim() || '',
+  };
 };
 
 const joinLocation = (city: string, district: string) =>
-  [city, district].filter(Boolean).join(', ');
+  `${city}, ${district}`;
 
 const safeParseDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return null;
@@ -151,6 +148,8 @@ interface UserProfile {
   job_title: string | null;
   location: string | null;
   street_address: string | null;
+  bio: string | null;
+  contact_details: string | null;
   is_active: boolean;
   updated_by?: string | null;
   created_at: string;
@@ -224,6 +223,8 @@ const AdminDashboard = () => {
     streetAddress: '',
     location: '',
     avatarUrl: '',
+    bio: '',
+    contactDetails: '',
   });
   const [uploadingNewUserAvatar, setUploadingNewUserAvatar] = useState(false);
   const newUserAvatarInputRef = useRef<HTMLInputElement>(null);
@@ -339,30 +340,47 @@ const AdminDashboard = () => {
       toast.error('Name is required');
       return;
     }
-    if (!newUser.email || !newUser.password) {
-      toast.error('Email and password are required');
+    if (!newUser.email) {
+      toast.error('Email is required');
       return;
     }
-    if (newUser.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+
+    const loc = parseLocation(newUser.location);
+    if (!loc.district) {
+      toast.error('District is required');
       return;
     }
+
+    const effectivePassword = (createUserRole === 'user' && !newUser.password) 
+      ? Math.random().toString(36).slice(-12) + '!'
+      : newUser.password;
+
+    if (!effectivePassword || effectivePassword.length < 6) {
+      toast.error('Password is required (min 6 characters)');
+      return;
+    }
+
     setCreatingUser(true);
     const ok = await callAdminAction({
       action: 'create_user',
       email: newUser.email,
-      password: newUser.password,
+      password: effectivePassword,
       displayName: newUser.displayName,
       phone: newUser.phone,
       jobTitle: newUser.jobTitle,
       streetAddress: newUser.streetAddress,
       location: newUser.location,
       avatarUrl: newUser.avatarUrl,
+      bio: newUser.bio,
+      contactDetails: newUser.contactDetails,
       role: createUserRole,
     });
     setCreatingUser(false);
     if (ok) {
-      toast.success(`${createUserRole} account created`);
+      const msg = createUserRole === 'user' 
+        ? 'Non-realtor account created. They can use "Forgot Password" to set their own password.' 
+        : `${createUserRole} account created.`;
+      toast.success(msg);
       setCreateUserOpen(false);
       setNewUser({
         email: '',
@@ -373,6 +391,8 @@ const AdminDashboard = () => {
         streetAddress: '',
         location: '',
         avatarUrl: '',
+        bio: '',
+        contactDetails: '',
       });
       fetchAll();
     }
@@ -831,9 +851,113 @@ const AdminDashboard = () => {
         <DialogContent className='max-w-md max-h-[90vh] overflow-y-auto'>
           <DialogHeader><DialogTitle>Create {createUserRole.charAt(0).toUpperCase() + createUserRole.slice(1)} Account</DialogTitle></DialogHeader>
           <div className='space-y-4'>
+            <div className='flex flex-col items-center gap-4 py-2'>
+              <div className='relative h-24 w-24 rounded-full bg-muted overflow-hidden border-2 border-border group'>
+                {newUser.avatarUrl ? (
+                  <img src={newUser.avatarUrl} alt='' className='h-full w-full object-cover' />
+                ) : (
+                  <div className='h-full w-full flex items-center justify-center text-muted-foreground'>
+                    <Camera className='h-8 w-8' />
+                  </div>
+                )}
+                <button
+                  type='button'
+                  onClick={() => newUserAvatarInputRef.current?.click()}
+                  className='absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
+                  disabled={uploadingNewUserAvatar}
+                >
+                  <Plus className='h-6 w-6 text-white' />
+                </button>
+                {uploadingNewUserAvatar && (
+                  <div className='absolute inset-0 bg-background/60 flex items-center justify-center'>
+                    <Loader2 className='h-6 w-6 animate-spin text-accent' />
+                  </div>
+                )}
+              </div>
+              <input
+                type='file'
+                ref={newUserAvatarInputRef}
+                className='hidden'
+                accept='image/*'
+                onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setUploadingNewUserAvatar(true);
+                  const path = `${Date.now()}-${file.name}`;
+                  const { data, error } = await supabase.storage.from('avatars').upload(path, file);
+                  if (error) {
+                    toast.error('Avatar upload failed');
+                  } else {
+                    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(data.path);
+                    setNewUser({ ...newUser, avatarUrl: publicUrl });
+                  }
+                  setUploadingNewUserAvatar(false);
+                }}
+              />
+              <p className='text-xs text-muted-foreground'>Click to upload avatar</p>
+            </div>
             <div><Label>Name *</Label><Input value={newUser.displayName} onChange={e => setNewUser({ ...newUser, displayName: e.target.value })} placeholder='Full name' /></div>
             <div><Label>Email *</Label><Input type='email' value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} placeholder='user@example.com' /></div>
-            <div><Label>Temporary Password *</Label><Input type='text' value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} placeholder='Min. 6 characters' /></div>
+            {createUserRole !== 'user' && (
+              <div><Label>Temporary Password *</Label><Input type='text' value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} placeholder='Min. 6 characters' /></div>
+            )}
+            <div>
+              <Label>Phone</Label>
+              <Input 
+                value={newUser.phone} 
+                onChange={e => setNewUser({ ...newUser, phone: e.target.value })} 
+                placeholder='Phone number' 
+              />
+            </div>
+            {createUserRole === 'admin' && (
+              <div>
+                <Label>Job Title</Label>
+                <Input 
+                  value={newUser.jobTitle} 
+                  onChange={e => setNewUser({ ...newUser, jobTitle: e.target.value })} 
+                  placeholder='e.g. Administrator' 
+                />
+              </div>
+            )}
+            <div>
+              <Label>Street Address</Label>
+              <Input 
+                value={newUser.streetAddress} 
+                onChange={e => setNewUser({ ...newUser, streetAddress: e.target.value })} 
+                placeholder='e.g. Thamel, Ward No. 26' 
+              />
+            </div>
+            <LocationSelector
+              city={parseLocation(newUser.location).city}
+              district={parseLocation(newUser.location).district}
+              onLocationChange={(city, district) => {
+                setNewUser({ ...newUser, location: joinLocation(city, district) });
+              }}
+            />
+            <div>
+              <Label>Additional Info (Contact Details)</Label>
+              <Textarea 
+                value={newUser.contactDetails} 
+                onChange={e => {
+                  const lines = e.target.value.split('\n');
+                  const trimmed = lines.length > 6 ? lines.slice(0, 6).join('\n') : e.target.value;
+                  setNewUser({ ...newUser, contactDetails: trimmed });
+                }} 
+                placeholder='Phone, WhatsApp, office address, etc.'
+                className='resize-none'
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>About Me (Bio)</Label>
+              <Textarea 
+                value={newUser.bio} 
+                onChange={e => setNewUser({ ...newUser, bio: e.target.value })} 
+                placeholder='Tell others a bit about yourself...'
+                className='resize-none'
+                rows={4}
+              />
+            </div>
             <div className='flex justify-end gap-2'>
               <Button variant='outline' onClick={() => setCreateUserOpen(false)} disabled={creatingUser}>Cancel</Button>
               <Button onClick={handleCreateUser} disabled={creatingUser} className='gap-2'>

@@ -19,6 +19,7 @@ interface Realtor {
   city: string;
   district: string | null;
   state: string;
+  street_address: string | null;
   bio: string | null;
   specialties: string[] | null;
   years_experience: number | null;
@@ -155,9 +156,14 @@ const RealtorsPage = () => {
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-display text-lg font-bold text-foreground truncate">{realtor.name}</h3>
-                    <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" /> {realtor.city}{realtor.district ? `, ${realtor.district}` : ''}
-                    </p>
+                    <div className="flex flex-col gap-0.5 text-sm text-muted-foreground mt-0.5">
+                      <p className="flex items-center gap-1 font-medium text-foreground truncate">
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-accent" /> {realtor.street_address || '—'}
+                      </p>
+                      <p className="ml-[18px] truncate">
+                        {realtor.city}{realtor.district ? `, ${realtor.district}` : ''}
+                      </p>
+                    </div>
                     {realtor.years_experience && (
                       <p className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Star className="h-3.5 w-3.5 shrink-0" /> {realtor.years_experience} years experience

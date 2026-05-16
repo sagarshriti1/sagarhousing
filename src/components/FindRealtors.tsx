@@ -183,12 +183,15 @@ const FindRealtors = () => {
                     <h3 className='text-lg font-bold text-slate-900 truncate'>
                       {realtor.name}
                     </h3>
-                    <p className='flex items-center gap-1 text-sm text-slate-500'>
-                      <MapPin className='h-3.5 w-3.5 shrink-0 text-[#FF6B00]' />
-                      <span className='truncate'>
-                        {[realtor.street_address, realtor.city, realtor.district].filter(Boolean).join(', ')}
-                      </span>
-                    </p>
+                    <div className='flex flex-col gap-0.5 text-sm text-slate-500'>
+                      <p className='flex items-center gap-1 font-medium text-slate-700 truncate'>
+                        <MapPin className='h-3.5 w-3.5 shrink-0 text-[#FF6B00]' />
+                        {realtor.street_address}
+                      </p>
+                      <p className='ml-[18px] truncate'>
+                        {[realtor.city, realtor.district].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
                   </div>
                 </div>
 

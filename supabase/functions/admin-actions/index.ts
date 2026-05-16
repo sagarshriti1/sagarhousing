@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { action, userId, email, password, displayName, phone, jobTitle, location, streetAddress, role, avatarUrl } = await req.json();
+    const { action, userId, email, password, displayName, phone, jobTitle, location, streetAddress, role, avatarUrl, bio, contactDetails } = await req.json();
 
     if (action === "create_user") {
       if (!email || !password || !role) {
@@ -81,6 +81,8 @@ Deno.serve(async (req) => {
         street_address: streetAddress ?? null,
         display_name: displayName ?? null,
         avatar_url: avatarUrl ?? null,
+        bio: bio ?? null,
+        contact_details: contactDetails ?? null,
         updated_by: caller.id,
       }).eq("user_id", created.user.id);
 
